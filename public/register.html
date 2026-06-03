@@ -1,0 +1,284 @@
+<!DOCTYPE html>
+<html lang="he" dir="rtl">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>יצירת אירוע | אישורי הגעה</title>
+  <link rel="stylesheet" href="style.css" />
+</head>
+<body>
+
+  <nav class="landing-nav">
+    <a class="logo" href="/">✡ אישורי הגעה</a>
+  </nav>
+
+  <div class="register-page">
+    <div class="register-header">
+      <h1>יצירת אירוע חדש</h1>
+      <p>מלאו את הפרטים ותוך דקות האירוע שלכם מוכן</p>
+    </div>
+
+    <!-- Wizard Steps Indicator -->
+    <div class="wizard-steps" id="wizardSteps">
+      <div class="wizard-step active" id="ws1">1</div>
+      <div class="wizard-connector" id="wc1"></div>
+      <div class="wizard-step" id="ws2">2</div>
+      <div class="wizard-connector" id="wc2"></div>
+      <div class="wizard-step" id="ws3">3</div>
+    </div>
+
+    <!-- Step 1: Event Details -->
+    <div class="step-panel active" id="panel1">
+      <div class="reg-card">
+        <h2>פרטי האירוע</h2>
+
+        <div class="form-group">
+          <label>סוג האירוע *</label>
+          <div class="event-type-grid" id="eventTypeGrid">
+            <div class="event-type-card" data-value="bar_mitzvah" onclick="selectEventType(this)">
+              <div class="et-icon">🎉</div>
+              <div class="et-label">בר / בת מצווה</div>
+            </div>
+            <div class="event-type-card" data-value="wedding" onclick="selectEventType(this)">
+              <div class="et-icon">💍</div>
+              <div class="et-label">חתונה</div>
+            </div>
+            <div class="event-type-card" data-value="brit" onclick="selectEventType(this)">
+              <div class="et-icon">👶</div>
+              <div class="et-label">ברית מילה</div>
+            </div>
+            <div class="event-type-card" data-value="birthday" onclick="selectEventType(this)">
+              <div class="et-icon">🎂</div>
+              <div class="et-label">יום הולדת</div>
+            </div>
+            <div class="event-type-card" data-value="family" onclick="selectEventType(this)">
+              <div class="et-icon">🎊</div>
+              <div class="et-label">אירוע משפחתי</div>
+            </div>
+            <div class="event-type-card" data-value="other" onclick="selectEventType(this)">
+              <div class="et-icon">✡</div>
+              <div class="et-label">אחר</div>
+            </div>
+          </div>
+        </div>
+
+        <div class="form-group">
+          <label for="eventName">שם האירוע *</label>
+          <input type="text" id="eventName" placeholder='למשל: בר המצווה של יונתן' />
+        </div>
+
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px">
+          <div class="form-group">
+            <label for="gregorianDate">תאריך *</label>
+            <input type="date" id="gregorianDate" />
+          </div>
+          <div class="form-group">
+            <label for="eventTime">שעה *</label>
+            <input type="time" id="eventTime" />
+          </div>
+        </div>
+
+        <div class="form-group">
+          <label for="hebrewDate">תאריך עברי (אופציונלי)</label>
+          <input type="text" id="hebrewDate" placeholder='למשל: כ״ח בסיוון תשפ״ו' />
+        </div>
+
+        <div class="form-group">
+          <label for="location">שם האולם / המקום *</label>
+          <input type="text" id="location" placeholder='למשל: אולם טרומפטה' />
+        </div>
+
+        <div class="form-group">
+          <label for="address">כתובת *</label>
+          <input type="text" id="address" placeholder='למשל: רחוב הדגן 22, חיפה' />
+        </div>
+
+        <div class="form-group">
+          <label for="extraNote">הערה נוספת לאורחים (אופציונלי)</label>
+          <textarea id="extraNote" rows="2" placeholder='למשל: טקס הנחת תפילין בשעה 16:00 ב...'></textarea>
+        </div>
+
+        <button class="submit-btn" onclick="goToStep2()">המשך לפרטי המארגן ←</button>
+      </div>
+    </div>
+
+    <!-- Step 2: Organizer Details -->
+    <div class="step-panel" id="panel2">
+      <div class="reg-card">
+        <h2>פרטי המארגן</h2>
+
+        <div class="form-group">
+          <label for="customerName">שם מלא *</label>
+          <input type="text" id="customerName" placeholder='שם ומשפחה' autocomplete="name" />
+        </div>
+
+        <div class="form-group">
+          <label for="customerEmail">אימייל * <span style="font-weight:400;color:var(--text-muted)">(לאן ישלח האימייל עם הקישורים)</span></label>
+          <input type="email" id="customerEmail" placeholder='your@email.com' autocomplete="email" />
+        </div>
+
+        <div class="form-group">
+          <label for="customerPhone">טלפון (אופציונלי)</label>
+          <input type="tel" id="customerPhone" placeholder='050-0000000' autocomplete="tel" />
+        </div>
+
+        <div class="btn-row">
+          <button class="back-btn" onclick="goToStep(1)">→ חזור</button>
+          <button class="submit-btn next-btn" onclick="goToStep3()">המשך לתצוגה מקדימה ←</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- Step 3: Preview + Checkout -->
+    <div class="step-panel" id="panel3">
+      <div class="reg-card">
+        <h2>תצוגה מקדימה ואישור</h2>
+
+        <div class="preview-card" id="previewCard">
+          <!-- filled by JS -->
+        </div>
+
+        <p style="color:var(--text-muted);font-size:.9rem;margin-bottom:20px;line-height:1.6">
+          לאחר התשלום יישלח אימייל עם קישור האורחים וקישור הדשבורד.
+          התשלום מאובטח דרך Stripe.
+        </p>
+
+        <div class="btn-row">
+          <button class="back-btn" onclick="goToStep(2)">→ חזור</button>
+          <button class="submit-btn next-btn" id="payBtn" onclick="startCheckout()">
+            שלם ₪99 ופתח את האירוע 🎉
+          </button>
+        </div>
+
+        <div id="checkoutError" style="display:none;margin-top:12px;color:var(--red);font-size:.9rem;text-align:center"></div>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    const EVENT_TYPE_LABELS = {
+      bar_mitzvah: "בר / בת מצווה",
+      wedding:     "חתונה",
+      brit:        "ברית מילה",
+      birthday:    "יום הולדת",
+      family:      "אירוע משפחתי",
+      other:       "אחר",
+    };
+
+    let formData = { event_type: "" };
+    let currentStep = 1;
+
+    function selectEventType(card) {
+      document.querySelectorAll(".event-type-card").forEach(c => c.classList.remove("selected"));
+      card.classList.add("selected");
+      formData.event_type = card.dataset.value;
+    }
+
+    function showError(msg) {
+      alert(msg);
+    }
+
+    function goToStep2() {
+      if (!formData.event_type) return showError("נא לבחור סוג אירוע");
+      const name = document.getElementById("eventName").value.trim();
+      const date = document.getElementById("gregorianDate").value;
+      const time = document.getElementById("eventTime").value;
+      const loc  = document.getElementById("location").value.trim();
+      const addr = document.getElementById("address").value.trim();
+      if (!name) return showError("נא להזין שם אירוע");
+      if (!date) return showError("נא לבחור תאריך");
+      if (!time) return showError("נא להזין שעה");
+      if (!loc)  return showError("נא להזין שם המקום");
+      if (!addr) return showError("נא להזין כתובת");
+
+      formData.event_name     = name;
+      formData.gregorian_date = date;
+      formData.event_time     = time;
+      formData.hebrew_date    = document.getElementById("hebrewDate").value.trim();
+      formData.location       = loc;
+      formData.address        = addr;
+      formData.extra_note     = document.getElementById("extraNote").value.trim();
+
+      goToStep(2);
+    }
+
+    function goToStep3() {
+      const name  = document.getElementById("customerName").value.trim();
+      const email = document.getElementById("customerEmail").value.trim();
+      if (!name)  return showError("נא להזין שם מלא");
+      if (!email || !/^\S+@\S+\.\S+$/.test(email)) return showError("נא להזין אימייל תקין");
+
+      formData.customer_name  = name;
+      formData.customer_email = email;
+      formData.customer_phone = document.getElementById("customerPhone").value.trim();
+
+      renderPreview();
+      goToStep(3);
+    }
+
+    function renderPreview() {
+      const typeLabel = EVENT_TYPE_LABELS[formData.event_type] || formData.event_type;
+      const dateFormatted = formData.gregorian_date
+        ? new Date(formData.gregorian_date + "T12:00:00").toLocaleDateString("he-IL", { day:"numeric", month:"long", year:"numeric" })
+        : "";
+
+      document.getElementById("previewCard").innerHTML = `
+        <div class="preview-title">${formData.event_name}</div>
+        <div class="preview-row"><span class="preview-lbl">סוג</span><span class="preview-val">${typeLabel}</span></div>
+        <div class="preview-row"><span class="preview-lbl">תאריך</span><span class="preview-val">${formData.hebrew_date ? formData.hebrew_date + " · " : ""}${dateFormatted}</span></div>
+        <div class="preview-row"><span class="preview-lbl">שעה</span><span class="preview-val">${formData.event_time}</span></div>
+        <div class="preview-row"><span class="preview-lbl">מיקום</span><span class="preview-val">${formData.location}</span></div>
+        <div class="preview-row"><span class="preview-lbl">כתובת</span><span class="preview-val">${formData.address}</span></div>
+        ${formData.extra_note ? `<div class="preview-row"><span class="preview-lbl">הערה</span><span class="preview-val">${formData.extra_note}</span></div>` : ""}
+        <div class="preview-row" style="margin-top:4px;border-top:2px solid #e5e7eb;padding-top:12px">
+          <span class="preview-lbl">אימייל</span><span class="preview-val">${formData.customer_email}</span>
+        </div>
+      `;
+    }
+
+    function goToStep(n) {
+      // Hide all panels
+      document.querySelectorAll(".step-panel").forEach(p => p.classList.remove("active"));
+      document.getElementById("panel" + n).classList.add("active");
+
+      // Update wizard indicators
+      for (let i = 1; i <= 3; i++) {
+        const ws = document.getElementById("ws" + i);
+        ws.classList.remove("active", "done");
+        if (i < n) ws.classList.add("done");
+        else if (i === n) ws.classList.add("active");
+      }
+      for (let i = 1; i <= 2; i++) {
+        const wc = document.getElementById("wc" + i);
+        wc.classList.toggle("done", i < n);
+      }
+      currentStep = n;
+      window.scrollTo({ top: 0, behavior: "smooth" });
+    }
+
+    async function startCheckout() {
+      const btn = document.getElementById("payBtn");
+      const errEl = document.getElementById("checkoutError");
+      errEl.style.display = "none";
+      btn.disabled = true;
+      btn.textContent = "מעביר לתשלום...";
+
+      try {
+        const res = await fetch("/api/create-checkout", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify(formData),
+        });
+        const json = await res.json();
+        if (!res.ok || !json.url) throw new Error(json.error || "שגיאה בשרת");
+        window.location.href = json.url;
+      } catch (e) {
+        errEl.textContent = "שגיאה: " + e.message;
+        errEl.style.display = "block";
+        btn.disabled = false;
+        btn.textContent = "שלם ₪99 ופתח את האירוע 🎉";
+      }
+    }
+  </script>
+</body>
+</html>

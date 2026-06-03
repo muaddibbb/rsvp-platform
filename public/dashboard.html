@@ -1,0 +1,277 @@
+<!DOCTYPE html>
+<html lang="he" dir="rtl">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>דשבורד ניהול אישורים</title>
+  <link rel="stylesheet" href="/style.css" />
+  <style>
+    .delete-btn { background:none;border:none;cursor:pointer;font-size:1rem;opacity:.35;transition:opacity .15s;padding:2px 6px;border-radius:6px; }
+    .delete-btn:hover { opacity:1;background:var(--red-light); }
+  </style>
+</head>
+<body>
+
+  <!-- Login Screen -->
+  <div class="page" id="loginPage">
+    <header class="hero hero--small">
+      <div class="star-of-david">✡</div>
+      <h1 class="event-title" id="loginTitle">דשבורד ניהול</h1>
+      <p class="invite-text">ניהול אישורי הגעה</p>
+    </header>
+    <section class="form-card">
+      <h2 class="form-title">כניסה</h2>
+      <div class="form-group">
+        <label for="password">סיסמה</label>
+        <input type="password" id="password" placeholder="הזן סיסמה"
+               onkeydown="if(event.key==='Enter') login()" />
+      </div>
+      <button class="submit-btn" onclick="login()">כניסה</button>
+      <div class="error-banner" id="loginError"
+           style="display:none;position:static;margin-top:12px;border-radius:8px;transform:none;left:auto;bottom:auto">
+        סיסמה שגויה
+      </div>
+    </section>
+  </div>
+
+  <!-- Dashboard -->
+  <div id="dashboardPage" style="display:none">
+    <div class="dashboard-header">
+      <div>
+        <h1 class="dash-title" id="dashTitle">דשבורד אישורים</h1>
+        <p class="dash-sub" id="dashSub">רשימת אישורי הגעה</p>
+      </div>
+      <div class="dash-actions">
+        <button class="icon-btn" onclick="loadRSVPs()" title="רענן">🔄 רענן</button>
+        <button class="icon-btn" onclick="exportCSV()" title="ייצא">📥 ייצא CSV</button>
+        <a href="#" id="rsvpPageLink" class="icon-btn" target="_blank">🔗 דף האורחים</a>
+      </div>
+    </div>
+
+    <!-- Stats -->
+    <div class="stats-row">
+      <div class="stat-card stat-total">
+        <div class="stat-num" id="statTotal">0</div>
+        <div class="stat-label">סה"כ משיבים</div>
+      </div>
+      <div class="stat-card stat-yes">
+        <div class="stat-num" id="statYes">0</div>
+        <div class="stat-label">מגיעים</div>
+      </div>
+      <div class="stat-card stat-no">
+        <div class="stat-num" id="statNo">0</div>
+        <div class="stat-label">לא מגיעים</div>
+      </div>
+      <div class="stat-card stat-guests">
+        <div class="stat-num" id="statGuests">0</div>
+        <div class="stat-label">סה"כ אורחים</div>
+      </div>
+    </div>
+
+    <!-- Filter -->
+    <div class="filter-row">
+      <button class="filter-btn active" data-filter="all"  onclick="setFilter('all', this)">הכל</button>
+      <button class="filter-btn"        data-filter="yes"  onclick="setFilter('yes', this)">מגיעים</button>
+      <button class="filter-btn"        data-filter="no"   onclick="setFilter('no', this)">לא מגיעים</button>
+      <input type="text" class="search-input" id="searchInput"
+             placeholder="חיפוש לפי שם..." oninput="renderTable()" />
+    </div>
+
+    <!-- Table -->
+    <div class="table-wrap">
+      <div class="loading" id="loadingState">טוען נתונים...</div>
+      <div class="empty-state" id="emptyState" style="display:none">אין נתונים עדיין</div>
+      <table class="rsvp-table" id="rsvpTable" style="display:none">
+        <thead>
+          <tr>
+            <th>#</th>
+            <th>שם</th>
+            <th>הגעה</th>
+            <th>מספר אורחים</th>
+            <th>הערות</th>
+            <th>זמן הרשמה</th>
+            <th></th>
+          </tr>
+        </thead>
+        <tbody id="tableBody"></tbody>
+      </table>
+    </div>
+  </div>
+
+  <script>
+    const slug = window.location.pathname.split("/").filter(Boolean).pop();
+    let allRSVPs = [];
+    let currentFilter = "all";
+    let storedPassword = "";
+
+    document.getElementById("rsvpPageLink").href = `/rsvp/${slug}`;
+
+    async function login() {
+      const pw = document.getElementById("password").value;
+      if (!pw) return;
+
+      const btn = document.querySelector("#loginPage .submit-btn");
+      btn.disabled = true;
+      btn.textContent = "בודק...";
+
+      try {
+        const res = await fetch(`/api/dashboard/${slug}?password=${encodeURIComponent(pw)}`);
+        if (res.status === 401) {
+          document.getElementById("loginError").style.display = "block";
+          btn.disabled = false;
+          btn.textContent = "כניסה";
+          return;
+        }
+        if (!res.ok) throw new Error("שגיאת שרת");
+
+        const data = await res.json();
+        storedPassword = pw;
+
+        // Populate event info
+        if (data.event) {
+          document.getElementById("dashTitle").textContent = data.event.event_name || "דשבורד אישורים";
+          document.getElementById("dashSub").textContent = "רשימת אישורי הגעה";
+        }
+
+        document.getElementById("loginPage").style.display = "none";
+        document.getElementById("dashboardPage").style.display = "block";
+
+        processData(data);
+      } catch (e) {
+        alert("שגיאה: " + e.message);
+        btn.disabled = false;
+        btn.textContent = "כניסה";
+      }
+    }
+
+    async function loadRSVPs() {
+      document.getElementById("loadingState").style.display = "block";
+      document.getElementById("rsvpTable").style.display = "none";
+      document.getElementById("emptyState").style.display = "none";
+
+      try {
+        const res = await fetch(`/api/dashboard/${slug}?password=${encodeURIComponent(storedPassword)}`);
+        if (!res.ok) throw new Error("שגיאה");
+        const data = await res.json();
+        processData(data);
+      } catch (e) {
+        document.getElementById("loadingState").textContent = "שגיאה בטעינת הנתונים";
+      }
+    }
+
+    function processData(data) {
+      allRSVPs = data.rsvps || [];
+      const stats = data.stats || {};
+      document.getElementById("statTotal").textContent  = stats.total       || allRSVPs.length;
+      document.getElementById("statYes").textContent    = stats.attending   || allRSVPs.filter(r => r.attending === "yes").length;
+      document.getElementById("statNo").textContent     = stats.notAttending || allRSVPs.filter(r => r.attending !== "yes").length;
+      document.getElementById("statGuests").textContent = stats.totalGuests  || allRSVPs.filter(r => r.attending === "yes").reduce((s, r) => s + (parseInt(r.guests) || 0), 0);
+      renderTable();
+    }
+
+    async function deleteRSVP(idx) {
+      const entry = allRSVPs[idx];
+      if (!entry) return;
+      if (!confirm(`למחוק את "${entry.name}"?`)) return;
+
+      // Optimistic update
+      allRSVPs.splice(idx, 1);
+      renderTable();
+      updateStats();
+
+      try {
+        await fetch(`/api/dashboard/${slug}?id=${entry.id}&password=${encodeURIComponent(storedPassword)}`, {
+          method: "DELETE",
+        });
+      } catch (e) {
+        // Reload to sync
+        setTimeout(loadRSVPs, 500);
+      }
+    }
+
+    function updateStats() {
+      const yes = allRSVPs.filter(r => r.attending === "yes");
+      document.getElementById("statTotal").textContent  = allRSVPs.length;
+      document.getElementById("statYes").textContent    = yes.length;
+      document.getElementById("statNo").textContent     = allRSVPs.length - yes.length;
+      document.getElementById("statGuests").textContent = yes.reduce((s, r) => s + (parseInt(r.guests) || 0), 0);
+    }
+
+    function setFilter(filter, btn) {
+      currentFilter = filter;
+      document.querySelectorAll(".filter-btn").forEach(b => b.classList.remove("active"));
+      btn.classList.add("active");
+      renderTable();
+    }
+
+    function renderTable() {
+      const search = document.getElementById("searchInput").value.toLowerCase();
+      const filtered = allRSVPs
+        .map((r, i) => ({ ...r, _idx: i }))
+        .filter(r => {
+          const matchFilter = currentFilter === "all" || r.attending === currentFilter;
+          const matchSearch = r.name.toLowerCase().includes(search);
+          return matchFilter && matchSearch;
+        });
+
+      document.getElementById("loadingState").style.display = "none";
+
+      if (filtered.length === 0) {
+        document.getElementById("emptyState").style.display = "block";
+        document.getElementById("rsvpTable").style.display = "none";
+        return;
+      }
+
+      document.getElementById("emptyState").style.display = "none";
+      document.getElementById("rsvpTable").style.display = "table";
+
+      const tbody = document.getElementById("tableBody");
+      tbody.innerHTML = filtered.map((r, i) => `
+        <tr>
+          <td class="cell-num">${i + 1}</td>
+          <td class="cell-name">${escHtml(r.name)}</td>
+          <td>
+            <span class="badge ${r.attending === "yes" ? "badge-yes" : "badge-no"}">
+              ${r.attending === "yes" ? "✅ מגיע" : "❌ לא מגיע"}
+            </span>
+          </td>
+          <td class="cell-center">${r.attending === "yes" ? (r.guests || 1) : "—"}</td>
+          <td class="cell-notes">${escHtml(r.notes || "")}</td>
+          <td class="cell-time">${escHtml(r.timestamp || "")}</td>
+          <td class="cell-center">
+            <button class="delete-btn" onclick="deleteRSVP(${r._idx})" title="מחק">🗑️</button>
+          </td>
+        </tr>`
+      ).join("");
+    }
+
+    function escHtml(str) {
+      return String(str)
+        .replace(/&/g, "&amp;")
+        .replace(/</g, "&lt;")
+        .replace(/>/g, "&gt;")
+        .replace(/"/g, "&quot;");
+    }
+
+    function exportCSV() {
+      const headers = ["שם", "הגעה", "מספר אורחים", "הערות", "זמן"];
+      const rows = allRSVPs.map(r => [
+        r.name,
+        r.attending === "yes" ? "מגיע" : "לא מגיע",
+        r.attending === "yes" ? r.guests : 0,
+        r.notes || "",
+        r.timestamp || "",
+      ]);
+      const csv = [headers, ...rows]
+        .map(row => row.map(v => `"${String(v).replace(/"/g, '""')}"`).join(","))
+        .join("\n");
+
+      const blob = new Blob(["﻿" + csv], { type: "text/csv;charset=utf-8;" });
+      const a = document.createElement("a");
+      a.href = URL.createObjectURL(blob);
+      a.download = `rsvp-${slug}.csv`;
+      a.click();
+    }
+  </script>
+</body>
+</html>

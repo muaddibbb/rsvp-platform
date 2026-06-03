@@ -1,0 +1,10 @@
+{
+  "name": "rsvp-platform",
+  "version": "1.0.0",
+  "description": "Hebrew RSVP SaaS — rsvp.kupernet.com",
+  "dependencies": {
+    "@supabase/supabase-js": "^2.39.0",
+    "resend": "^3.2.0",
+    "stripe": "^14.18.0"
+  }
+}

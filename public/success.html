@@ -1,0 +1,110 @@
+<!DOCTYPE html>
+<html lang="he" dir="rtl">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>תשלום התקבל | אישורי הגעה</title>
+  <link rel="stylesheet" href="style.css" />
+</head>
+<body>
+
+  <nav class="landing-nav">
+    <a class="logo" href="/">✡ אישורי הגעה</a>
+  </nav>
+
+  <div class="success-page">
+
+    <!-- Pending state -->
+    <div id="pendingState">
+      <div class="pending-state">
+        מעבד את האירוע שלך<span class="spinner"></span>
+      </div>
+    </div>
+
+    <!-- Success state -->
+    <div id="successState" style="display:none;width:100%;max-width:480px">
+      <div class="big-check">🎉</div>
+      <h1>האירוע מוכן!</h1>
+      <p class="sub" id="successSub">
+        שלחנו אימייל עם כל הפרטים — קישור האורחים, קישור הדשבורד וסיסמת הניהול.
+        בדוק את תיבת הדואר (ואולי תיקיית ספאם).
+      </p>
+
+      <div class="success-links">
+        <a id="rsvpLinkBtn" class="success-link-btn gold" href="#">
+          🔗 קישור לאורחים (לשתף בוואטסאפ)
+        </a>
+        <a id="dashboardLinkBtn" class="success-link-btn navy" href="#">
+          📊 כניסה לדשבורד הניהול
+        </a>
+        <a id="waBtn" class="success-link-btn whatsapp" href="#" target="_blank">
+          💬 שתף ישירות בוואטסאפ
+        </a>
+      </div>
+
+      <p style="margin-top:24px;color:var(--text-muted);font-size:.85rem">
+        שמור את הקישורים — הם נשלחו גם לאימייל שלך
+      </p>
+    </div>
+
+    <!-- Error state -->
+    <div id="errorState" style="display:none;text-align:center">
+      <div style="font-size:3rem;margin-bottom:12px">⚠️</div>
+      <h2 style="color:var(--navy);margin-bottom:8px">התשלום התקבל</h2>
+      <p style="color:var(--text-muted)">
+        האירוע שלך נוצר. בדוק את האימייל לקישורים.<br/>
+        אם לא קיבלת אימייל תוך כמה דקות, צור קשר עם <a href="mailto:info@kupernet.com">info@kupernet.com</a>
+      </p>
+    </div>
+  </div>
+
+  <script>
+    const BASE = "https://rsvp.kupernet.com";
+    const params = new URLSearchParams(window.location.search);
+    const sessionId = params.get("session_id");
+
+    async function fetchSuccess(retries = 0) {
+      if (!sessionId) {
+        document.getElementById("pendingState").style.display = "none";
+        document.getElementById("errorState").style.display = "block";
+        return;
+      }
+
+      try {
+        const res = await fetch("/api/success?session_id=" + encodeURIComponent(sessionId));
+        const data = await res.json();
+
+        if (data.pending && retries < 8) {
+          setTimeout(() => fetchSuccess(retries + 1), 1500);
+          return;
+        }
+
+        document.getElementById("pendingState").style.display = "none";
+
+        if (data.slug) {
+          const rsvpUrl = `${BASE}/rsvp/${data.slug}`;
+          const dashUrl = `${BASE}/dashboard/${data.slug}`;
+          const waText  = encodeURIComponent(`אתם מוזמנים ל${data.event_name || "האירוע שלנו"}!\nלאישור הגעה: ${rsvpUrl}`);
+
+          document.getElementById("successSub").textContent =
+            `שלחנו אימייל עם כל הפרטים ל${data.customer_name || ""}. ` +
+            "קישור האורחים, קישור הדשבורד וסיסמת הניהול מחכים בתיבת הדואר.";
+
+          document.getElementById("rsvpLinkBtn").href     = rsvpUrl;
+          document.getElementById("dashboardLinkBtn").href = dashUrl;
+          document.getElementById("waBtn").href            = `https://wa.me/?text=${waText}`;
+
+          document.getElementById("successState").style.display = "block";
+        } else {
+          document.getElementById("errorState").style.display = "block";
+        }
+      } catch (e) {
+        document.getElementById("pendingState").style.display = "none";
+        document.getElementById("errorState").style.display = "block";
+      }
+    }
+
+    fetchSuccess();
+  </script>
+</body>
+</html>

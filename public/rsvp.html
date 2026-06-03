@@ -1,0 +1,261 @@
+<!DOCTYPE html>
+<html lang="he" dir="rtl">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>אישור הגעה</title>
+  <link rel="stylesheet" href="/style.css" />
+</head>
+<body>
+  <div class="page">
+
+    <!-- Header -->
+    <header class="hero">
+      <div class="star-of-david">✡</div>
+      <h1 class="event-title" id="eventTitle">טוען...</h1>
+      <p class="invite-text">אתם מוזמנים לחגוג עמנו</p>
+    </header>
+
+    <!-- Event Details -->
+    <section class="details-card" id="detailsCard" style="display:none">
+      <div class="detail-row extra-note-row" id="extraNoteRow" style="display:none">
+        <span class="detail-icon">💬</span>
+        <div>
+          <div class="detail-value" id="detailExtraNote"></div>
+        </div>
+      </div>
+      <div class="detail-row">
+        <span class="detail-icon">📅</span>
+        <div>
+          <div class="detail-label">תאריך</div>
+          <div class="detail-value" id="detailDate"></div>
+        </div>
+      </div>
+      <div class="detail-row">
+        <span class="detail-icon">🕖</span>
+        <div>
+          <div class="detail-label">שעה</div>
+          <div class="detail-value" id="detailTime"></div>
+        </div>
+      </div>
+      <div class="detail-row">
+        <span class="detail-icon">📍</span>
+        <div>
+          <div class="detail-label">מיקום</div>
+          <div class="detail-value" id="detailLocation"></div>
+          <div class="detail-sub" id="detailAddress"></div>
+        </div>
+      </div>
+    </section>
+
+    <!-- Not Found -->
+    <section class="form-card" id="notFoundSection" style="display:none">
+      <div style="text-align:center;padding:20px">
+        <div style="font-size:3rem;margin-bottom:12px">🔍</div>
+        <h2 style="color:var(--navy);margin-bottom:8px">האירוע לא נמצא</h2>
+        <p style="color:var(--text-muted)">הקישור אינו תקין או שהאירוע הסתיים</p>
+      </div>
+    </section>
+
+    <!-- RSVP Form -->
+    <section class="form-card" id="formSection" style="display:none">
+      <h2 class="form-title">אישור הגעה</h2>
+
+      <div class="form-group">
+        <label for="fullName">שם מלא *</label>
+        <input type="text" id="fullName" placeholder="ישראל ישראלי" autocomplete="name" />
+      </div>
+
+      <div class="form-group">
+        <label>האם תגיעו? *</label>
+        <div class="radio-group">
+          <label class="radio-card" id="radioYesCard">
+            <input type="radio" name="attending" value="yes" id="radioYes" />
+            <span class="radio-icon">🎉</span>
+            <span>מגיעים!</span>
+          </label>
+          <label class="radio-card" id="radioNoCard">
+            <input type="radio" name="attending" value="no" id="radioNo" />
+            <span class="radio-icon">😔</span>
+            <span>לא יכולים</span>
+          </label>
+        </div>
+      </div>
+
+      <div class="form-group" id="guestsGroup" style="display:none">
+        <label for="guestCount">כמה אנשים יגיעו? *</label>
+        <div class="counter">
+          <button type="button" class="counter-btn" id="decreaseBtn">−</button>
+          <span class="counter-value" id="guestCount">1</span>
+          <button type="button" class="counter-btn" id="increaseBtn">+</button>
+        </div>
+      </div>
+
+      <div class="form-group">
+        <label for="notes">הערות (אופציונלי)</label>
+        <textarea id="notes" placeholder="צרכים מיוחדים, אלרגיות, שאלות..." rows="3"></textarea>
+      </div>
+
+      <button class="submit-btn" id="submitBtn" onclick="submitRSVP()">שלח אישור</button>
+    </section>
+
+    <!-- Success State -->
+    <section class="success-card" id="successSection" style="display:none">
+      <div class="success-icon">🎊</div>
+      <h2 id="successTitle"></h2>
+      <p id="successMessage"></p>
+      <button class="outline-btn" onclick="resetForm()">שלח אישור נוסף</button>
+    </section>
+
+    <!-- Error Banner -->
+    <div class="error-banner" id="errorBanner" style="display:none">
+      <span id="errorText"></span>
+    </div>
+
+    <footer class="footer" id="pageFooter" style="display:none">
+      <a id="dashboardLink" href="#" class="dashboard-link">ניהול אישורים</a>
+    </footer>
+  </div>
+
+  <script>
+    // Extract slug from URL path: /rsvp/[slug]
+    const slug = window.location.pathname.split("/").filter(Boolean).pop();
+    let guestCountValue = 1;
+    let eventData = null;
+
+    async function loadEvent() {
+      if (!slug) return showNotFound();
+      try {
+        const res = await fetch(`/api/event/${slug}`);
+        if (!res.ok) return showNotFound();
+        eventData = await res.json();
+        populateEvent(eventData);
+      } catch (e) {
+        showNotFound();
+      }
+    }
+
+    function showNotFound() {
+      document.getElementById("eventTitle").textContent = "אירוע לא נמצא";
+      document.getElementById("notFoundSection").style.display = "block";
+    }
+
+    function populateEvent(ev) {
+      document.title = ev.event_name + " — אישור הגעה";
+      document.getElementById("eventTitle").textContent = ev.event_name;
+
+      // Date
+      const dateStr = ev.hebrew_date
+        ? ev.hebrew_date + " | " + ev.gregorian_date
+        : ev.gregorian_date;
+      document.getElementById("detailDate").textContent = dateStr;
+      document.getElementById("detailTime").textContent = ev.event_time;
+      document.getElementById("detailLocation").textContent = ev.location;
+      document.getElementById("detailAddress").textContent = ev.address;
+
+      if (ev.extra_note) {
+        document.getElementById("detailExtraNote").textContent = ev.extra_note;
+        document.getElementById("extraNoteRow").style.display = "flex";
+      }
+
+      document.getElementById("detailsCard").style.display = "block";
+      document.getElementById("formSection").style.display = "block";
+      document.getElementById("pageFooter").style.display = "block";
+      document.getElementById("dashboardLink").href = `/dashboard/${slug}`;
+    }
+
+    // Radio card toggle
+    document.querySelectorAll('input[name="attending"]').forEach(radio => {
+      radio.addEventListener("change", function () {
+        document.querySelectorAll(".radio-card").forEach(c => c.classList.remove("selected"));
+        this.parentElement.classList.add("selected");
+        document.getElementById("guestsGroup").style.display =
+          this.value === "yes" ? "block" : "none";
+      });
+    });
+
+    // Guest counter
+    document.getElementById("increaseBtn").addEventListener("click", () => {
+      guestCountValue = Math.min(guestCountValue + 1, 20);
+      document.getElementById("guestCount").textContent = guestCountValue;
+    });
+    document.getElementById("decreaseBtn").addEventListener("click", () => {
+      guestCountValue = Math.max(guestCountValue - 1, 1);
+      document.getElementById("guestCount").textContent = guestCountValue;
+    });
+
+    function showError(msg) {
+      const banner = document.getElementById("errorBanner");
+      document.getElementById("errorText").textContent = msg;
+      banner.style.display = "block";
+      setTimeout(() => (banner.style.display = "none"), 4000);
+    }
+
+    function resetForm() {
+      document.getElementById("formSection").style.display = "block";
+      document.getElementById("successSection").style.display = "none";
+      document.getElementById("fullName").value = "";
+      document.querySelectorAll('input[name="attending"]').forEach(r => (r.checked = false));
+      document.querySelectorAll(".radio-card").forEach(c => c.classList.remove("selected"));
+      document.getElementById("guestsGroup").style.display = "none";
+      document.getElementById("notes").value = "";
+      guestCountValue = 1;
+      document.getElementById("guestCount").textContent = "1";
+    }
+
+    async function submitRSVP() {
+      const name      = document.getElementById("fullName").value.trim();
+      const attending = document.querySelector('input[name="attending"]:checked');
+      const notes     = document.getElementById("notes").value.trim();
+
+      if (!name)      return showError("נא להזין שם מלא");
+      if (!attending) return showError("נא לסמן האם תגיעו");
+
+      const btn = document.getElementById("submitBtn");
+      btn.disabled = true;
+      btn.textContent = "שולח...";
+
+      const payload = {
+        name,
+        attending: attending.value === "yes",
+        guests:    attending.value === "yes" ? guestCountValue : 0,
+        notes,
+      };
+
+      try {
+        const res = await fetch(`/api/rsvp/${slug}`, {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify(payload),
+        });
+
+        if (!res.ok) {
+          const err = await res.json();
+          throw new Error(err.error || "שגיאה בשליחה");
+        }
+
+        document.getElementById("formSection").style.display = "none";
+        const successSection = document.getElementById("successSection");
+        successSection.style.display = "block";
+
+        if (attending.value === "yes") {
+          document.getElementById("successTitle").textContent = "כיף שתגיעו! 🎉";
+          document.getElementById("successMessage").textContent =
+            `${name}, הרישום שלך התקבל. מחכים לראותך${guestCountValue > 1 ? " ואת כולם" : ""}!`;
+        } else {
+          document.getElementById("successTitle").textContent = "תודה על הידוע 🙏";
+          document.getElementById("successMessage").textContent =
+            `${name}, קיבלנו את תשובתך. מקווים לראותך בפעם הבאה!`;
+        }
+      } catch (err) {
+        showError(err.message || "שגיאה בשליחה — נסה שוב");
+      } finally {
+        btn.disabled = false;
+        btn.textContent = "שלח אישור";
+      }
+    }
+
+    loadEvent();
+  </script>
+</body>
+</html>
