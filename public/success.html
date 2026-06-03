@@ -59,52 +59,29 @@
   </div>
 
   <script>
-    const BASE = "https://rsvp.kupernet.com";
+    const BASE   = window.location.origin;
     const params = new URLSearchParams(window.location.search);
-    const sessionId = params.get("session_id");
+    const slug   = params.get("slug");
 
-    async function fetchSuccess(retries = 0) {
-      if (!sessionId) {
-        document.getElementById("pendingState").style.display = "none";
+    function init() {
+      document.getElementById("pendingState").style.display = "none";
+
+      if (!slug) {
         document.getElementById("errorState").style.display = "block";
         return;
       }
 
-      try {
-        const res = await fetch("/api/success?session_id=" + encodeURIComponent(sessionId));
-        const data = await res.json();
+      const rsvpUrl = `${BASE}/rsvp/${slug}`;
+      const dashUrl = `${BASE}/dashboard/${slug}`;
+      const waText  = encodeURIComponent(`אתם מוזמנים!\nלאישור הגעה: ${rsvpUrl}`);
 
-        if (data.pending && retries < 8) {
-          setTimeout(() => fetchSuccess(retries + 1), 1500);
-          return;
-        }
-
-        document.getElementById("pendingState").style.display = "none";
-
-        if (data.slug) {
-          const rsvpUrl = `${BASE}/rsvp/${data.slug}`;
-          const dashUrl = `${BASE}/dashboard/${data.slug}`;
-          const waText  = encodeURIComponent(`אתם מוזמנים ל${data.event_name || "האירוע שלנו"}!\nלאישור הגעה: ${rsvpUrl}`);
-
-          document.getElementById("successSub").textContent =
-            `שלחנו אימייל עם כל הפרטים ל${data.customer_name || ""}. ` +
-            "קישור האורחים, קישור הדשבורד וסיסמת הניהול מחכים בתיבת הדואר.";
-
-          document.getElementById("rsvpLinkBtn").href     = rsvpUrl;
-          document.getElementById("dashboardLinkBtn").href = dashUrl;
-          document.getElementById("waBtn").href            = `https://wa.me/?text=${waText}`;
-
-          document.getElementById("successState").style.display = "block";
-        } else {
-          document.getElementById("errorState").style.display = "block";
-        }
-      } catch (e) {
-        document.getElementById("pendingState").style.display = "none";
-        document.getElementById("errorState").style.display = "block";
-      }
+      document.getElementById("rsvpLinkBtn").href      = rsvpUrl;
+      document.getElementById("dashboardLinkBtn").href  = dashUrl;
+      document.getElementById("waBtn").href             = `https://wa.me/?text=${waText}`;
+      document.getElementById("successState").style.display = "block";
     }
 
-    fetchSuccess();
+    init();
   </script>
 </body>
 </html>

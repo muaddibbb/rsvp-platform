@@ -146,7 +146,7 @@
         <div class="btn-row">
           <button class="back-btn" onclick="goToStep(2)">→ חזור</button>
           <button class="submit-btn next-btn" id="payBtn" onclick="startCheckout()">
-            שלם ₪99 ופתח את האירוע 🎉
+            צור אירוע עכשיו 🎉
           </button>
         </div>
 
@@ -261,22 +261,22 @@
       const errEl = document.getElementById("checkoutError");
       errEl.style.display = "none";
       btn.disabled = true;
-      btn.textContent = "מעביר לתשלום...";
+      btn.textContent = "יוצר אירוע...";
 
       try {
-        const res = await fetch("/api/create-checkout", {
+        const res = await fetch("/api/create-event", {
           method: "POST",
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify(formData),
         });
         const json = await res.json();
-        if (!res.ok || !json.url) throw new Error(json.error || "שגיאה בשרת");
-        window.location.href = json.url;
+        if (!res.ok || !json.slug) throw new Error(json.error || "שגיאה בשרת");
+        window.location.href = `/success?slug=${json.slug}`;
       } catch (e) {
         errEl.textContent = "שגיאה: " + e.message;
         errEl.style.display = "block";
         btn.disabled = false;
-        btn.textContent = "שלם ₪99 ופתח את האירוע 🎉";
+        btn.textContent = "צור אירוע 🎉";
       }
     }
   </script>
