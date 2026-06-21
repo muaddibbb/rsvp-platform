@@ -4,7 +4,9 @@ const crypto = require("crypto");
 
 const supabase = createClient(process.env.SUPABASE_URL, process.env.SUPABASE_SERVICE_ROLE_KEY);
 const resend = process.env.RESEND_API_KEY ? new Resend(process.env.RESEND_API_KEY) : null;
-const PAYPAL_BASE = "https://api-m.paypal.com";
+const PAYPAL_BASE = process.env.PAYPAL_SANDBOX === "false"
+  ? "https://api-m.paypal.com"
+  : "https://api-m.sandbox.paypal.com";
 const BASE_URL = process.env.BASE_URL || "https://rsvp.kupernet.com";
 
 const HE_MAP = {

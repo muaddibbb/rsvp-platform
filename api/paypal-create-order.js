@@ -1,4 +1,6 @@
-const PAYPAL_BASE = "https://api-m.paypal.com";
+const PAYPAL_BASE = process.env.PAYPAL_SANDBOX === "false"
+  ? "https://api-m.paypal.com"
+  : "https://api-m.sandbox.paypal.com";
 
 async function getAccessToken() {
   const res = await fetch(`${PAYPAL_BASE}/v1/oauth2/token`, {
