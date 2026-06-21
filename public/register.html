@@ -5,6 +5,7 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>יצירת אירוע | אישורי הגעה</title>
   <link rel="stylesheet" href="style.css" />
+  <script src="https://www.paypal.com/sdk/js?client-id=Ad-TcQioZH3mgDeSQRlmfCwecLBOjikftYqeM2xI4U4NzEaGRw8feDyC3lJW7rW8UTf7lldAX_Ayq2sM&currency=ILS"></script>
 </head>
 <body>
 
@@ -290,15 +291,22 @@
           }
         },
 
-        onError: () => {
+        onError: (err) => {
+          console.error("PayPal error:", err);
           const errEl = document.getElementById("checkoutError");
           errEl.textContent = "שגיאה בתשלום, נסה שוב";
           errEl.style.display = "block";
         },
-      }).render("#paypal-button-container");
+      }).render("#paypal-button-container").catch(err => {
+        console.error("PayPal render error:", err);
+        document.getElementById("checkoutError").textContent = "שגיאה בטעינת PayPal: " + err;
+        document.getElementById("checkoutError").style.display = "block";
+      });
     }
   </script>
 
-  <script src="https://www.paypal.com/sdk/js?client-id=Ad-TcQioZH3mgDeSQRlmfCwecLBOjikftYqeM2xI4U4NzEaGRw8feDyC3lJW7rW8UTf7lldAX_Ayq2sM&currency=ILS"></script>
+  <footer style="text-align:center;padding:24px;color:#9ca3af;font-size:.8rem;margin-top:32px">
+    נוצר ע״י Kupernet Systems
+  </footer>
 </body>
 </html>
