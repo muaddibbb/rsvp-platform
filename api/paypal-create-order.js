@@ -34,9 +34,13 @@ module.exports = async (req, res) => {
       }),
     });
     const orderData = await order.json();
+    console.log("PayPal order response:", JSON.stringify(orderData));
+    if (!orderData.id) {
+      return res.status(500).json({ error: orderData.message || "PayPal rejected order", details: orderData });
+    }
     res.status(200).json({ id: orderData.id });
   } catch (e) {
     console.error("PayPal create-order error:", e);
-    res.status(500).json({ error: "שגיאה ביצירת הזמנה" });
+    res.status(500).json({ error: e.message });
   }
 };
