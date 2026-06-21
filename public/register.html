@@ -259,6 +259,7 @@
 
     function initPayPalButtons() {
       if (paypalInitialized) return;
+      if (typeof paypal === "undefined") { setTimeout(initPayPalButtons, 150); return; }
       paypalInitialized = true;
 
       paypal.Buttons({
