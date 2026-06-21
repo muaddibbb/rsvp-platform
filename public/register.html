@@ -140,16 +140,14 @@
 
         <p style="color:var(--text-muted);font-size:.9rem;margin-bottom:20px;line-height:1.6">
           לאחר התשלום יישלח אימייל עם קישור האורחים וקישור הדשבורד.
-          התשלום מאובטח דרך Stripe.
+          התשלום מאובטח דרך PayPal.
         </p>
 
-        <div class="btn-row">
+        <div class="btn-row" style="margin-bottom:12px">
           <button class="back-btn" onclick="goToStep(2)">→ חזור</button>
-          <button class="submit-btn next-btn" id="payBtn" onclick="startCheckout()">
-            צור אירוע עכשיו 🎉
-          </button>
         </div>
 
+        <div id="paypal-button-container"></div>
         <div id="checkoutError" style="display:none;margin-top:12px;color:var(--red);font-size:.9rem;text-align:center"></div>
       </div>
     </div>
@@ -214,6 +212,7 @@
 
       renderPreview();
       goToStep(3);
+      initPayPalButtons();
     }
 
     function renderPreview() {
@@ -256,29 +255,49 @@
       window.scrollTo({ top: 0, behavior: "smooth" });
     }
 
-    async function startCheckout() {
-      const btn = document.getElementById("payBtn");
-      const errEl = document.getElementById("checkoutError");
-      errEl.style.display = "none";
-      btn.disabled = true;
-      btn.textContent = "יוצר אירוע...";
+    let paypalInitialized = false;
 
-      try {
-        const res = await fetch("/api/create-event", {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify(formData),
-        });
-        const json = await res.json();
-        if (!res.ok || !json.slug) throw new Error(json.error || "שגיאה בשרת");
-        window.location.href = `/success?slug=${json.slug}`;
-      } catch (e) {
-        errEl.textContent = "שגיאה: " + e.message;
-        errEl.style.display = "block";
-        btn.disabled = false;
-        btn.textContent = "צור אירוע 🎉";
-      }
+    function initPayPalButtons() {
+      if (paypalInitialized) return;
+      paypalInitialized = true;
+
+      paypal.Buttons({
+        style: { layout: "vertical", color: "gold", shape: "rect", label: "pay" },
+
+        createOrder: async () => {
+          const res = await fetch("/api/paypal-create-order", { method: "POST" });
+          const data = await res.json();
+          if (!data.id) throw new Error("שגיאה ביצירת הזמנה");
+          return data.id;
+        },
+
+        onApprove: async (data) => {
+          const errEl = document.getElementById("checkoutError");
+          errEl.style.display = "none";
+          try {
+            const res = await fetch("/api/paypal-capture", {
+              method: "POST",
+              headers: { "Content-Type": "application/json" },
+              body: JSON.stringify({ orderID: data.orderID, ...formData }),
+            });
+            const json = await res.json();
+            if (!res.ok || !json.slug) throw new Error(json.error || "שגיאה בשרת");
+            window.location.href = `/success?slug=${json.slug}`;
+          } catch (e) {
+            errEl.textContent = "שגיאה: " + e.message;
+            errEl.style.display = "block";
+          }
+        },
+
+        onError: () => {
+          const errEl = document.getElementById("checkoutError");
+          errEl.textContent = "שגיאה בתשלום, נסה שוב";
+          errEl.style.display = "block";
+        },
+      }).render("#paypal-button-container");
     }
   </script>
+
+  <script src="https://www.paypal.com/sdk/js?client-id=Ad-TcQioZH3mgDeSQRlmfCwecLBOjikftYqeM2xI4U4NzEaGRw8feDyC3lJW7rW8UTf7lldAX_Ayq2sM&currency=ILS"></script>
 </body>
 </html>

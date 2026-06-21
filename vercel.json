@@ -1,7 +1,8 @@
 {
   "rewrites": [
     { "source": "/rsvp/:slug", "destination": "/rsvp.html" },
-    { "source": "/dashboard/:slug", "destination": "/dashboard.html" }
+    { "source": "/dashboard/:slug", "destination": "/dashboard.html" },
+    { "source": "/success", "destination": "/success.html" }
   ],
   "headers": [
     {
