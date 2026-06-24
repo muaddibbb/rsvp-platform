@@ -1,91 +1,111 @@
-const PDFDocument = require("pdfkit");
+const pdfmake = require("pdfmake");
 const path = require("path");
 
-const FONT = path.join(__dirname, "fonts", "Alef-Regular.ttf");
+const fontPath = path.join(__dirname, "fonts", "Alef-Regular.ttf");
 
-// Right-align Hebrew text (PDFKit RTL helper)
-function rtl(doc, text, y, opts = {}) {
-  doc.text(text, 50, y, { align: "right", lineBreak: false, width: 495, ...opts });
-}
+// Allow local filesystem access for font loading
+pdfmake.setLocalAccessPolicy(() => true);
+pdfmake.setUrlAccessPolicy(() => false);
+
+pdfmake.addFonts({
+  Hebrew: {
+    normal: fontPath,
+    bold: fontPath,
+    italics: fontPath,
+    bolditalics: fontPath,
+  },
+});
 
 function pad(n) {
   return String(n).padStart(6, "0");
 }
 
-function todayHebrew() {
-  return new Date().toLocaleDateString("he-IL", {
-    day: "2-digit", month: "2-digit", year: "numeric",
-  });
-}
-
 module.exports = function generateReceiptPDF({ receiptNumber, customerName, paymentDate }) {
-  return new Promise((resolve, reject) => {
-    const doc = new PDFDocument({ size: "A5", margin: 40, info: { Title: "קבלה" } });
-    doc.registerFont("Heebo", FONT);
+  const num = pad(receiptNumber);
+  const date = paymentDate || new Date().toLocaleDateString("he-IL");
 
-    const chunks = [];
-    doc.on("data", c => chunks.push(c));
-    doc.on("end", () => resolve(Buffer.concat(chunks)));
-    doc.on("error", reject);
+  const docDef = {
+    pageSize: "A5",
+    pageMargins: [40, 20, 40, 20],
+    defaultStyle: { font: "Hebrew", fontSize: 11, rtl: true },
 
-    const W = doc.page.width - 80; // usable width
-    const date = paymentDate || todayHebrew();
-    const num = pad(receiptNumber);
+    content: [
+      // ── Header ──────────────────────────────────────────────
+      {
+        canvas: [{ type: "rect", x: -40, y: -20, w: 419, h: 80, color: "#1a2744" }],
+        margin: [0, 0, 0, 0],
+      },
+      {
+        text: "קבלה",
+        fontSize: 28,
+        color: "#f0d080",
+        alignment: "center",
+        margin: [-40, -66, -40, 2],
+      },
+      {
+        text: `מספר קבלה: ${num}`,
+        fontSize: 12,
+        color: "#ffffff",
+        alignment: "center",
+        margin: [-40, 0, -40, 18],
+      },
 
-    // ── Header band ──────────────────────────────────────────────
-    doc.rect(0, 0, doc.page.width, 80).fill("#1a2744");
-    doc.font("Heebo").fontSize(26).fillColor("#f0d080");
-    doc.text("קבלה", 0, 18, { align: "center", width: doc.page.width });
-    doc.fontSize(12).fillColor("#ffffff");
-    doc.text(`מספר קבלה: ${num}`, 0, 50, { align: "center", width: doc.page.width });
+      // ── Business ─────────────────────────────────────────────
+      { text: "Kupernet", fontSize: 18, color: "#1a2744", alignment: "center", margin: [0, 4, 0, 4] },
+      { text: "עוסק פטור מס׳ 036409084", fontSize: 10, color: "#6b7280", alignment: "center", margin: [0, 0, 0, 12] },
+      { canvas: [{ type: "line", x1: 0, y1: 0, x2: 339, y2: 0, lineWidth: 0.5, lineColor: "#e5e7eb" }], margin: [0, 0, 0, 12] },
 
-    doc.fillColor("#1a2744");
+      // ── Details table ────────────────────────────────────────
+      {
+        table: {
+          widths: ["*", "auto"],
+          body: [
+            [
+              { text: date,                             color: "#1a1a2e", alignment: "right", margin: [0, 4, 0, 4] },
+              { text: "תאריך",                          color: "#6b7280", alignment: "right", margin: [0, 4, 8, 4] },
+            ],
+            [
+              { text: customerName,                     color: "#1a1a2e", alignment: "right", margin: [0, 4, 0, 4] },
+              { text: "שם המשלם",                       color: "#6b7280", alignment: "right", margin: [0, 4, 8, 4] },
+            ],
+            [
+              { text: "תשעים ותשעה שקלים — 99 ש״ח",    color: "#1a1a2e", alignment: "right", margin: [0, 4, 0, 4] },
+              { text: "סכום ששולם",                     color: "#6b7280", alignment: "right", margin: [0, 4, 8, 4] },
+            ],
+            [
+              { text: "PayPal",                         color: "#1a1a2e", alignment: "right", margin: [0, 4, 0, 4] },
+              { text: "אמצעי תשלום",                    color: "#6b7280", alignment: "right", margin: [0, 4, 8, 4] },
+            ],
+          ],
+        },
+        layout: "lightHorizontalLines",
+        margin: [0, 0, 0, 12],
+      },
 
-    // ── Business block ───────────────────────────────────────────
-    let y = 100;
-    doc.font("Heebo").fontSize(18).text("Kupernet", 0, y, { align: "center", width: doc.page.width });
-    y += 24;
-    doc.fontSize(10).fillColor("#6b7280");
-    doc.text(`עוסק פטור מס׳ 036409084`, 0, y, { align: "center", width: doc.page.width });
-    y += 30;
+      // ── Total ────────────────────────────────────────────────
+      {
+        table: {
+          widths: ["*", "auto"],
+          body: [[
+            { text: "99 ש״ח", fontSize: 16, color: "#c9993a", bold: true, alignment: "left",  margin: [4, 8, 0, 8] },
+            { text: "סה״כ שולם",  fontSize: 13, color: "#1a2744",                alignment: "right", margin: [0, 8, 4, 8] },
+          ]],
+        },
+        layout: {
+          fillColor: () => "#fdf5e0",
+          hLineWidth: () => 0,
+          vLineWidth: () => 0,
+        },
+        margin: [0, 0, 0, 16],
+      },
 
-    // ── Divider ──────────────────────────────────────────────────
-    doc.moveTo(40, y).lineTo(doc.page.width - 40, y).strokeColor("#e5e7eb").stroke();
-    y += 16;
+      // ── Footer ───────────────────────────────────────────────
+      { text: `מספר קבלה סידורי: ${num}`, fontSize: 9, color: "#6b7280", alignment: "center", margin: [0, 0, 0, 6] },
+      { canvas: [{ type: "line", x1: 0, y1: 0, x2: 339, y2: 0, lineWidth: 0.5, lineColor: "#d1d5db" }], margin: [0, 0, 0, 8] },
+      { text: "קבלה זו מונפקת על ידי Kupernet Systems", fontSize: 9, color: "#9ca3af", alignment: "center" },
+      { text: "rsvp.kupernet.com", fontSize: 9, color: "#9ca3af", alignment: "center" },
+    ],
+  };
 
-    // ── Details table ────────────────────────────────────────────
-    const rows = [
-      ["תאריך", date],
-      ["שם המשלם", customerName],
-      ["סכום ששולם", "תשעים ותשעה שקלים — 99 ש״ח"],
-      ["אמצעי תשלום", "PayPal"],
-    ];
-
-    doc.fontSize(11).fillColor("#1a2744");
-    rows.forEach(([label, value]) => {
-      // label on right, value on left (RTL receipt layout)
-      doc.font("Heebo").fillColor("#6b7280").text(label, 40, y, { width: 120, align: "right", lineBreak: false });
-      doc.fillColor("#1a1a2e").text(value, 170, y, { width: W - 120, align: "right", lineBreak: false });
-      y += 24;
-    });
-
-    y += 8;
-    doc.moveTo(40, y).lineTo(doc.page.width - 40, y).strokeColor("#e5e7eb").stroke();
-    y += 20;
-
-    // ── Amount highlight ─────────────────────────────────────────
-    doc.rect(40, y, W + 8, 36).fill("#fdf5e0");
-    doc.font("Heebo").fontSize(13).fillColor("#1a2744");
-    doc.text("סה״כ שולם:", 50, y + 10, { width: 120, align: "right", lineBreak: false });
-    doc.fontSize(15).fillColor("#c9993a");
-    doc.text("99 ש״ח", 0, y + 8, { align: "center", width: doc.page.width });
-    y += 56;
-
-    // ── Footer ───────────────────────────────────────────────────
-    doc.fontSize(9).fillColor("#9ca3af");
-    doc.text("קבלה זו מונפקת ע״י Kupernet Systems", 0, y, { align: "center", width: doc.page.width });
-    doc.text("rsvp.kupernet.com", 0, y + 14, { align: "center", width: doc.page.width });
-
-    doc.end();
-  });
+  return pdfmake.createPdf(docDef).getBuffer();
 };

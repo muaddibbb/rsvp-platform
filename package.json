@@ -3,9 +3,11 @@
   "version": "1.0.0",
   "description": "Hebrew RSVP SaaS — rsvp.kupernet.com",
   "dependencies": {
+    "@fontsource/alef": "^5.2.8",
     "@fontsource/heebo": "^5.2.8",
     "@supabase/supabase-js": "^2.39.0",
     "pdfkit": "^0.19.1",
+    "pdfmake": "^0.3.11",
     "resend": "^3.2.0",
     "stripe": "^14.18.0"
   }
