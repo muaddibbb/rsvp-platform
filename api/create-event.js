@@ -1,14 +1,26 @@
 const { createClient } = require("@supabase/supabase-js");
-const { Resend } = require("resend");
 const crypto = require("crypto");
 
 const supabase = createClient(
   process.env.SUPABASE_URL,
   process.env.SUPABASE_SERVICE_ROLE_KEY
 );
-const resend = process.env.RESEND_API_KEY ? new Resend(process.env.RESEND_API_KEY) : null;
 
 const BASE_URL = process.env.BASE_URL || "https://rsvp.kupernet.com";
+
+async function sendEmail(to, subject, html) {
+  if (!process.env.BREVO_API_KEY) return;
+  await fetch("https://api.brevo.com/v3/smtp/email", {
+    method: "POST",
+    headers: { "api-key": process.env.BREVO_API_KEY, "Content-Type": "application/json" },
+    body: JSON.stringify({
+      sender: { name: "אישורי הגעה", email: "kupernetservice@gmail.com" },
+      to: [{ email: to }],
+      subject,
+      htmlContent: html,
+    }),
+  }).catch(e => console.error("Brevo error:", e));
+}
 
 // Hebrew → Latin transliteration for slug
 const HE_MAP = {
@@ -170,14 +182,11 @@ module.exports = async (req, res) => {
     }
 
     // Send email (non-blocking — don't fail if email fails)
-    if (resend) {
-      resend.emails.send({
-        from:    "אישורי הגעה <rsvp@kupernet.com>",
-        to:      body.customer_email.trim(),
-        subject: `אישורי הגעה ל${body.event_name} — הפרטים שלך`,
-        html:    buildEmail(body, slug, dashboard_password),
-      }).catch(e => console.error("Email error:", e));
-    }
+    sendEmail(
+      body.customer_email.trim(),
+      `אישורי הגעה ל${body.event_name} — הפרטים שלך`,
+      buildEmail(body, slug, dashboard_password)
+    );
 
     console.log(`✅ Event created: ${slug} for ${body.customer_email}`);
     res.status(200).json({ slug, event_name: body.event_name, dashboard_password });

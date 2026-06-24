@@ -1,9 +1,21 @@
 const { createClient } = require("@supabase/supabase-js");
-const { Resend } = require("resend");
 const crypto = require("crypto");
 
 const supabase = createClient(process.env.SUPABASE_URL, process.env.SUPABASE_SERVICE_ROLE_KEY);
-const resend = process.env.RESEND_API_KEY ? new Resend(process.env.RESEND_API_KEY) : null;
+
+async function sendEmail(to, subject, html) {
+  if (!process.env.BREVO_API_KEY) return;
+  await fetch("https://api.brevo.com/v3/smtp/email", {
+    method: "POST",
+    headers: { "api-key": process.env.BREVO_API_KEY, "Content-Type": "application/json" },
+    body: JSON.stringify({
+      sender: { name: "אישורי הגעה", email: "kupernetservice@gmail.com" },
+      to: [{ email: to }],
+      subject,
+      htmlContent: html,
+    }),
+  }).catch(e => console.error("Brevo error:", e));
+}
 const PAYPAL_BASE = process.env.PAYPAL_SANDBOX === "false"
   ? "https://api-m.paypal.com"
   : "https://api-m.sandbox.paypal.com";
@@ -96,28 +108,25 @@ module.exports = async (req, res) => {
     }
 
     // 4. Send confirmation email (non-blocking)
-    if (resend) {
-      const rsvpUrl = `${BASE_URL}/rsvp/${slug}`;
-      const dashUrl = `${BASE_URL}/dashboard/${slug}`;
-      const typeLabel = EVENT_TYPE_LABELS[formData.event_type] || formData.event_type;
-      resend.emails.send({
-        from: "אישורי הגעה <rsvp@kupernet.com>",
-        to: formData.customer_email?.trim(),
-        subject: `אישורי הגעה ל${formData.event_name} — הפרטים שלך`,
-        html: `<div dir="rtl" style="font-family:Arial;padding:24px;max-width:520px">
-          <h2 style="color:#1a2744">האירוע מוכן! 🎉</h2>
-          <p>שלום ${formData.customer_name},</p>
-          <p><strong>סוג אירוע:</strong> ${typeLabel}<br/>
-          <strong>תאריך:</strong> ${formData.gregorian_date}<br/>
-          <strong>מקום:</strong> ${formData.location}</p>
-          <p><a href="${rsvpUrl}" style="background:#c9993a;color:#fff;padding:12px 20px;border-radius:8px;text-decoration:none;display:inline-block;margin-bottom:8px">🔗 קישור לאורחים</a></p>
-          <p><a href="${dashUrl}" style="background:#1a2744;color:#fff;padding:12px 20px;border-radius:8px;text-decoration:none;display:inline-block">📊 דשבורד ניהול</a></p>
-          <p style="background:#fdf5e0;border:2px dashed #c9993a;border-radius:8px;padding:16px;text-align:center">
-            סיסמת דשבורד: <strong style="font-size:1.3rem;letter-spacing:.1em">${dashboard_password}</strong>
-          </p>
-        </div>`,
-      }).catch(e => console.error("Email error:", e));
-    }
+    const rsvpUrl = `${BASE_URL}/rsvp/${slug}`;
+    const dashUrl = `${BASE_URL}/dashboard/${slug}`;
+    const typeLabel = EVENT_TYPE_LABELS[formData.event_type] || formData.event_type;
+    sendEmail(
+      formData.customer_email?.trim(),
+      `אישורי הגעה ל${formData.event_name} — הפרטים שלך`,
+      `<div dir="rtl" style="font-family:Arial;padding:24px;max-width:520px">
+        <h2 style="color:#1a2744">האירוע מוכן! 🎉</h2>
+        <p>שלום ${formData.customer_name},</p>
+        <p><strong>סוג אירוע:</strong> ${typeLabel}<br/>
+        <strong>תאריך:</strong> ${formData.gregorian_date}<br/>
+        <strong>מקום:</strong> ${formData.location}</p>
+        <p><a href="${rsvpUrl}" style="background:#c9993a;color:#fff;padding:12px 20px;border-radius:8px;text-decoration:none;display:inline-block;margin-bottom:8px">🔗 קישור לאורחים</a></p>
+        <p><a href="${dashUrl}" style="background:#1a2744;color:#fff;padding:12px 20px;border-radius:8px;text-decoration:none;display:inline-block">📊 דשבורד ניהול</a></p>
+        <p style="background:#fdf5e0;border:2px dashed #c9993a;border-radius:8px;padding:16px;text-align:center">
+          סיסמת דשבורד: <strong style="font-size:1.3rem;letter-spacing:.1em">${dashboard_password}</strong>
+        </p>
+      </div>`
+    );
 
     console.log(`✅ Event created via PayPal: ${slug}`);
     res.status(200).json({ slug, event_name: formData.event_name, dashboard_password });
