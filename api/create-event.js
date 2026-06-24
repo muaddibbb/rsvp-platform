@@ -142,6 +142,7 @@ function buildEmail(meta, slug, dashboard_password) {
 
     <p class="note">שלח את קישור האורחים בוואטסאפ או בהזמנה הדיגיטלית.
     בדשבורד תוכל לעקוב אחר האישורים בזמן אמת.</p>
+    <p class="note" style="font-size:.8rem;color:#9ca3af">🗓️ תזכורת: האירוע ונתוני האורחים יימחקו אוטומטית חודש אחד לאחר תאריך האירוע (${meta.gregorian_date}).</p>
   </div>
   <div class="footer">מערכת אישורי הגעה · rsvp.kupernet.com</div>
 </div>

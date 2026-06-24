@@ -135,6 +135,9 @@ module.exports = async (req, res) => {
         <p style="background:#fdf5e0;border:2px dashed #c9993a;border-radius:8px;padding:16px;text-align:center">
           סיסמת דשבורד: <strong style="font-size:1.3rem;letter-spacing:.1em">${dashboard_password}</strong>
         </p>
+        <p style="font-size:.82rem;color:#6b7280;background:#f3f4f6;border-radius:8px;padding:10px 14px;margin-top:16px;line-height:1.6">
+          🗓️ תזכורת: האירוע ונתוני האורחים יימחקו אוטומטית חודש אחד לאחר תאריך האירוע (${formData.gregorian_date}).
+        </p>
       </div>`
     );
 
