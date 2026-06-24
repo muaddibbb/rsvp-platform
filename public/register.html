@@ -60,6 +60,14 @@
               <div class="et-icon">🎂</div>
               <div class="et-label">יום הולדת</div>
             </div>
+            <div class="event-type-card" data-value="bachelor" onclick="selectEventType(this)">
+              <div class="et-icon">🕺</div>
+              <div class="et-label">מסיבת רווקים</div>
+            </div>
+            <div class="event-type-card" data-value="bachelorette" onclick="selectEventType(this)">
+              <div class="et-icon">💃</div>
+              <div class="et-label">מסיבת רווקות</div>
+            </div>
             <div class="event-type-card" data-value="family" onclick="selectEventType(this)">
               <div class="et-icon">🎊</div>
               <div class="et-label">אירוע משפחתי</div>
@@ -164,14 +172,16 @@
 
   <script>
     const EVENT_TYPE_LABELS = {
-      bar_mitzvah: "בר מצווה",
-      bat_mitzvah: "בת מצווה",
-      wedding:     "חתונה",
-      brit:        "ברית מילה",
-      brit_bat:    "בריתה",
-      birthday:    "יום הולדת",
-      family:      "אירוע משפחתי",
-      other:       "אחר",
+      bar_mitzvah:  "בר מצווה",
+      bat_mitzvah:  "בת מצווה",
+      wedding:      "חתונה",
+      brit:         "ברית מילה",
+      brit_bat:     "בריתה",
+      birthday:     "יום הולדת",
+      bachelor:     "מסיבת רווקים",
+      bachelorette: "מסיבת רווקות",
+      family:       "אירוע משפחתי",
+      other:        "אחר",
     };
 
     let formData = { event_type: "" };

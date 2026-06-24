@@ -19,14 +19,16 @@ async function getRawBody(req) {
 }
 
 const EVENT_TYPE_LABELS = {
-  bar_mitzvah: "בר מצווה",
-  bat_mitzvah: "בת מצווה",
-  wedding:     "חתונה",
-  brit:        "ברית מילה",
-  brit_bat:    "בריתה",
-  birthday:    "יום הולדת",
-  family:      "אירוע משפחתי",
-  other:       "אירוע",
+  bar_mitzvah:  "בר מצווה",
+  bat_mitzvah:  "בת מצווה",
+  wedding:      "חתונה",
+  brit:         "ברית מילה",
+  brit_bat:     "בריתה",
+  birthday:     "יום הולדת",
+  bachelor:     "מסיבת רווקים",
+  bachelorette: "מסיבת רווקות",
+  family:       "אירוע משפחתי",
+  other:        "אירוע",
 };
 
 function buildEmail(meta) {

@@ -38,8 +38,9 @@ function hebrewToLatin(str) {
 
 const EVENT_TYPE_LABELS = {
   bar_mitzvah:"בר מצווה", bat_mitzvah:"בת מצווה", wedding:"חתונה",
-  brit:"ברית מילה", brit_bat:"בריתה",
-  birthday:"יום הולדת", family:"אירוע משפחתי", other:"אחר",
+  brit:"ברית מילה", brit_bat:"בריתה", birthday:"יום הולדת",
+  bachelor:"מסיבת רווקים", bachelorette:"מסיבת רווקות",
+  family:"אירוע משפחתי", other:"אחר",
 };
 
 async function getAccessToken() {
@@ -80,7 +81,7 @@ module.exports = async (req, res) => {
 
     // 2. Generate slug
     const year = new Date(formData.gregorian_date + "T12:00:00").getFullYear();
-    const typeMap = { bar_mitzvah:"bm", bat_mitzvah:"btm", wedding:"wedding", brit:"brit", brit_bat:"britb", birthday:"bday", family:"family", other:"event" };
+    const typeMap = { bar_mitzvah:"bm", bat_mitzvah:"btm", wedding:"wedding", brit:"brit", brit_bat:"britb", birthday:"bday", bachelor:"bach", bachelorette:"bachette", family:"family", other:"event" };
     const prefix = typeMap[formData.event_type] || "event";
     const lastName = (formData.customer_name || "").trim().split(/\s+/).pop();
     const base = `${prefix}-${hebrewToLatin(lastName) || "il"}-${year}`;
