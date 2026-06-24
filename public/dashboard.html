@@ -8,6 +8,18 @@
   <style>
     .delete-btn { background:none;border:none;cursor:pointer;font-size:1rem;opacity:.35;transition:opacity .15s;padding:2px 6px;border-radius:6px; }
     .delete-btn:hover { opacity:1;background:var(--red-light); }
+    .modal-overlay { display:none;position:fixed;inset:0;background:rgba(0,0,0,.5);z-index:100;align-items:center;justify-content:center; }
+    .modal-overlay.open { display:flex; }
+    .modal { background:#fff;border-radius:16px;padding:32px;max-width:480px;width:90%;max-height:90vh;overflow-y:auto;direction:rtl; }
+    .modal h2 { margin:0 0 20px;color:#1a2744;font-size:1.2rem; }
+    .modal .form-group { margin-bottom:14px; }
+    .modal label { display:block;font-size:.85rem;color:#6b7280;margin-bottom:4px; }
+    .modal input, .modal textarea { width:100%;padding:8px 12px;border:1px solid #e5e7eb;border-radius:8px;font-size:.95rem;box-sizing:border-box;font-family:inherit; }
+    .modal textarea { resize:vertical;min-height:72px; }
+    .modal-actions { display:flex;gap:10px;justify-content:flex-end;margin-top:20px; }
+    .btn-save { background:#1a2744;color:#fff;border:none;padding:10px 24px;border-radius:8px;cursor:pointer;font-size:.95rem; }
+    .btn-save:disabled { opacity:.5;cursor:default; }
+    .btn-cancel { background:#f3f4f6;color:#374151;border:none;padding:10px 18px;border-radius:8px;cursor:pointer;font-size:.95rem; }
   </style>
 </head>
 <body>
@@ -44,6 +56,7 @@
       <div class="dash-actions">
         <button class="icon-btn" onclick="loadRSVPs()" title="רענן">🔄 רענן</button>
         <button class="icon-btn" onclick="exportCSV()" title="ייצא">📥 ייצא CSV</button>
+        <button class="icon-btn" onclick="openEditModal()" title="עריכת פרטים">✏️ עריכה</button>
         <a href="#" id="rsvpPageLink" class="icon-btn" target="_blank">🔗 דף האורחים</a>
       </div>
     </div>
@@ -98,11 +111,51 @@
     </div>
   </div>
 
+  <!-- Edit Event Modal -->
+  <div class="modal-overlay" id="editModal" onclick="if(event.target===this)closeEditModal()">
+    <div class="modal">
+      <h2>✏️ עריכת פרטי האירוע</h2>
+      <div class="form-group">
+        <label>שם האירוע</label>
+        <input type="text" id="edit_event_name" />
+      </div>
+      <div class="form-group">
+        <label>תאריך לועזי</label>
+        <input type="date" id="edit_gregorian_date" />
+      </div>
+      <div class="form-group">
+        <label>תאריך עברי (אופציונלי)</label>
+        <input type="text" id="edit_hebrew_date" placeholder="למשל: י״ד תמוז תשפ״ו" />
+      </div>
+      <div class="form-group">
+        <label>שעת האירוע</label>
+        <input type="time" id="edit_event_time" />
+      </div>
+      <div class="form-group">
+        <label>מיקום</label>
+        <input type="text" id="edit_location" />
+      </div>
+      <div class="form-group">
+        <label>כתובת</label>
+        <input type="text" id="edit_address" />
+      </div>
+      <div class="form-group">
+        <label>הערה נוספת (אופציונלי)</label>
+        <textarea id="edit_extra_note"></textarea>
+      </div>
+      <div class="modal-actions">
+        <button class="btn-cancel" onclick="closeEditModal()">ביטול</button>
+        <button class="btn-save" id="editSaveBtn" onclick="saveEventDetails()">שמור שינויים</button>
+      </div>
+    </div>
+  </div>
+
   <script>
     const slug = window.location.pathname.split("/").filter(Boolean).pop();
     let allRSVPs = [];
     let currentFilter = "all";
     let storedPassword = "";
+    let currentEvent = {};
 
     document.getElementById("rsvpPageLink").href = `/rsvp/${slug}`;
 
@@ -160,6 +213,7 @@
     }
 
     function processData(data) {
+      if (data.event) currentEvent = data.event;
       allRSVPs = data.rsvps || [];
       const stats = data.stats || {};
       document.getElementById("statTotal").textContent  = stats.total       || allRSVPs.length;
@@ -251,6 +305,54 @@
         .replace(/</g, "&lt;")
         .replace(/>/g, "&gt;")
         .replace(/"/g, "&quot;");
+    }
+
+    function openEditModal() {
+      document.getElementById("edit_event_name").value    = currentEvent.event_name    || "";
+      document.getElementById("edit_gregorian_date").value = currentEvent.gregorian_date || "";
+      document.getElementById("edit_hebrew_date").value   = currentEvent.hebrew_date   || "";
+      document.getElementById("edit_event_time").value    = currentEvent.event_time    || "";
+      document.getElementById("edit_location").value      = currentEvent.location      || "";
+      document.getElementById("edit_address").value       = currentEvent.address       || "";
+      document.getElementById("edit_extra_note").value    = currentEvent.extra_note    || "";
+      document.getElementById("editModal").classList.add("open");
+    }
+
+    function closeEditModal() {
+      document.getElementById("editModal").classList.remove("open");
+    }
+
+    async function saveEventDetails() {
+      const btn = document.getElementById("editSaveBtn");
+      btn.disabled = true;
+      btn.textContent = "שומר...";
+
+      const updates = {
+        event_name:     document.getElementById("edit_event_name").value.trim(),
+        gregorian_date: document.getElementById("edit_gregorian_date").value,
+        hebrew_date:    document.getElementById("edit_hebrew_date").value.trim(),
+        event_time:     document.getElementById("edit_event_time").value,
+        location:       document.getElementById("edit_location").value.trim(),
+        address:        document.getElementById("edit_address").value.trim(),
+        extra_note:     document.getElementById("edit_extra_note").value.trim(),
+      };
+
+      try {
+        const res = await fetch(`/api/dashboard/${slug}?password=${encodeURIComponent(storedPassword)}`, {
+          method: "PATCH",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify(updates),
+        });
+        if (!res.ok) throw new Error("שגיאת שרת");
+        Object.assign(currentEvent, updates);
+        document.getElementById("dashTitle").textContent = updates.event_name || currentEvent.event_name;
+        closeEditModal();
+      } catch (e) {
+        alert("שגיאה בשמירה: " + e.message);
+      } finally {
+        btn.disabled = false;
+        btn.textContent = "שמור שינויים";
+      }
     }
 
     function exportCSV() {

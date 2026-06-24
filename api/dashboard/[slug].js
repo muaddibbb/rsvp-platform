@@ -87,6 +87,22 @@ module.exports = async (req, res) => {
       });
     }
 
+    // --- PATCH: update event details ---
+    if (req.method === "PATCH") {
+      const allowed = ["event_name", "hebrew_date", "gregorian_date", "event_time", "location", "address", "extra_note"];
+      const body = req.body || {};
+      const updates = {};
+      for (const field of allowed) {
+        if (field in body) updates[field] = body[field] || null;
+      }
+      if (Object.keys(updates).length === 0)
+        return res.status(400).json({ error: "No fields to update" });
+
+      const { error: uErr } = await supabase.from("events").update(updates).eq("id", event.id);
+      if (uErr) throw uErr;
+      return res.status(200).json({ ok: true });
+    }
+
     // --- DELETE: remove an RSVP ---
     if (req.method === "DELETE") {
       const rsvpId = req.query.id || (req.body && req.body.id);
