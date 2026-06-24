@@ -178,7 +178,7 @@ module.exports = async (req, res) => {
 
     if (dbErr) {
       console.error("DB error:", dbErr);
-      return res.status(500).json({ error: "שגיאת מסד נתונים" });
+      return res.status(500).json({ error: "שגיאת מסד נתונים", dbErr });
     }
 
     // Send email (non-blocking — don't fail if email fails)
