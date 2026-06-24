@@ -58,23 +58,23 @@ module.exports = function generateReceiptPDF({ receiptNumber, customerName, paym
       // ── Details table ────────────────────────────────────────
       {
         table: {
-          widths: ["*", "auto"],
+          widths: ["auto", "*"],
           body: [
             [
-              { text: date,                             color: "#1a1a2e", alignment: "right", margin: [0, 4, 0, 4] },
-              { text: "תאריך",                          color: "#6b7280", alignment: "right", margin: [0, 4, 8, 4] },
+              { text: "תאריך",                          color: "#6b7280", alignment: "right", margin: [0, 4, 0, 4] },
+              { text: date,                             color: "#1a1a2e", alignment: "left",  margin: [0, 4, 8, 4] },
             ],
             [
-              { text: customerName,                     color: "#1a1a2e", alignment: "right", margin: [0, 4, 0, 4] },
-              { text: "שם המשלם",                       color: "#6b7280", alignment: "right", margin: [0, 4, 8, 4] },
+              { text: "שם המשלם",                       color: "#6b7280", alignment: "right", margin: [0, 4, 0, 4] },
+              { text: customerName,                     color: "#1a1a2e", alignment: "left",  margin: [0, 4, 8, 4] },
             ],
             [
-              { text: "תשעים ותשעה שקלים — 99 ש״ח",    color: "#1a1a2e", alignment: "right", margin: [0, 4, 0, 4] },
-              { text: "סכום ששולם",                     color: "#6b7280", alignment: "right", margin: [0, 4, 8, 4] },
+              { text: "סכום ששולם",                     color: "#6b7280", alignment: "right", margin: [0, 4, 0, 4] },
+              { text: "תשעים ותשעה שקלים — 99 ש״ח",    color: "#1a1a2e", alignment: "left",  margin: [0, 4, 8, 4] },
             ],
             [
-              { text: "PayPal",                         color: "#1a1a2e", alignment: "right", margin: [0, 4, 0, 4] },
-              { text: "אמצעי תשלום",                    color: "#6b7280", alignment: "right", margin: [0, 4, 8, 4] },
+              { text: "אמצעי תשלום",                    color: "#6b7280", alignment: "right", margin: [0, 4, 0, 4] },
+              { text: "PayPal",                         color: "#1a1a2e", alignment: "left",  margin: [0, 4, 8, 4] },
             ],
           ],
         },
@@ -85,10 +85,10 @@ module.exports = function generateReceiptPDF({ receiptNumber, customerName, paym
       // ── Total ────────────────────────────────────────────────
       {
         table: {
-          widths: ["*", "auto"],
+          widths: ["auto", "*"],
           body: [[
-            { text: "99 ש״ח", fontSize: 16, color: "#c9993a", bold: true, alignment: "left",  margin: [4, 8, 0, 8] },
-            { text: "סה״כ שולם",  fontSize: 13, color: "#1a2744",                alignment: "right", margin: [0, 8, 4, 8] },
+            { text: "סה״כ שולם",  fontSize: 13, color: "#1a2744",                alignment: "right", margin: [0, 8, 0, 8] },
+            { text: "99 ש״ח", fontSize: 16, color: "#c9993a", bold: true, alignment: "left",  margin: [8, 8, 4, 8] },
           ]],
         },
         layout: {
