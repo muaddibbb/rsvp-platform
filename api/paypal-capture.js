@@ -110,7 +110,8 @@ module.exports = async (req, res) => {
       return res.status(500).json({ error: "שגיאת מסד נתונים" });
     }
 
-    // 4. Send confirmation + receipt emails (non-blocking)
+    // 4. Send confirmation + receipt emails (must complete before responding — Vercel kills the
+    //    function as soon as res.json() is called, so fire-and-forget doesn't work here)
     const rsvpUrl = `${BASE_URL}/rsvp/${slug}`;
     const dashUrl = `${BASE_URL}/dashboard/${slug}`;
     const typeLabel = EVENT_TYPE_LABELS[formData.event_type] || formData.event_type;
@@ -118,7 +119,7 @@ module.exports = async (req, res) => {
     const name = formData.customer_name;
 
     // 4a. Confirmation email
-    sendEmail(
+    await sendEmail(
       email,
       `אישורי הגעה ל${formData.event_name} — הפרטים שלך`,
       `<div dir="rtl" style="font-family:Arial;padding:24px;max-width:520px">
@@ -136,33 +137,31 @@ module.exports = async (req, res) => {
     );
 
     // 4b. Receipt email with PDF attachment
-    (async () => {
-      try {
-        const { count } = await supabase
-          .from("events").select("*", { count: "exact", head: true });
-        const receiptNumber = count || 1;
-        const pdfBuffer = await generateReceiptPDF({
-          receiptNumber,
-          customerName: name,
-          paymentDate: new Date().toLocaleDateString("he-IL"),
-        });
-        await sendEmail(
-          email,
-          `קבלה מספר ${String(receiptNumber).padStart(6, "0")} — Kupernet`,
-          `<div dir="rtl" style="font-family:Arial;padding:24px">
-            <p>שלום ${name},</p>
-            <p>מצורפת קבלה עבור תשלום אישורי הגעה לאירוע <strong>${formData.event_name}</strong>.</p>
-            <p>תודה שבחרת ב-Kupernet!</p>
-          </div>`,
-          {
-            content: pdfBuffer.toString("base64"),
-            name: `קבלה-${String(receiptNumber).padStart(6, "0")}.pdf`,
-          }
-        );
-      } catch (e) {
-        console.error("Receipt email error:", e);
-      }
-    })();
+    try {
+      const { count } = await supabase
+        .from("events").select("*", { count: "exact", head: true });
+      const receiptNumber = count || 1;
+      const pdfBuffer = await generateReceiptPDF({
+        receiptNumber,
+        customerName: name,
+        paymentDate: new Date().toLocaleDateString("he-IL"),
+      });
+      await sendEmail(
+        email,
+        `קבלה מספר ${String(receiptNumber).padStart(6, "0")} — Kupernet`,
+        `<div dir="rtl" style="font-family:Arial;padding:24px">
+          <p>שלום ${name},</p>
+          <p>מצורפת קבלה עבור תשלום אישורי הגעה לאירוע <strong>${formData.event_name}</strong>.</p>
+          <p>תודה שבחרת ב-Kupernet!</p>
+        </div>`,
+        {
+          content: pdfBuffer.toString("base64"),
+          name: `קבלה-${String(receiptNumber).padStart(6, "0")}.pdf`,
+        }
+      );
+    } catch (e) {
+      console.error("Receipt email error:", e);
+    }
 
     console.log(`✅ Event created via PayPal: ${slug}`);
     res.status(200).json({ slug, event_name: formData.event_name, dashboard_password });
