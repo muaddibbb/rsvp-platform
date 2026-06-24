@@ -1,19 +1,22 @@
 const { createClient } = require("@supabase/supabase-js");
 const crypto = require("crypto");
+const generateReceiptPDF = require("./_receipt");
 
 const supabase = createClient(process.env.SUPABASE_URL, process.env.SUPABASE_SERVICE_ROLE_KEY);
 
-async function sendEmail(to, subject, html) {
+async function sendEmail(to, subject, html, attachment) {
   if (!process.env.BREVO_API_KEY) return;
+  const body = {
+    sender: { name: "אישורי הגעה", email: "kupernetservice@gmail.com" },
+    to: [{ email: to }],
+    subject,
+    htmlContent: html,
+  };
+  if (attachment) body.attachment = [attachment];
   await fetch("https://api.brevo.com/v3/smtp/email", {
     method: "POST",
     headers: { "api-key": process.env.BREVO_API_KEY, "Content-Type": "application/json" },
-    body: JSON.stringify({
-      sender: { name: "אישורי הגעה", email: "kupernetservice@gmail.com" },
-      to: [{ email: to }],
-      subject,
-      htmlContent: html,
-    }),
+    body: JSON.stringify(body),
   }).catch(e => console.error("Brevo error:", e));
 }
 const PAYPAL_BASE = process.env.PAYPAL_SANDBOX === "false"
@@ -107,16 +110,20 @@ module.exports = async (req, res) => {
       return res.status(500).json({ error: "שגיאת מסד נתונים" });
     }
 
-    // 4. Send confirmation email (non-blocking)
+    // 4. Send confirmation + receipt emails (non-blocking)
     const rsvpUrl = `${BASE_URL}/rsvp/${slug}`;
     const dashUrl = `${BASE_URL}/dashboard/${slug}`;
     const typeLabel = EVENT_TYPE_LABELS[formData.event_type] || formData.event_type;
+    const email = formData.customer_email?.trim();
+    const name = formData.customer_name;
+
+    // 4a. Confirmation email
     sendEmail(
-      formData.customer_email?.trim(),
+      email,
       `אישורי הגעה ל${formData.event_name} — הפרטים שלך`,
       `<div dir="rtl" style="font-family:Arial;padding:24px;max-width:520px">
         <h2 style="color:#1a2744">האירוע מוכן! 🎉</h2>
-        <p>שלום ${formData.customer_name},</p>
+        <p>שלום ${name},</p>
         <p><strong>סוג אירוע:</strong> ${typeLabel}<br/>
         <strong>תאריך:</strong> ${formData.gregorian_date}<br/>
         <strong>מקום:</strong> ${formData.location}</p>
@@ -127,6 +134,35 @@ module.exports = async (req, res) => {
         </p>
       </div>`
     );
+
+    // 4b. Receipt email with PDF attachment
+    (async () => {
+      try {
+        const { count } = await supabase
+          .from("events").select("*", { count: "exact", head: true });
+        const receiptNumber = count || 1;
+        const pdfBuffer = await generateReceiptPDF({
+          receiptNumber,
+          customerName: name,
+          paymentDate: new Date().toLocaleDateString("he-IL"),
+        });
+        await sendEmail(
+          email,
+          `קבלה מספר ${String(receiptNumber).padStart(6, "0")} — Kupernet`,
+          `<div dir="rtl" style="font-family:Arial;padding:24px">
+            <p>שלום ${name},</p>
+            <p>מצורפת קבלה עבור תשלום אישורי הגעה לאירוע <strong>${formData.event_name}</strong>.</p>
+            <p>תודה שבחרת ב-Kupernet!</p>
+          </div>`,
+          {
+            content: pdfBuffer.toString("base64"),
+            name: `קבלה-${String(receiptNumber).padStart(6, "0")}.pdf`,
+          }
+        );
+      } catch (e) {
+        console.error("Receipt email error:", e);
+      }
+    })();
 
     console.log(`✅ Event created via PayPal: ${slug}`);
     res.status(200).json({ slug, event_name: formData.event_name, dashboard_password });
