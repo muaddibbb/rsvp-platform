@@ -167,6 +167,12 @@
           <button class="back-btn" onclick="goToStep(2)">→ חזור</button>
         </div>
 
+        <div style="margin-bottom:16px;font-size:.85rem;color:var(--text-muted)">
+          <label style="display:flex;align-items:flex-start;gap:8px;cursor:pointer">
+            <input type="checkbox" id="tosCheck" style="margin-top:3px;flex-shrink:0" />
+            <span>קראתי ואני מסכים/ה ל<a href="/tos.html" target="_blank" style="color:var(--gold)">תנאי השימוש ומדיניות הפרטיות</a></span>
+          </label>
+        </div>
         <div id="paypal-button-container"></div>
         <div id="checkoutError" style="display:none;margin-top:12px;color:var(--red);font-size:.9rem;text-align:center"></div>
       </div>
@@ -293,6 +299,12 @@
         style: { layout: "vertical", color: "gold", shape: "rect", label: "pay" },
 
         createOrder: async () => {
+          if (!document.getElementById("tosCheck").checked) {
+            document.getElementById("checkoutError").textContent = "יש לאשר את תנאי השימוש לפני התשלום";
+            document.getElementById("checkoutError").style.display = "block";
+            throw new Error("ToS not accepted");
+          }
+          document.getElementById("checkoutError").style.display = "none";
           const res = await fetch("/api/paypal-create-order", { method: "POST" });
           const data = await res.json();
           if (!data.id) throw new Error("שגיאה ביצירת הזמנה");
