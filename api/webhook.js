@@ -20,9 +20,12 @@ async function getRawBody(req) {
 
 const EVENT_TYPE_LABELS = {
   bar_mitzvah: "בר מצווה",
+  bat_mitzvah: "בת מצווה",
   wedding:     "חתונה",
-  brit:        "ברית",
+  brit:        "ברית מילה",
+  brit_bat:    "בריתה",
   birthday:    "יום הולדת",
+  family:      "אירוע משפחתי",
   other:       "אירוע",
 };
 

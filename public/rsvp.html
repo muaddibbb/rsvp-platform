@@ -11,7 +11,7 @@
 
     <!-- Header -->
     <header class="hero">
-      <div class="star-of-david">✡</div>
+      <div class="star-of-david" id="eventEmoji">✡</div>
       <h1 class="event-title" id="eventTitle">טוען...</h1>
       <p class="invite-text">אתם מוזמנים לחגוג עמנו</p>
     </header>
@@ -140,9 +140,16 @@
       document.getElementById("notFoundSection").style.display = "block";
     }
 
+    const EVENT_EMOJI = {
+      bar_mitzvah: "✡", bat_mitzvah: "🌸", wedding: "💍",
+      brit: "👶", brit_bat: "🎀", birthday: "🎂",
+      family: "🎊", other: "✡",
+    };
+
     function populateEvent(ev) {
       document.title = ev.event_name + " — אישור הגעה";
       document.getElementById("eventTitle").textContent = ev.event_name;
+      document.getElementById("eventEmoji").textContent = EVENT_EMOJI[ev.event_type] || "✡";
 
       // Date
       const dateStr = ev.hebrew_date

@@ -38,7 +38,11 @@
           <div class="event-type-grid" id="eventTypeGrid">
             <div class="event-type-card" data-value="bar_mitzvah" onclick="selectEventType(this)">
               <div class="et-icon">🎉</div>
-              <div class="et-label">בר / בת מצווה</div>
+              <div class="et-label">בר מצווה</div>
+            </div>
+            <div class="event-type-card" data-value="bat_mitzvah" onclick="selectEventType(this)">
+              <div class="et-icon">🌸</div>
+              <div class="et-label">בת מצווה</div>
             </div>
             <div class="event-type-card" data-value="wedding" onclick="selectEventType(this)">
               <div class="et-icon">💍</div>
@@ -47,6 +51,10 @@
             <div class="event-type-card" data-value="brit" onclick="selectEventType(this)">
               <div class="et-icon">👶</div>
               <div class="et-label">ברית מילה</div>
+            </div>
+            <div class="event-type-card" data-value="brit_bat" onclick="selectEventType(this)">
+              <div class="et-icon">🎀</div>
+              <div class="et-label">בריתה</div>
             </div>
             <div class="event-type-card" data-value="birthday" onclick="selectEventType(this)">
               <div class="et-icon">🎂</div>
@@ -156,9 +164,11 @@
 
   <script>
     const EVENT_TYPE_LABELS = {
-      bar_mitzvah: "בר / בת מצווה",
+      bar_mitzvah: "בר מצווה",
+      bat_mitzvah: "בת מצווה",
       wedding:     "חתונה",
       brit:        "ברית מילה",
+      brit_bat:    "בריתה",
       birthday:    "יום הולדת",
       family:      "אירוע משפחתי",
       other:       "אחר",

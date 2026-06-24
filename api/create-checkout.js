@@ -33,8 +33,8 @@ function generatePassword() {
 
 async function generateSlug(eventType, customerName, year) {
   const typeMap = {
-    bar_mitzvah: "bm", wedding: "wedding", brit: "brit",
-    birthday: "bday", other: "event"
+    bar_mitzvah: "bm", bat_mitzvah: "btm", wedding: "wedding", brit: "brit",
+    brit_bat: "britb", birthday: "bday", family: "family", other: "event"
   };
   const prefix = typeMap[eventType] || "event";
   const lastName = customerName.trim().split(/\s+/).pop();
@@ -61,6 +61,12 @@ function validate(body) {
   return null;
 }
 
+const EVENT_TYPE_LABELS = {
+  bar_mitzvah: "בר מצווה", bat_mitzvah: "בת מצווה", wedding: "חתונה",
+  brit: "ברית מילה", brit_bat: "בריתה",
+  birthday: "יום הולדת", family: "אירוע משפחתי", other: "אירוע",
+};
+
 module.exports = async (req, res) => {
   if (req.method === "OPTIONS") return res.status(200).end();
   if (req.method !== "POST") return res.status(405).json({ error: "Method not allowed" });
@@ -84,7 +90,7 @@ module.exports = async (req, res) => {
           unit_amount: PRICE_AGOROT,
           product_data: {
             name: `אישורי הגעה — ${body.event_name}`,
-            description: `${body.event_type === "bar_mitzvah" ? "בר מצווה" : body.event_type === "wedding" ? "חתונה" : body.event_type === "brit" ? "ברית" : "אירוע"} · ${body.gregorian_date}`,
+            description: `${EVENT_TYPE_LABELS[body.event_type] || "אירוע"} · ${body.gregorian_date}`,
           },
         },
         quantity: 1,
