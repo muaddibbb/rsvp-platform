@@ -64,6 +64,8 @@ function validate(body) {
     if (!body[f] || !String(body[f]).trim()) return `שדה חסר: ${f}`;
   }
   if (!/^\S+@\S+\.\S+$/.test(body.customer_email)) return "אימייל לא תקין";
+  const today = new Date().toISOString().slice(0, 10);
+  if (body.gregorian_date < today) return "לא ניתן לבחור תאריך שעבר";
   return null;
 }
 

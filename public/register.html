@@ -190,6 +190,9 @@
     let formData = { event_type: "" };
     let currentStep = 1;
 
+    // Block past dates
+    document.getElementById("gregorianDate").min = new Date().toISOString().slice(0, 10);
+
     function selectEventType(card) {
       document.querySelectorAll(".event-type-card").forEach(c => c.classList.remove("selected"));
       card.classList.add("selected");

@@ -62,6 +62,9 @@ module.exports = async (req, res) => {
 
   const { orderID, ...formData } = req.body || {};
   if (!orderID) return res.status(400).json({ error: "חסר מזהה הזמנה" });
+  const today = new Date().toISOString().slice(0, 10);
+  if (formData.gregorian_date && formData.gregorian_date < today)
+    return res.status(400).json({ error: "לא ניתן לבחור תאריך שעבר" });
 
   try {
     // 1. Capture PayPal payment
