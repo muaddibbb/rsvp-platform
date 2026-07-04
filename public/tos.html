@@ -5,36 +5,58 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>תנאי שימוש ומדיניות פרטיות | rsvp.kupernet.com</title>
   <link rel="stylesheet" href="/style.css" />
+  <script src="/theme.js" defer></script>
   <style>
     .tos-page { max-width: 720px; margin: 0 auto; padding: 40px 24px 80px; }
     .tos-page h1 { color: var(--navy); font-size: 1.6rem; margin-bottom: 8px; }
     .tos-page .updated { color: var(--text-muted); font-size: .85rem; margin-bottom: 36px; }
-    .tos-page h2 { color: var(--navy); font-size: 1.1rem; margin: 32px 0 10px; border-bottom: 1px solid #e5e7eb; padding-bottom: 6px; }
+    .tos-page h2 { color: var(--navy); font-size: 1.05rem; margin: 32px 0 10px; border-bottom: 1px solid #e5e7eb; padding-bottom: 6px; }
     .tos-page p, .tos-page li { color: #374151; line-height: 1.8; font-size: .95rem; }
     .tos-page ul { padding-right: 20px; margin: 8px 0; }
     .tos-page a { color: var(--gold); }
+    .legal-nav { display: flex; gap: 12px; flex-wrap: wrap; margin-bottom: 32px; }
+    .legal-nav a {
+      background: #f3f4f6; color: var(--navy); padding: 6px 14px;
+      border-radius: 20px; text-decoration: none; font-size: .85rem;
+    }
+    .legal-nav a.active { background: var(--navy); color: #fff; }
+
+    /* ── Dark mode ── */
+    html.dark .tos-page h1,
+    html.dark .tos-page h2 { color: #f0d080; }
+    html.dark .tos-page h2 { border-bottom-color: #334155; }
+    html.dark .tos-page p, html.dark .tos-page li { color: #cbd5e1; }
+    html.dark .tos-page .updated { color: #94a3b8; }
+    html.dark .legal-nav a { background: #1e293b; color: #e5e7eb; }
+    html.dark .legal-nav a.active { background: #f0d080; color: #1a2744; }
   </style>
 </head>
 <body>
   <nav class="landing-nav">
-    <a class="logo" href="/">✡ אישורי הגעה</a>
+    <a class="logo" href="/">🎉 אישורי הגעה</a>
   </nav>
 
   <div class="tos-page">
-    <h1>תנאי שימוש ומדיניות פרטיות</h1>
+    <div class="legal-nav">
+      <a href="/tos.html" class="active">תנאי שימוש</a>
+      <a href="/privacy.html">מדיניות פרטיות</a>
+      <a href="/refund.html">מדיניות החזרות</a>
+    </div>
+
+    <h1>תנאי שימוש</h1>
     <p class="updated">עדכון אחרון: יוני 2026</p>
 
     <h2>1. מי אנחנו</h2>
     <p>
       השירות מופעל על ידי <strong>Kupernet Systems</strong>, עוסק פטור מספר 036409084.
-      לפניות: <a href="mailto:info@kupernet.com">info@kupernet.com</a>
+      לפניות: <a href="mailto:kupernetservice@gmail.com">kupernetservice@gmail.com</a>
     </p>
 
     <h2>2. השירות</h2>
     <p>
       rsvp.kupernet.com מאפשר למארגני אירועים ליצור דף אישורי הגעה דיגיטלי,
-      לשתף קישור עם האורחים ולנהל את רשימת המגיעים באמצעות דשבורד ייעודי.
-      התשלום חד-פעמי (₪99) מתבצע דרך PayPal.
+      לשתף קישור עם האורחים ולנהל את רשימת המגיעים באמצעות ממשק ניהול הזמנה.
+      התשלום חד-פעמי (₪99) מתבצע דרך ספק תשלום מאובטח.
     </p>
 
     <h2>3. המידע שאנו אוספים</h2>
@@ -42,7 +64,7 @@
     <ul>
       <li>שם מלא, כתובת אימייל, מספר טלפון</li>
       <li>פרטי האירוע: שם, סוג, תאריך, שעה, מיקום</li>
-      <li>פרטי תשלום — מעובדים ישירות על ידי PayPal ואינם מאוחסנים אצלנו</li>
+      <li>פרטי תשלום — מעובדים ישירות על ידי ספק התשלום ואינם מאוחסנים אצלנו</li>
     </ul>
     <p>מהאורחים בעת אישור הגעה:</p>
     <ul>
@@ -54,20 +76,20 @@
     <ul>
       <li>הפעלת שירות אישורי ההגעה</li>
       <li>שליחת אימייל אישור וקבלה למארגן</li>
-      <li>הצגת נתוני האורחים בדשבורד הניהול</li>
+      <li>הצגת נתוני האורחים בממשק ניהול הזמנה</li>
     </ul>
     <p>אנו לא מוכרים, משכירים או מעבירים מידע אישי לצד שלישי כלשהו.</p>
 
     <h2>5. שמירת מידע ומחיקה</h2>
     <p>
       כל נתוני האירוע והאורחים <strong>נמחקים אוטומטית חודש אחד לאחר תאריך האירוע</strong>.
-      ניתן לבקש מחיקה מוקדמת יותר בפנייה ל-<a href="mailto:info@kupernet.com">info@kupernet.com</a>.
+      ניתן לבקש מחיקה מוקדמת יותר בפנייה ל-<a href="mailto:kupernetservice@gmail.com">kupernetservice@gmail.com</a>.
     </p>
 
     <h2>6. אבטחת מידע</h2>
     <p>
-      המידע מאוחסן בשרתי Supabase (PostgreSQL מוצפן). הגישה לדשבורד מוגנת בסיסמה.
-      התשלום מאובטח דרך PayPal ואינו עובר דרך שרתינו.
+      המידע מאוחסן בשרתי Supabase (PostgreSQL מוצפן). הגישה לממשק ניהול הזמנה מוגנת בסיסמה.
+      התשלום מאובטח דרך ספק תשלום חיצוני ואינו עובר דרך שרתינו.
     </p>
 
     <h2>7. עוגיות (Cookies)</h2>
@@ -76,7 +98,7 @@
     <h2>8. זכויות לפי חוק הגנת הפרטיות הישראלי</h2>
     <p>
       בהתאם לחוק הגנת הפרטיות, התש"מ-1981, יש לכם זכות לעיין במידע האישי הנוגע לכם,
-      לתקנו או לבקש את מחיקתו. לפניות: <a href="mailto:info@kupernet.com">info@kupernet.com</a>.
+      לתקנו או לבקש את מחיקתו. לפניות: <a href="mailto:kupernetservice@gmail.com">kupernetservice@gmail.com</a>.
     </p>
 
     <h2>9. שינויים במדיניות</h2>
@@ -86,13 +108,16 @@
 
     <h2>10. יצירת קשר</h2>
     <p>
-      לכל שאלה או בקשה: <a href="mailto:info@kupernet.com">info@kupernet.com</a>
+      לכל שאלה או בקשה: <a href="mailto:kupernetservice@gmail.com">kupernetservice@gmail.com</a>
     </p>
   </div>
 
   <footer class="landing-footer">
-    © 2026 rsvp.kupernet.com · <a href="mailto:info@kupernet.com" style="color:#9ca3af">צור קשר</a>
-    · <a href="/tos.html" style="color:#9ca3af">תנאי שימוש</a>
+    © 2026 rsvp.kupernet.com ·
+    <a href="/tos.html" style="color:#9ca3af">תנאי שימוש</a> ·
+    <a href="/privacy.html" style="color:#9ca3af">פרטיות</a> ·
+    <a href="/refund.html" style="color:#9ca3af">החזרות</a> ·
+    <a href="mailto:kupernetservice@gmail.com" style="color:#9ca3af">צור קשר: kupernetservice@gmail.com</a>
   </footer>
 </body>
 </html>

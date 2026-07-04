@@ -6,15 +6,90 @@
   <meta name="x-deploy" content="2" />
   <title>אישור הגעה</title>
   <link rel="stylesheet" href="/style.css" />
+  <script>
+    window.PAGE_I18N = {
+      he: {
+        pageTitle: "אישור הגעה",
+        inviteText: "אתם מוזמנים לחגוג עמנו",
+        loading: "טוען...",
+        dateLabel: "תאריך",
+        timeLabel: "שעה",
+        locationLabel: "מיקום",
+        notFoundTitle: "האירוע לא נמצא",
+        notFoundText: "הקישור אינו תקין או שהאירוע הסתיים",
+        eventNotFound: "אירוע לא נמצא",
+        formTitle: "אישור הגעה",
+        fullNameLabel: "שם מלא *",
+        fullNamePh: "ישראל ישראלי",
+        attendLabel: "האם תגיעו? *",
+        attendYes: "מגיעים!",
+        attendNo: "לא יכולים",
+        guestCountLabel: "כמה אנשים יגיעו? *",
+        notesLabel: "הערות (אופציונלי)",
+        notesPh: "צרכים מיוחדים, אלרגיות, שאלות...",
+        submitBtn: "שלח אישור",
+        sendAnother: "שלח אישור נוסף",
+        dashboardLink: "ניהול אישורים",
+        footerCredit: "נוצר ע״י Kupernet Systems",
+        titleSuffix: " — אישור הגעה",
+        errName: "נא להזין שם מלא",
+        errAttending: "נא לסמן האם תגיעו",
+        sending: "שולח...",
+        errSubmit: "שגיאה בשליחה",
+        errSubmitRetry: "שגיאה בשליחה — נסה שוב",
+        successYesTitle: "כיף שתגיעו! 🎉",
+        successYesMsg: ", הרישום שלך התקבל. מחכים לראותך",
+        successYesAll: " ואת כולם",
+        successNoTitle: "תודה על ההענות 🙏",
+        successNoMsg: ", קיבלנו את תשובתך. מקווים לראותך בפעם הבאה!"
+      },
+      en: {
+        pageTitle: "RSVP",
+        inviteText: "You are invited to celebrate with us",
+        loading: "Loading...",
+        dateLabel: "Date",
+        timeLabel: "Time",
+        locationLabel: "Location",
+        notFoundTitle: "Event not found",
+        notFoundText: "The link is invalid or the event has ended",
+        eventNotFound: "Event not found",
+        formTitle: "RSVP",
+        fullNameLabel: "Full name *",
+        fullNamePh: "John Smith",
+        attendLabel: "Will you attend? *",
+        attendYes: "We'll be there!",
+        attendNo: "Can't make it",
+        guestCountLabel: "How many people are coming? *",
+        notesLabel: "Notes (optional)",
+        notesPh: "Special needs, allergies, questions...",
+        submitBtn: "Send RSVP",
+        sendAnother: "Send another RSVP",
+        dashboardLink: "Manage RSVPs",
+        footerCredit: "Created by Kupernet Systems",
+        titleSuffix: " — RSVP",
+        errName: "Please enter your full name",
+        errAttending: "Please select whether you will attend",
+        sending: "Sending...",
+        errSubmit: "Error sending RSVP",
+        errSubmitRetry: "Error sending — please try again",
+        successYesTitle: "So glad you're coming! 🎉",
+        successYesMsg: ", your RSVP has been received. Looking forward to seeing you",
+        successYesAll: " and everyone",
+        successNoTitle: "Thank you for letting us know 🙏",
+        successNoMsg: ", we received your reply. Hope to see you next time!"
+      }
+    };
+  </script>
+  <script src="/theme.js" defer></script>
 </head>
 <body>
   <div class="page">
 
     <!-- Header -->
     <header class="hero">
-      <div class="star-of-david" id="eventEmoji">✡</div>
+      <div class="star-of-david" id="eventEmoji">🎉</div>
       <h1 class="event-title" id="eventTitle">טוען...</h1>
-      <p class="invite-text">אתם מוזמנים לחגוג עמנו</p>
+      <p class="invite-text" data-i18n="inviteText">אתם מוזמנים לחגוג עמנו</p>
     </header>
 
     <!-- Event Details -->
@@ -28,21 +103,21 @@
       <div class="detail-row">
         <span class="detail-icon">📅</span>
         <div>
-          <div class="detail-label">תאריך</div>
+          <div class="detail-label" data-i18n="dateLabel">תאריך</div>
           <div class="detail-value" id="detailDate"></div>
         </div>
       </div>
       <div class="detail-row">
         <span class="detail-icon">🕖</span>
         <div>
-          <div class="detail-label">שעה</div>
+          <div class="detail-label" data-i18n="timeLabel">שעה</div>
           <div class="detail-value" id="detailTime"></div>
         </div>
       </div>
       <div class="detail-row">
         <span class="detail-icon">📍</span>
         <div>
-          <div class="detail-label">מיקום</div>
+          <div class="detail-label" data-i18n="locationLabel">מיקום</div>
           <div class="detail-value" id="detailLocation"></div>
           <div class="detail-sub" id="detailAddress"></div>
         </div>
@@ -53,38 +128,38 @@
     <section class="form-card" id="notFoundSection" style="display:none">
       <div style="text-align:center;padding:20px">
         <div style="font-size:3rem;margin-bottom:12px">🔍</div>
-        <h2 style="color:var(--navy);margin-bottom:8px">האירוע לא נמצא</h2>
-        <p style="color:var(--text-muted)">הקישור אינו תקין או שהאירוע הסתיים</p>
+        <h2 style="color:var(--navy);margin-bottom:8px" data-i18n="notFoundTitle">האירוע לא נמצא</h2>
+        <p style="color:var(--text-muted)" data-i18n="notFoundText">הקישור אינו תקין או שהאירוע הסתיים</p>
       </div>
     </section>
 
     <!-- RSVP Form -->
     <section class="form-card" id="formSection" style="display:none">
-      <h2 class="form-title">אישור הגעה</h2>
+      <h2 class="form-title" data-i18n="formTitle">אישור הגעה</h2>
 
       <div class="form-group">
-        <label for="fullName">שם מלא *</label>
-        <input type="text" id="fullName" placeholder="ישראל ישראלי" autocomplete="name" />
+        <label for="fullName" data-i18n="fullNameLabel">שם מלא *</label>
+        <input type="text" id="fullName" placeholder="ישראל ישראלי" data-i18n-ph="fullNamePh" autocomplete="name" />
       </div>
 
       <div class="form-group">
-        <label>האם תגיעו? *</label>
+        <label data-i18n="attendLabel">האם תגיעו? *</label>
         <div class="radio-group">
           <label class="radio-card" id="radioYesCard">
             <input type="radio" name="attending" value="yes" id="radioYes" />
             <span class="radio-icon">🎉</span>
-            <span>מגיעים!</span>
+            <span data-i18n="attendYes">מגיעים!</span>
           </label>
           <label class="radio-card" id="radioNoCard">
             <input type="radio" name="attending" value="no" id="radioNo" />
             <span class="radio-icon">😔</span>
-            <span>לא יכולים</span>
+            <span data-i18n="attendNo">לא יכולים</span>
           </label>
         </div>
       </div>
 
       <div class="form-group" id="guestsGroup" style="display:none">
-        <label for="guestCount">כמה אנשים יגיעו? *</label>
+        <label for="guestCount" data-i18n="guestCountLabel">כמה אנשים יגיעו? *</label>
         <div class="counter">
           <button type="button" class="counter-btn" id="decreaseBtn">−</button>
           <span class="counter-value" id="guestCount">1</span>
@@ -93,11 +168,11 @@
       </div>
 
       <div class="form-group">
-        <label for="notes">הערות (אופציונלי)</label>
-        <textarea id="notes" placeholder="צרכים מיוחדים, אלרגיות, שאלות..." rows="3"></textarea>
+        <label for="notes" data-i18n="notesLabel">הערות (אופציונלי)</label>
+        <textarea id="notes" placeholder="צרכים מיוחדים, אלרגיות, שאלות..." data-i18n-ph="notesPh" rows="3"></textarea>
       </div>
 
-      <button class="submit-btn" id="submitBtn" onclick="submitRSVP()">שלח אישור</button>
+      <button class="submit-btn" id="submitBtn" onclick="submitRSVP()" data-i18n="submitBtn">שלח אישור</button>
     </section>
 
     <!-- Success State -->
@@ -105,7 +180,7 @@
       <div class="success-icon">🎊</div>
       <h2 id="successTitle"></h2>
       <p id="successMessage"></p>
-      <button class="outline-btn" onclick="resetForm()">שלח אישור נוסף</button>
+      <button class="outline-btn" onclick="resetForm()" data-i18n="sendAnother">שלח אישור נוסף</button>
     </section>
 
     <!-- Error Banner -->
@@ -114,7 +189,7 @@
     </div>
 
     <footer class="footer" id="pageFooter" style="display:none">
-      <a id="dashboardLink" href="#" class="dashboard-link">ניהול אישורים</a>
+      <a id="dashboardLink" href="#" class="dashboard-link" data-i18n="dashboardLink">ניהול אישורים</a>
     </footer>
   </div>
 
@@ -123,6 +198,8 @@
     const slug = window.location.pathname.split("/").filter(Boolean).pop();
     let guestCountValue = 1;
     let eventData = null;
+    let lastSubmission = null;
+    let notFoundShown = false;
 
     async function loadEvent() {
       if (!slug) return showNotFound();
@@ -137,21 +214,22 @@
     }
 
     function showNotFound() {
-      document.getElementById("eventTitle").textContent = "אירוע לא נמצא";
+      notFoundShown = true;
+      document.getElementById("eventTitle").textContent = t("eventNotFound");
       document.getElementById("notFoundSection").style.display = "block";
     }
 
     const EVENT_EMOJI = {
-      bar_mitzvah: "✡", bat_mitzvah: "🌸", wedding: "💍",
+      bar_mitzvah: "🎉", bat_mitzvah: "🌸", wedding: "💍",
       brit: "👶", brit_bat: "🎀", birthday: "🎂",
       bachelor: "🕺", bachelorette: "💃",
-      family: "🎊", other: "✡",
+      henna: "🪬", family: "🎊", other: "🎉",
     };
 
     function populateEvent(ev) {
-      document.title = ev.event_name + " — אישור הגעה";
+      document.title = ev.event_name + t("titleSuffix");
       document.getElementById("eventTitle").textContent = ev.event_name;
-      document.getElementById("eventEmoji").textContent = EVENT_EMOJI[ev.event_type] || "✡";
+      document.getElementById("eventEmoji").textContent = EVENT_EMOJI[ev.event_type] || "🎉";
 
       // Date
       const dateStr = ev.hebrew_date
@@ -210,6 +288,7 @@
       document.getElementById("notes").value = "";
       guestCountValue = 1;
       document.getElementById("guestCount").textContent = "1";
+      lastSubmission = null;
     }
 
     async function submitRSVP() {
@@ -217,12 +296,12 @@
       const attending = document.querySelector('input[name="attending"]:checked');
       const notes     = document.getElementById("notes").value.trim();
 
-      if (!name)      return showError("נא להזין שם מלא");
-      if (!attending) return showError("נא לסמן האם תגיעו");
+      if (!name)      return showError(t("errName"));
+      if (!attending) return showError(t("errAttending"));
 
       const btn = document.getElementById("submitBtn");
       btn.disabled = true;
-      btn.textContent = "שולח...";
+      btn.textContent = t("sending");
 
       const payload = {
         name,
@@ -240,32 +319,56 @@
 
         if (!res.ok) {
           const err = await res.json();
-          throw new Error(err.error || "שגיאה בשליחה");
+          throw new Error(err.error || t("errSubmit"));
         }
 
         document.getElementById("formSection").style.display = "none";
         const successSection = document.getElementById("successSection");
         successSection.style.display = "block";
 
-        if (attending.value === "yes") {
-          document.getElementById("successTitle").textContent = "כיף שתגיעו! 🎉";
-          document.getElementById("successMessage").textContent =
-            `${name}, הרישום שלך התקבל. מחכים לראותך${guestCountValue > 1 ? " ואת כולם" : ""}!`;
-        } else {
-          document.getElementById("successTitle").textContent = "תודה על הידוע 🙏";
-          document.getElementById("successMessage").textContent =
-            `${name}, קיבלנו את תשובתך. מקווים לראותך בפעם הבאה!`;
-        }
+        lastSubmission = {
+          name,
+          yes: attending.value === "yes",
+          guests: guestCountValue,
+        };
+        renderSuccess();
       } catch (err) {
-        showError(err.message || "שגיאה בשליחה — נסה שוב");
+        showError(err.message || t("errSubmitRetry"));
       } finally {
         btn.disabled = false;
-        btn.textContent = "שלח אישור";
+        btn.textContent = t("submitBtn");
       }
     }
 
+    function renderSuccess() {
+      if (!lastSubmission) return;
+      if (lastSubmission.yes) {
+        document.getElementById("successTitle").textContent = t("successYesTitle");
+        document.getElementById("successMessage").textContent =
+          lastSubmission.name + t("successYesMsg") + (lastSubmission.guests > 1 ? t("successYesAll") : "") + "!";
+      } else {
+        document.getElementById("successTitle").textContent = t("successNoTitle");
+        document.getElementById("successMessage").textContent =
+          lastSubmission.name + t("successNoMsg");
+      }
+    }
+
+    // Re-render dynamic (JS-generated) strings when the language changes
+    window.addEventListener("langchange", () => {
+      if (eventData) {
+        document.title = eventData.event_name + t("titleSuffix");
+      } else if (notFoundShown) {
+        document.getElementById("eventTitle").textContent = t("eventNotFound");
+      } else {
+        document.getElementById("eventTitle").textContent = t("loading");
+      }
+      if (lastSubmission && document.getElementById("successSection").style.display === "block") {
+        renderSuccess();
+      }
+    });
+
     loadEvent();
   </script>
-  <footer style="text-align:center;padding:24px;color:#9ca3af;font-size:.8rem;margin-top:32px">נוצר ע״י Kupernet Systems</footer>
+  <footer style="text-align:center;padding:24px;color:#9ca3af;font-size:.8rem;margin-top:32px" data-i18n="footerCredit">נוצר ע״י Kupernet Systems</footer>
 </body>
 </html>

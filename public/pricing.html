@@ -1,0 +1,302 @@
+<!DOCTYPE html>
+<html lang="he" dir="rtl">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>מחירים | אישורי הגעה</title>
+  <link rel="stylesheet" href="/style.css" />
+  <script>
+    window.PAGE_I18N = {
+      he: {
+        pageTitle: "מחירים | אישורי הגעה",
+        logo: "אישורי הגעה",
+        navCta: "הקמת אירוע",
+        heroTitle: "מחיר פשוט, ללא הפתעות",
+        heroSub: "תשלום חד-פעמי. ללא מנוי חודשי. ללא עמלה לכל RSVP.",
+        planBadge: "הכי פופולרי",
+        planName: "אירוע מלא",
+        planPeriod: "תשלום חד-פעמי לאירוע",
+        planCta: "התחילו עכשיו",
+        feat1: "דף RSVP בעברית, מותאם לנייד",
+        feat2: "אורחים ללא הגבלה",
+        feat3: "ממשק ניהול הזמנה בזמן אמת",
+        feat4: "ייצוא רשימת אורחים (Excel)",
+        feat5: "שיתוף ישיר לוואטסאפ",
+        feat6: "אימייל אישור + קבלה",
+        feat7: "עריכת פרטי האירוע",
+        feat8: "מחיקה אוטומטית חודש לאחר האירוע",
+        faqTitle: "שאלות נפוצות",
+        faq1q: "האם יש עלויות נסתרות?",
+        faq1a: "לא. ₪99 הם המחיר הסופי, ללא עמלות נוספות בגין כמות האורחים או שימוש בממשק ניהול הזמנה.",
+        faq2q: "כמה אורחים אפשר להוסיף?",
+        faq2a: "אין הגבלה. השירות מתאים לאירועים קטנים (30 אורחים) ועד גדולים (1,000+).",
+        faq3q: "מה קורה לנתונים אחרי האירוע?",
+        faq3a: "כל נתוני האירוע והאורחים נמחקים אוטומטית חודש אחד לאחר תאריך האירוע. ממליצים לייצא את הרשימה לפני כן דרך ממשק ניהול הזמנה.",
+        faq4q: "אילו סוגי אירועים נתמכים?",
+        faq4a: "בר/בת מצווה, חתונה, ברית מילה, בריתה, יום הולדת, מסיבת רווקים/רווקות, אירוע משפחתי ועוד.",
+        faq5q: "האם ניתן לערוך את פרטי האירוע לאחר התשלום?",
+        faq5a: "כן. ניתן לעדכן כל פרט — שם, תאריך, מיקום, שעה — דרך ממשק ניהול הזמנה בכל עת.",
+        faq6q: "מה מדיניות ההחזרות?",
+        faq6a: "ניתן לקבל החזר מלא תוך 14 ימים מהרכישה, בתנאי שטרם נאספו אישורי הגעה. לפרטים ראו את",
+        faq6link: "מדיניות ההחזרות",
+        faq7q: "יש שאלה אחרת?",
+        faq7a: "פנו אלינו:",
+        faq7a2: "— נחזיר תוך יום עסקים.",
+        guaranteeTitle: "🛡️ 14 ימי ניסיון ללא סיכון",
+        guaranteeText: "אם לא אספתם עדיין אישורי הגעה תוך 14 יום מהרכישה — נחזיר את מלוא התשלום ללא שאלות.",
+        guaranteeContact: "פנו ל-",
+        footTos: "תנאי שימוש",
+        footPrivacy: "פרטיות",
+        footRefund: "החזרות",
+        footContact: "צור קשר: kupernetservice@gmail.com",
+      },
+      en: {
+        pageTitle: "Pricing | RSVP",
+        logo: "RSVP",
+        navCta: "Create Your Event",
+        heroTitle: "Simple Pricing, No Surprises",
+        heroSub: "One-time payment. No monthly subscription. No per-RSVP fees.",
+        planBadge: "Most Popular",
+        planName: "Full Event",
+        planPeriod: "one-time payment per event",
+        planCta: "Get Started",
+        feat1: "Hebrew RSVP page, mobile-friendly",
+        feat2: "Unlimited guests",
+        feat3: "Real-time management dashboard",
+        feat4: "Guest list export (Excel)",
+        feat5: "Direct WhatsApp sharing",
+        feat6: "Confirmation email + receipt",
+        feat7: "Edit event details anytime",
+        feat8: "Automatic deletion one month after the event",
+        faqTitle: "Frequently Asked Questions",
+        faq1q: "Are there any hidden costs?",
+        faq1a: "No. ₪99 is the final price — no extra fees for guest count or for using the management dashboard.",
+        faq2q: "How many guests can I add?",
+        faq2a: "There's no limit. The service fits small events (30 guests) up to large ones (1,000+).",
+        faq3q: "What happens to the data after the event?",
+        faq3a: "All event and guest data is deleted automatically one month after the event date. We recommend exporting your list beforehand via the management dashboard.",
+        faq4q: "Which event types are supported?",
+        faq4a: "Bar/Bat Mitzvah, wedding, brit milah, brita, birthday, bachelor/bachelorette party, family event and more.",
+        faq5q: "Can I edit the event details after payment?",
+        faq5a: "Yes. You can update any detail — name, date, location, time — via the management dashboard at any time.",
+        faq6q: "What is the refund policy?",
+        faq6a: "You can get a full refund within 14 days of purchase, provided no RSVPs have been collected yet. For details, see the",
+        faq6link: "refund policy",
+        faq7q: "Have another question?",
+        faq7a: "Contact us:",
+        faq7a2: "— we'll reply within one business day.",
+        guaranteeTitle: "🛡️ 14-Day Risk-Free Trial",
+        guaranteeText: "If you haven't collected any RSVPs within 14 days of purchase — we'll refund your full payment, no questions asked.",
+        guaranteeContact: "Contact ",
+        footTos: "Terms of Service",
+        footPrivacy: "Privacy",
+        footRefund: "Refunds",
+        footContact: "Contact: kupernetservice@gmail.com",
+      },
+    };
+  </script>
+  <script src="/theme.js" defer></script>
+  <style>
+    .pricing-page { max-width: 900px; margin: 0 auto; padding: 60px 24px 80px; }
+    .pricing-hero { text-align: center; margin-bottom: 56px; }
+    .pricing-hero h1 { color: var(--navy); font-size: 2rem; margin-bottom: 12px; }
+    .pricing-hero p { color: var(--text-muted); font-size: 1.05rem; max-width: 520px; margin: 0 auto; }
+
+    .plans-grid { display: flex; gap: 24px; justify-content: center; flex-wrap: wrap; margin-bottom: 64px; }
+
+    .plan-card {
+      background: #fff;
+      border: 2px solid #e5e7eb;
+      border-radius: 16px;
+      padding: 36px 32px;
+      max-width: 380px;
+      width: 100%;
+      box-shadow: 0 4px 16px rgba(0,0,0,.06);
+      text-align: center;
+      position: relative;
+    }
+    .plan-card.featured {
+      border-color: var(--gold);
+      box-shadow: 0 8px 32px rgba(201,153,58,.18);
+    }
+    .plan-badge {
+      position: absolute;
+      top: -14px;
+      right: 50%;
+      transform: translateX(50%);
+      background: var(--gold);
+      color: #fff;
+      font-size: .8rem;
+      font-weight: 700;
+      padding: 4px 16px;
+      border-radius: 20px;
+      white-space: nowrap;
+    }
+    .plan-name { color: var(--navy); font-size: 1.1rem; font-weight: 700; margin-bottom: 4px; }
+    .plan-price { font-size: 3rem; font-weight: 800; color: var(--navy); line-height: 1; margin: 16px 0 4px; }
+    .plan-price span { font-size: 1.2rem; font-weight: 500; }
+    .plan-period { color: var(--text-muted); font-size: .9rem; margin-bottom: 24px; }
+    .plan-cta {
+      display: block;
+      background: var(--gold);
+      color: #fff;
+      padding: 14px 24px;
+      border-radius: 10px;
+      text-decoration: none;
+      font-weight: 700;
+      font-size: 1rem;
+      margin-bottom: 28px;
+      transition: opacity .2s;
+    }
+    .plan-cta:hover { opacity: .88; }
+    .plan-features { list-style: none; padding: 0; margin: 0; text-align: right; }
+    .plan-features li {
+      color: #374151;
+      font-size: .93rem;
+      padding: 8px 0;
+      border-bottom: 1px solid #f3f4f6;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+    .plan-features li:last-child { border-bottom: none; }
+    .plan-features .check { color: #22c55e; font-size: 1rem; flex-shrink: 0; }
+
+    .faq { max-width: 640px; margin: 0 auto; }
+    .faq h2 { color: var(--navy); font-size: 1.3rem; text-align: center; margin-bottom: 32px; }
+    .faq-item { border-bottom: 1px solid #e5e7eb; padding: 18px 0; }
+    .faq-q { font-weight: 700; color: var(--navy); margin-bottom: 8px; }
+    .faq-a { color: #4b5563; font-size: .93rem; line-height: 1.7; }
+    .faq-a a { color: var(--gold); }
+
+    .guarantee {
+      text-align: center;
+      background: #fdf5e0;
+      border: 2px dashed var(--gold);
+      border-radius: 16px;
+      padding: 32px;
+      max-width: 520px;
+      margin: 48px auto 0;
+    }
+    .guarantee h3 { color: var(--navy); margin-bottom: 8px; }
+    .guarantee p { color: #4b5563; font-size: .9rem; line-height: 1.7; }
+
+    /* ── LTR (English) ── */
+    html[dir="ltr"] .plan-features { text-align: left; }
+
+    /* ── Dark mode ── */
+    html.dark .plan-card { background: #1e293b; border-color: #334155; }
+    html.dark .plan-card.featured { border-color: var(--gold); }
+    html.dark .pricing-hero h1,
+    html.dark .plan-name,
+    html.dark .plan-price,
+    html.dark .faq h2,
+    html.dark .faq-q,
+    html.dark .guarantee h3 { color: #f0d080; }
+    html.dark .plan-features li { color: #cbd5e1; border-bottom-color: #334155; }
+    html.dark .faq-item { border-bottom-color: #334155; }
+    html.dark .faq-a { color: #94a3b8; }
+    html.dark .guarantee { background: #3a3320; }
+    html.dark .guarantee p { color: #cbd5e1; }
+  </style>
+</head>
+<body>
+  <nav class="landing-nav">
+    <a class="logo" href="/">🎉 <span data-i18n="logo">אישורי הגעה</span></a>
+    <a class="nav-cta" href="/register.html" data-i18n="navCta">הקמת אירוע</a>
+  </nav>
+
+  <div class="pricing-page">
+
+    <div class="pricing-hero">
+      <h1 data-i18n="heroTitle">מחיר פשוט, ללא הפתעות</h1>
+      <p data-i18n="heroSub">תשלום חד-פעמי. ללא מנוי חודשי. ללא עמלה לכל RSVP.</p>
+    </div>
+
+    <div class="plans-grid">
+      <div class="plan-card featured">
+        <div class="plan-badge" data-i18n="planBadge">הכי פופולרי</div>
+        <div class="plan-name" data-i18n="planName">אירוע מלא</div>
+        <div class="plan-price"><span>₪</span>99</div>
+        <div class="plan-period" data-i18n="planPeriod">תשלום חד-פעמי לאירוע</div>
+        <a class="plan-cta" href="/register.html" data-i18n="planCta">התחילו עכשיו</a>
+        <ul class="plan-features">
+          <li><span class="check">✓</span> <span data-i18n="feat1">דף RSVP בעברית, מותאם לנייד</span></li>
+          <li><span class="check">✓</span> <span data-i18n="feat2">אורחים ללא הגבלה</span></li>
+          <li><span class="check">✓</span> <span data-i18n="feat3">ממשק ניהול הזמנה בזמן אמת</span></li>
+          <li><span class="check">✓</span> <span data-i18n="feat4">ייצוא רשימת אורחים (Excel)</span></li>
+          <li><span class="check">✓</span> <span data-i18n="feat5">שיתוף ישיר לוואטסאפ</span></li>
+          <li><span class="check">✓</span> <span data-i18n="feat6">אימייל אישור + קבלה</span></li>
+          <li><span class="check">✓</span> <span data-i18n="feat7">עריכת פרטי האירוע</span></li>
+          <li><span class="check">✓</span> <span data-i18n="feat8">מחיקה אוטומטית חודש לאחר האירוע</span></li>
+        </ul>
+      </div>
+    </div>
+
+    <div class="faq">
+      <h2 data-i18n="faqTitle">שאלות נפוצות</h2>
+
+      <div class="faq-item">
+        <div class="faq-q" data-i18n="faq1q">האם יש עלויות נסתרות?</div>
+        <div class="faq-a" data-i18n="faq1a">לא. ₪99 הם המחיר הסופי, ללא עמלות נוספות בגין כמות האורחים או שימוש בממשק ניהול הזמנה.</div>
+      </div>
+
+      <div class="faq-item">
+        <div class="faq-q" data-i18n="faq2q">כמה אורחים אפשר להוסיף?</div>
+        <div class="faq-a" data-i18n="faq2a">אין הגבלה. השירות מתאים לאירועים קטנים (30 אורחים) ועד גדולים (1,000+).</div>
+      </div>
+
+      <div class="faq-item">
+        <div class="faq-q" data-i18n="faq3q">מה קורה לנתונים אחרי האירוע?</div>
+        <div class="faq-a" data-i18n="faq3a">
+          כל נתוני האירוע והאורחים נמחקים אוטומטית חודש אחד לאחר תאריך האירוע.
+          ממליצים לייצא את הרשימה לפני כן דרך ממשק ניהול הזמנה.
+        </div>
+      </div>
+
+      <div class="faq-item">
+        <div class="faq-q" data-i18n="faq4q">אילו סוגי אירועים נתמכים?</div>
+        <div class="faq-a" data-i18n="faq4a">בר/בת מצווה, חתונה, ברית מילה, בריתה, יום הולדת, מסיבת רווקים/רווקות, אירוע משפחתי ועוד.</div>
+      </div>
+
+      <div class="faq-item">
+        <div class="faq-q" data-i18n="faq5q">האם ניתן לערוך את פרטי האירוע לאחר התשלום?</div>
+        <div class="faq-a" data-i18n="faq5a">כן. ניתן לעדכן כל פרט — שם, תאריך, מיקום, שעה — דרך ממשק ניהול הזמנה בכל עת.</div>
+      </div>
+
+      <div class="faq-item">
+        <div class="faq-q" data-i18n="faq6q">מה מדיניות ההחזרות?</div>
+        <div class="faq-a">
+          <span data-i18n="faq6a">ניתן לקבל החזר מלא תוך 14 ימים מהרכישה, בתנאי שטרם נאספו אישורי הגעה.
+          לפרטים ראו את</span> <a href="/refund.html" data-i18n="faq6link">מדיניות ההחזרות</a>.
+        </div>
+      </div>
+
+      <div class="faq-item">
+        <div class="faq-q" data-i18n="faq7q">יש שאלה אחרת?</div>
+        <div class="faq-a">
+          <span data-i18n="faq7a">פנו אלינו:</span> <a href="mailto:kupernetservice@gmail.com">kupernetservice@gmail.com</a> <span data-i18n="faq7a2">— נחזיר תוך יום עסקים.</span>
+        </div>
+      </div>
+    </div>
+
+    <div class="guarantee">
+      <h3 data-i18n="guaranteeTitle">🛡️ 14 ימי ניסיון ללא סיכון</h3>
+      <p>
+        <span data-i18n="guaranteeText">אם לא אספתם עדיין אישורי הגעה תוך 14 יום מהרכישה —
+        נחזיר את מלוא התשלום ללא שאלות.</span>
+        <br/><span data-i18n="guaranteeContact">פנו ל-</span><a href="mailto:kupernetservice@gmail.com">kupernetservice@gmail.com</a>.
+      </p>
+    </div>
+
+  </div>
+
+  <footer class="landing-footer">
+    © 2026 rsvp.kupernet.com ·
+    <a href="/tos.html" style="color:#9ca3af" data-i18n="footTos">תנאי שימוש</a> ·
+    <a href="/privacy.html" style="color:#9ca3af" data-i18n="footPrivacy">פרטיות</a> ·
+    <a href="/refund.html" style="color:#9ca3af" data-i18n="footRefund">החזרות</a> ·
+    <a href="mailto:kupernetservice@gmail.com" style="color:#9ca3af" data-i18n="footContact">צור קשר: kupernetservice@gmail.com</a>
+  </footer>
+</body>
+</html>

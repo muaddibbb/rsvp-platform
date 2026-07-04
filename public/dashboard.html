@@ -3,8 +3,129 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>דשבורד ניהול אישורים</title>
+  <title>ממשק ניהול הזמנה</title>
   <link rel="stylesheet" href="/style.css" />
+  <script>
+    window.PAGE_I18N = {
+      he: {
+        pageTitle: "ממשק ניהול הזמנה",
+        loginSub: "ניהול אישורי הגעה",
+        loginFormTitle: "כניסה",
+        passwordLabel: "סיסמה",
+        passwordPh: "הזן סיסמה",
+        loginBtn: "כניסה",
+        loginErr: "סיסמה שגויה",
+        dashSub: "רשימת אישורי הגעה",
+        refreshBtn: "🔄 רענן",
+        exportBtn: "📥 ייצא CSV",
+        editBtn: "✏️ עריכה",
+        guestPageLink: "🔗 דף האורחים",
+        statTotal: "סה\"כ משיבים",
+        statYes: "מגיעים",
+        statNo: "לא מגיעים",
+        statGuests: "סה\"כ אורחים",
+        filterAll: "הכל",
+        filterYes: "מגיעים",
+        filterNo: "לא מגיעים",
+        searchPh: "חיפוש לפי שם...",
+        loadingData: "טוען נתונים...",
+        emptyState: "אין נתונים עדיין",
+        thName: "שם",
+        thAttending: "הגעה",
+        thGuests: "מספר אורחים",
+        thNotes: "הערות",
+        thTime: "זמן הרשמה",
+        modalTitle: "✏️ עריכת פרטי האירוע",
+        editName: "שם האירוע",
+        editGregDate: "תאריך לועזי",
+        editHebDate: "תאריך עברי (אופציונלי)",
+        editHebDatePh: "למשל: י״ד תמוז תשפ״ו",
+        editTime: "שעת האירוע",
+        editLocation: "מיקום",
+        editAddress: "כתובת",
+        editExtraNote: "הערה נוספת (אופציונלי)",
+        cancelBtn: "ביטול",
+        saveBtn: "שמור שינויים",
+        footerCredit: "נוצר ע״י Kupernet Systems",
+        checking: "בודק...",
+        serverErr: "שגיאת שרת",
+        errPrefix: "שגיאה: ",
+        loadError: "שגיאה בטעינת הנתונים",
+        badgeYes: "✅ מגיע",
+        badgeNo: "❌ לא מגיע",
+        deleteTitle: "מחק",
+        confirmDeletePre: "למחוק את ",
+        saving: "שומר...",
+        saveErrPrefix: "שגיאה בשמירה: ",
+        csvName: "שם",
+        csvAttending: "הגעה",
+        csvGuests: "מספר אורחים",
+        csvNotes: "הערות",
+        csvTime: "זמן",
+        csvYes: "מגיע",
+        csvNo: "לא מגיע"
+      },
+      en: {
+        pageTitle: "Event Management Dashboard",
+        loginSub: "Manage your RSVPs",
+        loginFormTitle: "Sign in",
+        passwordLabel: "Password",
+        passwordPh: "Enter password",
+        loginBtn: "Sign in",
+        loginErr: "Incorrect password",
+        dashSub: "RSVP list",
+        refreshBtn: "🔄 Refresh",
+        exportBtn: "📥 Export CSV",
+        editBtn: "✏️ Edit",
+        guestPageLink: "🔗 Guest page",
+        statTotal: "Total responses",
+        statYes: "Attending",
+        statNo: "Not attending",
+        statGuests: "Total guests",
+        filterAll: "All",
+        filterYes: "Attending",
+        filterNo: "Not attending",
+        searchPh: "Search by name...",
+        loadingData: "Loading data...",
+        emptyState: "No data yet",
+        thName: "Name",
+        thAttending: "Attendance",
+        thGuests: "Guests",
+        thNotes: "Notes",
+        thTime: "Submitted at",
+        modalTitle: "✏️ Edit event details",
+        editName: "Event name",
+        editGregDate: "Date (Gregorian)",
+        editHebDate: "Hebrew date (optional)",
+        editHebDatePh: "e.g. 14 Tammuz 5786",
+        editTime: "Event time",
+        editLocation: "Location",
+        editAddress: "Address",
+        editExtraNote: "Additional note (optional)",
+        cancelBtn: "Cancel",
+        saveBtn: "Save changes",
+        footerCredit: "Created by Kupernet Systems",
+        checking: "Checking...",
+        serverErr: "Server error",
+        errPrefix: "Error: ",
+        loadError: "Error loading data",
+        badgeYes: "✅ Attending",
+        badgeNo: "❌ Not attending",
+        deleteTitle: "Delete",
+        confirmDeletePre: "Delete ",
+        saving: "Saving...",
+        saveErrPrefix: "Error saving: ",
+        csvName: "Name",
+        csvAttending: "Attendance",
+        csvGuests: "Guests",
+        csvNotes: "Notes",
+        csvTime: "Time",
+        csvYes: "Attending",
+        csvNo: "Not attending"
+      }
+    };
+  </script>
+  <script src="/theme.js" defer></script>
   <style>
     .delete-btn { background:none;border:none;cursor:pointer;font-size:1rem;opacity:.35;transition:opacity .15s;padding:2px 6px;border-radius:6px; }
     .delete-btn:hover { opacity:1;background:var(--red-light); }
@@ -20,6 +141,17 @@
     .btn-save { background:#1a2744;color:#fff;border:none;padding:10px 24px;border-radius:8px;cursor:pointer;font-size:.95rem; }
     .btn-save:disabled { opacity:.5;cursor:default; }
     .btn-cancel { background:#f3f4f6;color:#374151;border:none;padding:10px 18px;border-radius:8px;cursor:pointer;font-size:.95rem; }
+    /* LTR fix for the modal when English is active */
+    html[dir="ltr"] .modal { direction:ltr; }
+    /* Dark-mode overrides for this page's inline components */
+    html.dark .modal { background:#1e293b; }
+    html.dark .modal h2 { color:#e2e8f0; }
+    html.dark .modal label { color:#94a3b8; }
+    html.dark .modal input, html.dark .modal textarea { background:#0f172a;border-color:#334155;color:#e2e8f0; }
+    html.dark .btn-save { background:#3b82f6; }
+    html.dark .btn-save:disabled { opacity:.5; }
+    html.dark .btn-cancel { background:#334155;color:#e2e8f0; }
+    html.dark .delete-btn:hover { background:rgba(239,68,68,.25); }
   </style>
 </head>
 <body>
@@ -27,20 +159,21 @@
   <!-- Login Screen -->
   <div class="page" id="loginPage">
     <header class="hero hero--small">
-      <div class="star-of-david">✡</div>
-      <h1 class="event-title" id="loginTitle">דשבורד ניהול</h1>
-      <p class="invite-text">ניהול אישורי הגעה</p>
+      <div class="star-of-david">🎉</div>
+      <h1 class="event-title" id="loginTitle" data-i18n="pageTitle">ממשק ניהול הזמנה</h1>
+      <p class="invite-text" data-i18n="loginSub">ניהול אישורי הגעה</p>
     </header>
     <section class="form-card">
-      <h2 class="form-title">כניסה</h2>
+      <h2 class="form-title" data-i18n="loginFormTitle">כניסה</h2>
       <div class="form-group">
-        <label for="password">סיסמה</label>
-        <input type="password" id="password" placeholder="הזן סיסמה"
+        <label for="password" data-i18n="passwordLabel">סיסמה</label>
+        <input type="password" id="password" placeholder="הזן סיסמה" data-i18n-ph="passwordPh"
                onkeydown="if(event.key==='Enter') login()" />
       </div>
-      <button class="submit-btn" onclick="login()">כניסה</button>
+      <button class="submit-btn" onclick="login()" data-i18n="loginBtn">כניסה</button>
       <div class="error-banner" id="loginError"
-           style="display:none;position:static;margin-top:12px;border-radius:8px;transform:none;left:auto;bottom:auto">
+           style="display:none;position:static;margin-top:12px;border-radius:8px;transform:none;left:auto;bottom:auto"
+           data-i18n="loginErr">
         סיסמה שגויה
       </div>
     </section>
@@ -50,14 +183,14 @@
   <div id="dashboardPage" style="display:none">
     <div class="dashboard-header">
       <div>
-        <h1 class="dash-title" id="dashTitle">דשבורד אישורים</h1>
-        <p class="dash-sub" id="dashSub">רשימת אישורי הגעה</p>
+        <h1 class="dash-title" id="dashTitle">ממשק ניהול הזמנה</h1>
+        <p class="dash-sub" id="dashSub" data-i18n="dashSub">רשימת אישורי הגעה</p>
       </div>
       <div class="dash-actions">
-        <button class="icon-btn" onclick="loadRSVPs()" title="רענן">🔄 רענן</button>
-        <button class="icon-btn" onclick="exportCSV()" title="ייצא">📥 ייצא CSV</button>
-        <button class="icon-btn" onclick="openEditModal()" title="עריכת פרטים">✏️ עריכה</button>
-        <a href="#" id="rsvpPageLink" class="icon-btn" target="_blank">🔗 דף האורחים</a>
+        <button class="icon-btn" onclick="loadRSVPs()" title="רענן" data-i18n="refreshBtn">🔄 רענן</button>
+        <button class="icon-btn" onclick="exportCSV()" title="ייצא" data-i18n="exportBtn">📥 ייצא CSV</button>
+        <button class="icon-btn" onclick="openEditModal()" title="עריכת פרטים" data-i18n="editBtn">✏️ עריכה</button>
+        <a href="#" id="rsvpPageLink" class="icon-btn" target="_blank" data-i18n="guestPageLink">🔗 דף האורחים</a>
       </div>
     </div>
 
@@ -65,44 +198,44 @@
     <div class="stats-row">
       <div class="stat-card stat-total">
         <div class="stat-num" id="statTotal">0</div>
-        <div class="stat-label">סה"כ משיבים</div>
+        <div class="stat-label" data-i18n="statTotal">סה"כ משיבים</div>
       </div>
       <div class="stat-card stat-yes">
         <div class="stat-num" id="statYes">0</div>
-        <div class="stat-label">מגיעים</div>
+        <div class="stat-label" data-i18n="statYes">מגיעים</div>
       </div>
       <div class="stat-card stat-no">
         <div class="stat-num" id="statNo">0</div>
-        <div class="stat-label">לא מגיעים</div>
+        <div class="stat-label" data-i18n="statNo">לא מגיעים</div>
       </div>
       <div class="stat-card stat-guests">
         <div class="stat-num" id="statGuests">0</div>
-        <div class="stat-label">סה"כ אורחים</div>
+        <div class="stat-label" data-i18n="statGuests">סה"כ אורחים</div>
       </div>
     </div>
 
     <!-- Filter -->
     <div class="filter-row">
-      <button class="filter-btn active" data-filter="all"  onclick="setFilter('all', this)">הכל</button>
-      <button class="filter-btn"        data-filter="yes"  onclick="setFilter('yes', this)">מגיעים</button>
-      <button class="filter-btn"        data-filter="no"   onclick="setFilter('no', this)">לא מגיעים</button>
+      <button class="filter-btn active" data-filter="all"  onclick="setFilter('all', this)" data-i18n="filterAll">הכל</button>
+      <button class="filter-btn"        data-filter="yes"  onclick="setFilter('yes', this)" data-i18n="filterYes">מגיעים</button>
+      <button class="filter-btn"        data-filter="no"   onclick="setFilter('no', this)" data-i18n="filterNo">לא מגיעים</button>
       <input type="text" class="search-input" id="searchInput"
-             placeholder="חיפוש לפי שם..." oninput="renderTable()" />
+             placeholder="חיפוש לפי שם..." data-i18n-ph="searchPh" oninput="renderTable()" />
     </div>
 
     <!-- Table -->
     <div class="table-wrap">
-      <div class="loading" id="loadingState">טוען נתונים...</div>
-      <div class="empty-state" id="emptyState" style="display:none">אין נתונים עדיין</div>
+      <div class="loading" id="loadingState" data-i18n="loadingData">טוען נתונים...</div>
+      <div class="empty-state" id="emptyState" style="display:none" data-i18n="emptyState">אין נתונים עדיין</div>
       <table class="rsvp-table" id="rsvpTable" style="display:none">
         <thead>
           <tr>
             <th>#</th>
-            <th>שם</th>
-            <th>הגעה</th>
-            <th>מספר אורחים</th>
-            <th>הערות</th>
-            <th>זמן הרשמה</th>
+            <th data-i18n="thName">שם</th>
+            <th data-i18n="thAttending">הגעה</th>
+            <th data-i18n="thGuests">מספר אורחים</th>
+            <th data-i18n="thNotes">הערות</th>
+            <th data-i18n="thTime">זמן הרשמה</th>
             <th></th>
           </tr>
         </thead>
@@ -114,38 +247,38 @@
   <!-- Edit Event Modal -->
   <div class="modal-overlay" id="editModal" onclick="if(event.target===this)closeEditModal()">
     <div class="modal">
-      <h2>✏️ עריכת פרטי האירוע</h2>
+      <h2 data-i18n="modalTitle">✏️ עריכת פרטי האירוע</h2>
       <div class="form-group">
-        <label>שם האירוע</label>
+        <label data-i18n="editName">שם האירוע</label>
         <input type="text" id="edit_event_name" />
       </div>
       <div class="form-group">
-        <label>תאריך לועזי</label>
+        <label data-i18n="editGregDate">תאריך לועזי</label>
         <input type="date" id="edit_gregorian_date" />
       </div>
       <div class="form-group">
-        <label>תאריך עברי (אופציונלי)</label>
-        <input type="text" id="edit_hebrew_date" placeholder="למשל: י״ד תמוז תשפ״ו" />
+        <label data-i18n="editHebDate">תאריך עברי (אופציונלי)</label>
+        <input type="text" id="edit_hebrew_date" placeholder="למשל: י״ד תמוז תשפ״ו" data-i18n-ph="editHebDatePh" />
       </div>
       <div class="form-group">
-        <label>שעת האירוע</label>
+        <label data-i18n="editTime">שעת האירוע</label>
         <input type="time" id="edit_event_time" />
       </div>
       <div class="form-group">
-        <label>מיקום</label>
+        <label data-i18n="editLocation">מיקום</label>
         <input type="text" id="edit_location" />
       </div>
       <div class="form-group">
-        <label>כתובת</label>
+        <label data-i18n="editAddress">כתובת</label>
         <input type="text" id="edit_address" />
       </div>
       <div class="form-group">
-        <label>הערה נוספת (אופציונלי)</label>
+        <label data-i18n="editExtraNote">הערה נוספת (אופציונלי)</label>
         <textarea id="edit_extra_note"></textarea>
       </div>
       <div class="modal-actions">
-        <button class="btn-cancel" onclick="closeEditModal()">ביטול</button>
-        <button class="btn-save" id="editSaveBtn" onclick="saveEventDetails()">שמור שינויים</button>
+        <button class="btn-cancel" onclick="closeEditModal()" data-i18n="cancelBtn">ביטול</button>
+        <button class="btn-save" id="editSaveBtn" onclick="saveEventDetails()" data-i18n="saveBtn">שמור שינויים</button>
       </div>
     </div>
   </div>
@@ -154,10 +287,21 @@
     const slug = window.location.pathname.split("/").filter(Boolean).pop();
     let allRSVPs = [];
     let currentFilter = "all";
-    let storedPassword = "";
+    let storedPassword = sessionStorage.getItem("dash_pw_" + slug) || "";
     let currentEvent = {};
 
     document.getElementById("rsvpPageLink").href = `/rsvp/${slug}`;
+
+    if (storedPassword) attemptAutoLogin();
+
+    async function attemptAutoLogin() {
+      try {
+        const res = await fetch(`/api/dashboard/${slug}?password=${encodeURIComponent(storedPassword)}`);
+        if (!res.ok) { storedPassword = ""; sessionStorage.removeItem("dash_pw_" + slug); return; }
+        const data = await res.json();
+        showDashboard(data);
+      } catch (e) { /* network error — stay on login */ }
+    }
 
     async function login() {
       const pw = document.getElementById("password").value;
@@ -165,36 +309,36 @@
 
       const btn = document.querySelector("#loginPage .submit-btn");
       btn.disabled = true;
-      btn.textContent = "בודק...";
+      btn.textContent = t("checking");
 
       try {
         const res = await fetch(`/api/dashboard/${slug}?password=${encodeURIComponent(pw)}`);
         if (res.status === 401) {
           document.getElementById("loginError").style.display = "block";
           btn.disabled = false;
-          btn.textContent = "כניסה";
+          btn.textContent = t("loginBtn");
           return;
         }
-        if (!res.ok) throw new Error("שגיאת שרת");
+        if (!res.ok) throw new Error(t("serverErr"));
 
-        const data = await res.json();
         storedPassword = pw;
-
-        // Populate event info
-        if (data.event) {
-          document.getElementById("dashTitle").textContent = data.event.event_name || "דשבורד אישורים";
-          document.getElementById("dashSub").textContent = "רשימת אישורי הגעה";
-        }
-
-        document.getElementById("loginPage").style.display = "none";
-        document.getElementById("dashboardPage").style.display = "block";
-
-        processData(data);
+        sessionStorage.setItem("dash_pw_" + slug, pw);
+        showDashboard(await res.json());
       } catch (e) {
-        alert("שגיאה: " + e.message);
+        alert(t("errPrefix") + e.message);
         btn.disabled = false;
-        btn.textContent = "כניסה";
+        btn.textContent = t("loginBtn");
       }
+    }
+
+    function showDashboard(data) {
+      if (data.event) {
+        document.getElementById("dashTitle").textContent = data.event.event_name || t("pageTitle");
+        document.getElementById("dashSub").textContent = t("dashSub");
+      }
+      document.getElementById("loginPage").style.display = "none";
+      document.getElementById("dashboardPage").style.display = "block";
+      processData(data);
     }
 
     async function loadRSVPs() {
@@ -204,11 +348,11 @@
 
       try {
         const res = await fetch(`/api/dashboard/${slug}?password=${encodeURIComponent(storedPassword)}`);
-        if (!res.ok) throw new Error("שגיאה");
+        if (!res.ok) throw new Error(t("serverErr"));
         const data = await res.json();
         processData(data);
       } catch (e) {
-        document.getElementById("loadingState").textContent = "שגיאה בטעינת הנתונים";
+        document.getElementById("loadingState").textContent = t("loadError");
       }
     }
 
@@ -226,7 +370,7 @@
     async function deleteRSVP(idx) {
       const entry = allRSVPs[idx];
       if (!entry) return;
-      if (!confirm(`למחוק את "${entry.name}"?`)) return;
+      if (!confirm(t("confirmDeletePre") + `"${entry.name}"?`)) return;
 
       // Optimistic update
       allRSVPs.splice(idx, 1);
@@ -286,14 +430,14 @@
           <td class="cell-name">${escHtml(r.name)}</td>
           <td>
             <span class="badge ${r.attending === "yes" ? "badge-yes" : "badge-no"}">
-              ${r.attending === "yes" ? "✅ מגיע" : "❌ לא מגיע"}
+              ${r.attending === "yes" ? t("badgeYes") : t("badgeNo")}
             </span>
           </td>
           <td class="cell-center">${r.attending === "yes" ? (r.guests || 1) : "—"}</td>
           <td class="cell-notes">${escHtml(r.notes || "")}</td>
           <td class="cell-time">${escHtml(r.timestamp || "")}</td>
           <td class="cell-center">
-            <button class="delete-btn" onclick="deleteRSVP(${r._idx})" title="מחק">🗑️</button>
+            <button class="delete-btn" onclick="deleteRSVP(${r._idx})" title="${t("deleteTitle")}">🗑️</button>
           </td>
         </tr>`
       ).join("");
@@ -325,7 +469,7 @@
     async function saveEventDetails() {
       const btn = document.getElementById("editSaveBtn");
       btn.disabled = true;
-      btn.textContent = "שומר...";
+      btn.textContent = t("saving");
 
       const updates = {
         event_name:     document.getElementById("edit_event_name").value.trim(),
@@ -343,23 +487,23 @@
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify(updates),
         });
-        if (!res.ok) throw new Error("שגיאת שרת");
+        if (!res.ok) throw new Error(t("serverErr"));
         Object.assign(currentEvent, updates);
         document.getElementById("dashTitle").textContent = updates.event_name || currentEvent.event_name;
         closeEditModal();
       } catch (e) {
-        alert("שגיאה בשמירה: " + e.message);
+        alert(t("saveErrPrefix") + e.message);
       } finally {
         btn.disabled = false;
-        btn.textContent = "שמור שינויים";
+        btn.textContent = t("saveBtn");
       }
     }
 
     function exportCSV() {
-      const headers = ["שם", "הגעה", "מספר אורחים", "הערות", "זמן"];
+      const headers = [t("csvName"), t("csvAttending"), t("csvGuests"), t("csvNotes"), t("csvTime")];
       const rows = allRSVPs.map(r => [
         r.name,
-        r.attending === "yes" ? "מגיע" : "לא מגיע",
+        r.attending === "yes" ? t("csvYes") : t("csvNo"),
         r.attending === "yes" ? r.guests : 0,
         r.notes || "",
         r.timestamp || "",
@@ -374,7 +518,19 @@
       a.download = `rsvp-${slug}.csv`;
       a.click();
     }
+
+    // Re-render JS-generated strings (table badges, delete titles, fallback title)
+    // when the language changes. Guarded so it never runs before login/data load.
+    window.addEventListener("langchange", () => {
+      if (document.getElementById("dashboardPage").style.display !== "block") return;
+      try {
+        if (currentEvent && !currentEvent.event_name) {
+          document.getElementById("dashTitle").textContent = t("pageTitle");
+        }
+        renderTable();
+      } catch (e) { /* ignore — data not loaded yet */ }
+    });
   </script>
-  <footer style="text-align:center;padding:24px;color:#9ca3af;font-size:.8rem;margin-top:32px">נוצר ע״י Kupernet Systems</footer>
+  <footer style="text-align:center;padding:24px;color:#9ca3af;font-size:.8rem;margin-top:32px" data-i18n="footerCredit">נוצר ע״י Kupernet Systems</footer>
 </body>
 </html>

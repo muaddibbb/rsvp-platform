@@ -4,108 +4,242 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>אישורי הגעה דיגיטליים | rsvp.kupernet.com</title>
-  <meta name="description" content="צרו דף אישורי הגעה לאירוע שלכם — בר מצווה, חתונה, ברית ועוד. קישור לאורחים, דשבורד ניהול, ₪99 חד-פעמי." />
+  <meta name="description" content="צרו דף אישורי הגעה לאירוע שלכם — בר מצווה, חתונה, ברית ועוד. קישור לאורחים, ממשק ניהול הזמנה, ₪99 חד-פעמי." />
   <link rel="stylesheet" href="style.css" />
+  <!-- Google tag (gtag.js) -->
+  <script async src="https://www.googletagmanager.com/gtag/js?id=AW-18293655759"></script>
+  <script>
+    window.dataLayer = window.dataLayer || [];
+    function gtag(){dataLayer.push(arguments);}
+    gtag('js', new Date());
+    gtag('config', 'AW-18293655759');
+  </script>
+  <style>
+    .nav-tools { display: flex; align-items: center; gap: 10px; }
+    .tool-btn {
+      background: rgba(255,255,255,.12); color: #fff; border: 1px solid rgba(255,255,255,.25);
+      border-radius: 20px; padding: 6px 14px; font-size: .85rem; font-weight: 700;
+      cursor: pointer; transition: background .15s;
+    }
+    .tool-btn:hover { background: rgba(255,255,255,.22); }
+
+    /* ── Dark mode ── */
+    html.dark body { background: #0f172a; color: #e5e7eb; }
+    html.dark .features-section { background: #0f172a; }
+    html.dark .steps-section { background: #111c33; }
+    html.dark .feature-card { background: #1e293b; box-shadow: 0 2px 12px rgba(0,0,0,.4); }
+    html.dark .feature-label { color: #e5e7eb; }
+    html.dark .features-section .section-title,
+    html.dark .steps-section .section-title { color: #f0d080; }
+    html.dark .section-sub, html.dark .step-desc { color: #94a3b8; }
+    html.dark .step-title { color: #e5e7eb; }
+    html.dark .pricing-card { background: #1e293b; }
+    html.dark .price-currency, html.dark .price-amount { color: #f0d080; }
+    html.dark .price-period { color: #94a3b8; }
+    html.dark .pricing-features li { color: #cbd5e1; border-bottom-color: #334155; }
+    html.dark .landing-hero::after { background: #0f172a; }
+
+    /* ── LTR (English) ── */
+    html[dir="ltr"] body { direction: ltr; }
+    html[dir="ltr"] .pricing-features { text-align: left; }
+  </style>
 </head>
 <body>
 
   <!-- Nav -->
   <nav class="landing-nav">
-    <a class="logo" href="/">✡ אישורי הגעה</a>
-    <a class="nav-cta" href="/register.html">צור אירוע עכשיו</a>
+    <a class="logo" href="/">🎉 <span data-i18n="logo">אישורי הגעה</span></a>
+    <div class="nav-tools">
+      <button class="tool-btn" id="langBtn" onclick="toggleLang()">EN</button>
+      <button class="tool-btn" id="themeBtn" onclick="toggleTheme()">🌙</button>
+      <a class="nav-cta" href="/register.html" data-i18n="navCta">צור אירוע עכשיו</a>
+    </div>
   </nav>
+
+  <!-- Banner -->
+  <div class="promo-banner" data-i18n="banner">🎊 אישורי הגעה לאירוע שלכם בלי לקרוע את הכיס!!!</div>
 
   <!-- Hero -->
   <section class="landing-hero">
-    <div class="hero-star">✡</div>
-    <h1 class="hero-tagline">אישורי הגעה דיגיטליים לאירוע שלכם</h1>
-    <p class="hero-sub">
+    <div class="hero-star">🎉</div>
+    <h1 class="hero-tagline" data-i18n="heroTitle">אישורי הגעה דיגיטליים לאירוע שלכם</h1>
+    <p class="hero-sub" data-i18n="heroSub">
       שלחו קישור לאורחים בוואטסאפ, עקבו אחר האישורים בזמן אמת,
       נהלו את הרשימה בקלות — הכל במקום אחד.
     </p>
-    <a class="cta-btn" href="/register.html">צור אירוע עכשיו — ₪99 בלבד 🎉</a>
+    <a class="cta-btn" href="/register.html" data-i18n="heroCta">צור אירוע עכשיו — ₪99 בלבד 🎉</a>
   </section>
 
   <!-- Event Types -->
   <section class="features-section">
-    <h2 class="section-title">מתאים לכל סוגי האירועים</h2>
-    <p class="section-sub">בר מצווה, חתונה, ברית, יום הולדת ועוד — כל אירוע מקבל דף אישי</p>
+    <h2 class="section-title" data-i18n="typesTitle">מתאים לכל סוגי האירועים</h2>
+    <p class="section-sub" data-i18n="typesSub">בר מצווה, חתונה, ברית, יום הולדת ועוד — כל אירוע מקבל דף אישי</p>
     <div class="features-grid">
       <div class="feature-card">
         <div class="feature-icon">🎉</div>
-        <div class="feature-label">בר / בת מצווה</div>
+        <div class="feature-label" data-i18n="typeBm">בר / בת מצווה</div>
       </div>
       <div class="feature-card">
         <div class="feature-icon">💍</div>
-        <div class="feature-label">חתונה</div>
+        <div class="feature-label" data-i18n="typeWedding">חתונה</div>
       </div>
       <div class="feature-card">
         <div class="feature-icon">👶</div>
-        <div class="feature-label">ברית מילה</div>
+        <div class="feature-label" data-i18n="typeBrit">ברית מילה</div>
       </div>
       <div class="feature-card">
         <div class="feature-icon">🎂</div>
-        <div class="feature-label">יום הולדת</div>
+        <div class="feature-label" data-i18n="typeBday">יום הולדת</div>
       </div>
       <div class="feature-card">
         <div class="feature-icon">🎊</div>
-        <div class="feature-label">אירוע משפחתי</div>
+        <div class="feature-label" data-i18n="typeFamily">אירוע משפחתי</div>
       </div>
       <div class="feature-card">
-        <div class="feature-icon">✡</div>
-        <div class="feature-label">כל אירוע אחר</div>
+        <div class="feature-icon">🎉</div>
+        <div class="feature-label" data-i18n="typeOther">כל אירוע אחר</div>
       </div>
     </div>
   </section>
 
   <!-- How it Works -->
   <section class="steps-section">
-    <h2 class="section-title">איך זה עובד?</h2>
-    <p class="section-sub">שלושה שלבים פשוטים — ותוך דקות האירוע שלכם מוכן</p>
+    <h2 class="section-title" data-i18n="stepsTitle">איך זה עובד?</h2>
+    <p class="section-sub" data-i18n="stepsSub">שלושה שלבים פשוטים — ותוך דקות האירוע שלכם מוכן</p>
     <div class="steps-row">
       <div class="step-item">
         <div class="step-number">1</div>
-        <div class="step-title">מלאו פרטי האירוע</div>
-        <div class="step-desc">שם, תאריך, מיקום, ופרטים נוספים לאורחים</div>
+        <div class="step-title" data-i18n="step1Title">מלאו פרטי האירוע</div>
+        <div class="step-desc" data-i18n="step1Desc">שם, תאריך, מיקום, ופרטים נוספים לאורחים</div>
       </div>
       <div class="step-item">
         <div class="step-number">2</div>
-        <div class="step-title">שלמו ₪99 חד-פעמי</div>
-        <div class="step-desc">תשלום מאובטח. ללא מנויים, ללא עלויות נסתרות</div>
+        <div class="step-title" data-i18n="step2Title">שלמו ₪99 חד-פעמי</div>
+        <div class="step-desc" data-i18n="step2Desc">תשלום מאובטח. ללא מנויים, ללא עלויות נסתרות</div>
       </div>
       <div class="step-item">
         <div class="step-number">3</div>
-        <div class="step-title">שתפו בוואטסאפ</div>
-        <div class="step-desc">קישור אישי לאורחים ודשבורד ניהול — ישירות לאימייל</div>
+        <div class="step-title" data-i18n="step3Title">שתפו בוואטסאפ</div>
+        <div class="step-desc" data-i18n="step3Desc">קישור אישי לאורחים וממשק ניהול הזמנה — ישירות לאימייל</div>
       </div>
     </div>
   </section>
 
   <!-- Pricing -->
   <section class="pricing-section">
-    <h2 class="section-title">מחיר פשוט וברור</h2>
-    <p class="section-sub">תשלום חד-פעמי לכל האירוע — ללא הפתעות</p>
+    <h2 class="section-title" data-i18n="priceTitle">מחיר פשוט וברור</h2>
+    <p class="section-sub" data-i18n="priceSub">תשלום חד-פעמי לכל האירוע — ללא הפתעות</p>
     <div class="pricing-card">
       <div class="price-row">
         <span class="price-currency">₪</span><span class="price-amount">99</span>
-        <div class="price-period">תשלום חד-פעמי לאירוע</div>
+        <div class="price-period" data-i18n="pricePeriod">תשלום חד-פעמי לאירוע</div>
       </div>
       <ul class="pricing-features">
-        <li>דף אישורי הגעה לאורחים</li>
-        <li>קישור אישי לשיתוף בוואטסאפ</li>
-        <li>דשבורד ניהול עם סטטיסטיקות</li>
-        <li>עדכון בזמן אמת</li>
-        <li>ניהול ומחיקת אורחים</li>
-        <li>ייצוא לקובץ CSV</li>
-        <li>אימייל אישור עם כל הפרטים</li>
+        <li data-i18n="feat1">דף אישורי הגעה לאורחים</li>
+        <li data-i18n="feat2">קישור אישי לשיתוף בוואטסאפ</li>
+        <li data-i18n="feat3">ממשק ניהול הזמנה עם סטטיסטיקות</li>
+        <li data-i18n="feat4">עדכון בזמן אמת</li>
+        <li data-i18n="feat5">ניהול ומחיקת אורחים</li>
+        <li data-i18n="feat6">ייצוא לקובץ CSV</li>
+        <li data-i18n="feat7">אימייל אישור עם כל הפרטים</li>
       </ul>
-      <a class="pricing-cta" href="/register.html">צור אירוע עכשיו 🎉</a>
+      <a class="pricing-cta" href="/register.html" data-i18n="priceCta">צור אירוע עכשיו 🎉</a>
     </div>
   </section>
 
   <footer class="landing-footer">
-    © 2026 rsvp.kupernet.com · <a href="mailto:info@kupernet.com" style="color:#9ca3af">צור קשר</a>
-    · <a href="/tos.html" style="color:#9ca3af">תנאי שימוש ופרטיות</a>
+    <div data-i18n="credit" style="margin-bottom:6px">נוצר ע״י Kupernet Systems</div>
+    © 2026 rsvp.kupernet.com · <a href="mailto:kupernetservice@gmail.com" style="color:#9ca3af" data-i18n="contact">צור קשר: kupernetservice@gmail.com</a>
+    · <a href="/tos.html" style="color:#9ca3af" data-i18n="tos">תנאי שימוש ופרטיות</a>
   </footer>
+
+  <script>
+    const I18N = {
+      he: {
+        logo: "אישורי הגעה",
+        navCta: "צור אירוע עכשיו",
+        banner: "🎊 אישורי הגעה לאירוע שלכם בלי לקרוע את הכיס!!!",
+        heroTitle: "אישורי הגעה דיגיטליים לאירוע שלכם",
+        heroSub: "שלחו קישור לאורחים בוואטסאפ, עקבו אחר האישורים בזמן אמת, נהלו את הרשימה בקלות — הכל במקום אחד.",
+        heroCta: "צור אירוע עכשיו — ₪99 בלבד 🎉",
+        typesTitle: "מתאים לכל סוגי האירועים",
+        typesSub: "בר מצווה, חתונה, ברית, יום הולדת ועוד — כל אירוע מקבל דף אישי",
+        typeBm: "בר / בת מצווה", typeWedding: "חתונה", typeBrit: "ברית מילה",
+        typeBday: "יום הולדת", typeFamily: "אירוע משפחתי", typeOther: "כל אירוע אחר",
+        stepsTitle: "איך זה עובד?",
+        stepsSub: "שלושה שלבים פשוטים — ותוך דקות האירוע שלכם מוכן",
+        step1Title: "מלאו פרטי האירוע", step1Desc: "שם, תאריך, מיקום, ופרטים נוספים לאורחים",
+        step2Title: "שלמו ₪99 חד-פעמי", step2Desc: "תשלום מאובטח. ללא מנויים, ללא עלויות נסתרות",
+        step3Title: "שתפו בוואטסאפ", step3Desc: "קישור אישי לאורחים וממשק ניהול הזמנה — ישירות לאימייל",
+        priceTitle: "מחיר פשוט וברור",
+        priceSub: "תשלום חד-פעמי לכל האירוע — ללא הפתעות",
+        pricePeriod: "תשלום חד-פעמי לאירוע",
+        feat1: "דף אישורי הגעה לאורחים", feat2: "קישור אישי לשיתוף בוואטסאפ",
+        feat3: "ממשק ניהול הזמנה עם סטטיסטיקות", feat4: "עדכון בזמן אמת",
+        feat5: "ניהול ומחיקת אורחים", feat6: "ייצוא לקובץ CSV",
+        feat7: "אימייל אישור עם כל הפרטים",
+        priceCta: "צור אירוע עכשיו 🎉",
+        contact: "צור קשר: kupernetservice@gmail.com",
+        tos: "תנאי שימוש ופרטיות",
+        credit: "נוצר ע״י Kupernet Systems",
+        title: "אישורי הגעה דיגיטליים | rsvp.kupernet.com",
+      },
+      en: {
+        logo: "RSVP",
+        navCta: "Create Your Event",
+        banner: "🎊 RSVPs for your event — without breaking the bank!!!",
+        heroTitle: "Digital RSVPs for Your Event",
+        heroSub: "Send guests a WhatsApp link, track confirmations in real time, and manage your list with ease — all in one place.",
+        heroCta: "Create your event now — only ₪99 🎉",
+        typesTitle: "Perfect for Every Event",
+        typesSub: "Bar Mitzvah, wedding, brit, birthday and more — every event gets its own page",
+        typeBm: "Bar / Bat Mitzvah", typeWedding: "Wedding", typeBrit: "Brit Milah",
+        typeBday: "Birthday", typeFamily: "Family Event", typeOther: "Any Other Event",
+        stepsTitle: "How Does It Work?",
+        stepsSub: "Three simple steps — your event is ready in minutes",
+        step1Title: "Fill in the details", step1Desc: "Name, date, location and extra info for your guests",
+        step2Title: "Pay ₪99 once", step2Desc: "Secure payment. No subscriptions, no hidden fees",
+        step3Title: "Share on WhatsApp", step3Desc: "Personal guest link and management dashboard — straight to your email",
+        priceTitle: "Simple, Clear Pricing",
+        priceSub: "One-time payment per event — no surprises",
+        pricePeriod: "one-time payment per event",
+        feat1: "RSVP page for your guests", feat2: "Personal link to share on WhatsApp",
+        feat3: "Management dashboard with statistics", feat4: "Real-time updates",
+        feat5: "Manage and remove guests", feat6: "Export to CSV",
+        feat7: "Confirmation email with all the details",
+        priceCta: "Create your event now 🎉",
+        contact: "Contact: kupernetservice@gmail.com",
+        tos: "Terms & Privacy",
+        credit: "Created by Kupernet Systems",
+        title: "Digital RSVPs for Your Event | rsvp.kupernet.com",
+      },
+    };
+
+    let lang  = localStorage.getItem("lang")  || "he";
+    let theme = localStorage.getItem("theme") || "light";
+
+    function applyLang() {
+      const t = I18N[lang];
+      document.querySelectorAll("[data-i18n]").forEach(el => {
+        const key = el.getAttribute("data-i18n");
+        if (t[key]) el.textContent = t[key];
+      });
+      document.documentElement.lang = lang;
+      document.documentElement.dir  = lang === "he" ? "rtl" : "ltr";
+      document.title = t.title;
+      document.getElementById("langBtn").textContent = lang === "he" ? "EN" : "עברית";
+    }
+
+    function applyTheme() {
+      document.documentElement.classList.toggle("dark", theme === "dark");
+      document.getElementById("themeBtn").textContent = theme === "dark" ? "☀️" : "🌙";
+    }
+
+    function toggleLang()  { lang  = lang  === "he" ? "en" : "he";      localStorage.setItem("lang", lang);   applyLang(); }
+    function toggleTheme() { theme = theme === "dark" ? "light" : "dark"; localStorage.setItem("theme", theme); applyTheme(); }
+
+    applyLang();
+    applyTheme();
+  </script>
 </body>
 </html>

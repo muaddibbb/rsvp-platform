@@ -35,7 +35,7 @@ async function generateSlug(eventType, customerName, year) {
   const typeMap = {
     bar_mitzvah: "bm", bat_mitzvah: "btm", wedding: "wedding", brit: "brit",
     brit_bat: "britb", birthday: "bday", bachelor: "bach", bachelorette: "bachette",
-    family: "family", other: "event"
+    henna: "henna", family: "family", other: "event"
   };
   const prefix = typeMap[eventType] || "event";
   const lastName = customerName.trim().split(/\s+/).pop();
@@ -66,7 +66,7 @@ const EVENT_TYPE_LABELS = {
   bar_mitzvah: "בר מצווה", bat_mitzvah: "בת מצווה", wedding: "חתונה",
   brit: "ברית מילה", brit_bat: "בריתה", birthday: "יום הולדת",
   bachelor: "מסיבת רווקים", bachelorette: "מסיבת רווקות",
-  family: "אירוע משפחתי", other: "אירוע",
+  henna: "חינה", family: "אירוע משפחתי", other: "אירוע",
 };
 
 module.exports = async (req, res) => {

@@ -27,6 +27,7 @@ const EVENT_TYPE_LABELS = {
   birthday:     "יום הולדת",
   bachelor:     "מסיבת רווקים",
   bachelorette: "מסיבת רווקות",
+  henna:        "חינה",
   family:       "אירוע משפחתי",
   other:        "אירוע",
 };
@@ -69,7 +70,7 @@ function buildEmail(meta) {
 <body>
 <div class="wrap">
   <div class="hdr">
-    <div class="star">✡</div>
+    <div class="star">🎉</div>
     <h1>${meta.event_name}</h1>
     <p>שלום ${meta.customer_name}, אישורי ההגעה שלך מוכנים!</p>
   </div>
@@ -96,18 +97,18 @@ function buildEmail(meta) {
     <div class="cta-block">
       <p>הקישורים שלך:</p>
       <a class="btn btn-gold" href="${rsvpUrl}">🔗 קישור לאורחים (לשתף בוואטסאפ)</a>
-      <a class="btn btn-navy" href="${dashUrl}">📊 דשבורד ניהול</a>
+      <a class="btn btn-navy" href="${dashUrl}">📊 ממשק ניהול הזמנה</a>
     </div>
 
     <div class="pw-box">
-      <div class="pw-lbl">סיסמת הדשבורד שלך</div>
+      <div class="pw-lbl">סיסמת ממשק ניהול הזמנה שלך</div>
       <div class="pw-val">${meta.dashboard_password}</div>
       <div class="pw-note">שמור את הסיסמה הזו — היא לא תישלח שוב</div>
     </div>
 
     <p class="note">
       שלח את קישור האורחים בוואטסאפ, בהזמנה הדיגיטלית, או בכל דרך שתבחר.
-      בדשבורד תוכל לעקוב אחר האישורים בזמן אמת ולנהל את רשימת האורחים.
+      בממשק ניהול הזמנה תוכל לעקוב אחר האישורים בזמן אמת ולנהל את רשימת האורחים.
     </p>
   </div>
   <div class="footer">נשלח על ידי מערכת אישורי הגעה · rsvp.kupernet.com</div>

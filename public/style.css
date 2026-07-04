@@ -339,6 +339,17 @@ textarea { resize: vertical; }
 .delete-btn:hover { opacity: 1; background: var(--red-light); }
 
 /* ===== Landing Page ===== */
+.promo-banner {
+  background: #c9993a;
+  color: #fff;
+  text-align: center;
+  padding: 16px 24px;
+  font-size: 1.3rem;
+  font-weight: 800;
+  letter-spacing: .01em;
+  line-height: 1.4;
+}
+
 .landing-nav {
   display: flex;
   align-items: center;
@@ -603,3 +614,72 @@ textarea { resize: vertical; }
 .pending-state { color: var(--text-muted); font-size: 1.1rem; }
 .spinner { display: inline-block; width: 24px; height: 24px; border: 3px solid #e5e7eb; border-top-color: var(--navy); border-radius: 50%; animation: spin 0.8s linear infinite; margin-left: 8px; vertical-align: middle; }
 @keyframes spin { to { transform: rotate(360deg); } }
+
+/* ===== Theme toolbar (injected by theme.js) ===== */
+.theme-toolbar { position: fixed; top: 14px; left: 14px; z-index: 999; display: flex; gap: 8px; }
+html[dir="ltr"] .theme-toolbar { left: auto; right: 14px; }
+.theme-tool-btn {
+  background: rgba(15,23,42,.45); color: #fff; border: 1px solid rgba(255,255,255,.35);
+  border-radius: 20px; padding: 6px 13px; font-size: .85rem; font-weight: 700;
+  cursor: pointer; backdrop-filter: blur(4px); transition: background .15s;
+}
+.theme-tool-btn:hover { background: rgba(15,23,42,.7); }
+
+/* ===== LTR (English) ===== */
+html[dir="ltr"] body { direction: ltr; }
+html[dir="ltr"] input[type="text"], html[dir="ltr"] input[type="email"], html[dir="ltr"] input[type="tel"],
+html[dir="ltr"] input[type="date"], html[dir="ltr"] input[type="time"], html[dir="ltr"] input[type="password"],
+html[dir="ltr"] textarea { direction: ltr; }
+html[dir="ltr"] .rsvp-table th { text-align: left; }
+html[dir="ltr"] .pricing-features { text-align: left; }
+
+/* ===== Dark mode ===== */
+html.dark {
+  --bg: #0f172a;
+  --card: #1e293b;
+  --text: #e5e7eb;
+  --text-muted: #94a3b8;
+  --shadow: 0 4px 24px rgba(0,0,0,.45);
+}
+html.dark body { background: var(--bg); color: var(--text); }
+
+/* Headings & labels that use navy (too dark on dark bg) */
+html.dark .form-title, html.dark .form-group label, html.dark .success-card h2,
+html.dark .stat-num, html.dark .feature-label, html.dark .step-title,
+html.dark .register-header h1, html.dark .event-type-card .et-label,
+html.dark .reg-card h2, html.dark .success-page h1,
+html.dark .price-currency, html.dark .price-amount,
+html.dark .features-section .section-title, html.dark .steps-section .section-title,
+html.dark .radio-card.selected, html.dark .counter-value,
+html.dark .preview-card .preview-title, html.dark .cell-name { color: #f0d080; }
+
+/* Inputs */
+html.dark input[type="text"], html.dark input[type="email"], html.dark input[type="tel"],
+html.dark input[type="date"], html.dark input[type="time"], html.dark input[type="password"],
+html.dark textarea {
+  background: #0f172a; border-color: #334155; color: #e5e7eb;
+}
+html.dark input:focus, html.dark textarea:focus { background: #111c33; }
+
+/* Cards & surfaces with hardcoded light backgrounds */
+html.dark .rsvp-table, html.dark .stat-card, html.dark .filter-btn,
+html.dark .feature-card, html.dark .steps-section, html.dark .pricing-card,
+html.dark .wizard-step, html.dark .event-type-card, html.dark .reg-card { background: var(--card); }
+html.dark .filter-btn { color: var(--text); border-color: #334155; }
+html.dark .filter-btn.active { background: var(--gold); border-color: var(--gold); }
+html.dark .search-input { background: var(--card); color: var(--text); border-color: #334155; }
+html.dark .rsvp-table td { border-bottom-color: #334155; }
+html.dark .rsvp-table tr:hover td { background: #263449; }
+html.dark .detail-row { border-bottom-color: #334155; }
+html.dark .counter { background: #111c33; }
+html.dark .radio-card { border-color: #334155; background: var(--card); color: var(--text); }
+html.dark .radio-card:hover { background: #263449; }
+html.dark .radio-card.selected { background: #3a3320; }
+html.dark .event-type-card { border-color: #334155; }
+html.dark .event-type-card:hover { background: #263449; }
+html.dark .event-type-card.selected { background: #1e2f55; }
+html.dark .pricing-features li { color: #cbd5e1; border-bottom-color: #334155; }
+html.dark .price-period { color: var(--text-muted); }
+html.dark .preview-card { background: #1e2f55; }
+html.dark .landing-hero::after { background: var(--bg); }
+html.dark .spinner { border-color: #334155; border-top-color: #f0d080; }

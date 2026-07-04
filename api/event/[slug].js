@@ -18,6 +18,7 @@ module.exports = async (req, res) => {
       .select("id, event_type, event_name, hebrew_date, gregorian_date, event_time, location, address, extra_note")
       .eq("slug", slug)
       .not("paid_at", "is", null)
+      .neq("active", false)
       .maybeSingle();
 
     if (error) throw error;

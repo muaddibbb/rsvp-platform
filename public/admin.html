@@ -1,0 +1,377 @@
+<!DOCTYPE html>
+<html lang="he" dir="rtl">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Super Admin | אישורי הגעה</title>
+  <link rel="stylesheet" href="/style.css" />
+  <script src="/theme.js" defer></script>
+  <style>
+    body { background: #f3f4f6; }
+
+    /* ── Login ── */
+    .login-wrap {
+      min-height: 80vh; display: flex; align-items: center; justify-content: center;
+    }
+    .login-card {
+      background: #fff; border-radius: 16px; padding: 40px 36px;
+      box-shadow: 0 8px 32px rgba(0,0,0,.1); width: 100%; max-width: 360px; text-align: center;
+    }
+    .login-card h1 { color: var(--navy); font-size: 1.4rem; margin-bottom: 6px; }
+    .login-card p  { color: var(--text-muted); font-size: .9rem; margin-bottom: 24px; }
+    .login-card input {
+      width: 100%; padding: 12px 14px; border: 2px solid #e5e7eb; border-radius: 10px;
+      font-size: 1rem; margin-bottom: 14px; box-sizing: border-box; text-align: center;
+      letter-spacing: .1em;
+    }
+    .login-card input:focus { border-color: var(--gold); outline: none; }
+    .login-card button {
+      width: 100%; background: var(--navy); color: #fff; border: none;
+      padding: 13px; border-radius: 10px; font-size: 1rem; cursor: pointer;
+    }
+    .login-card button:hover { opacity: .9; }
+    .login-err { color: #dc2626; font-size: .85rem; margin-top: 10px; }
+
+    /* ── Admin shell ── */
+    .admin-wrap { max-width: 1100px; margin: 0 auto; padding: 32px 20px 80px; }
+
+    .admin-header {
+      display: flex; align-items: center; justify-content: space-between;
+      margin-bottom: 28px; flex-wrap: wrap; gap: 12px;
+    }
+    .admin-header h1 { color: var(--navy); font-size: 1.5rem; }
+    .admin-header button {
+      background: #e5e7eb; color: var(--navy); border: none; padding: 8px 16px;
+      border-radius: 8px; cursor: pointer; font-size: .85rem;
+    }
+
+    /* ── Stats bar ── */
+    .stats-bar { display: flex; gap: 16px; margin-bottom: 28px; flex-wrap: wrap; }
+    .stat-card {
+      background: #fff; border-radius: 12px; padding: 18px 24px;
+      box-shadow: 0 2px 8px rgba(0,0,0,.06); flex: 1; min-width: 140px; text-align: center;
+    }
+    .stat-num  { font-size: 2rem; font-weight: 800; color: var(--navy); }
+    .stat-lbl  { font-size: .8rem; color: var(--text-muted); margin-top: 2px; }
+
+    /* ── Search ── */
+    .search-bar {
+      background: #fff; border: 2px solid #e5e7eb; border-radius: 10px;
+      padding: 10px 16px; width: 100%; max-width: 340px; font-size: .95rem;
+      margin-bottom: 16px; box-sizing: border-box;
+    }
+    .search-bar:focus { border-color: var(--gold); outline: none; }
+
+    /* ── Table ── */
+    .admin-table-wrap {
+      background: #fff; border-radius: 14px; box-shadow: 0 2px 8px rgba(0,0,0,.06);
+      overflow-x: auto;
+    }
+    table { width: 100%; border-collapse: collapse; font-size: .88rem; }
+    th {
+      background: var(--navy); color: #fff; padding: 12px 14px;
+      text-align: right; font-weight: 600; white-space: nowrap;
+    }
+    td { padding: 12px 14px; border-bottom: 1px solid #f3f4f6; vertical-align: middle; }
+    tr:last-child td { border-bottom: none; }
+    tr:hover td { background: #fafafa; }
+
+    .badge {
+      display: inline-block; padding: 3px 10px; border-radius: 20px;
+      font-size: .78rem; font-weight: 600; background: #e0e7ff; color: #3730a3;
+    }
+    .rsvp-count { font-weight: 700; color: var(--navy); }
+    .action-btn {
+      display: inline-block; padding: 5px 10px; border-radius: 6px;
+      font-size: .78rem; text-decoration: none; cursor: pointer; border: none;
+      margin-inline-start: 4px; font-weight: 600;
+    }
+    .btn-rsvp  { background: #fdf5e0; color: #92400e; }
+    .btn-dash  { background: #e0e7ff; color: #3730a3; }
+    .btn-receipt { background: #f0fdf4; color: #166534; }
+    .btn-receipt:hover { background: #bbf7d0; }
+    .btn-refund  { background: #fff1f2; color: #9f1239; }
+    .btn-refund:hover  { background: #fecdd3; }
+    .btn-del   { background: #fee2e2; color: #991b1b; }
+    .btn-del:hover { background: #fca5a5; }
+    .btn-toggle { background: #fef3c7; color: #92400e; }
+    .btn-toggle:hover { background: #fde68a; }
+    tr.inactive td { opacity: .45; }
+    .badge-inactive {
+      display: inline-block; padding: 2px 8px; border-radius: 12px;
+      font-size: .7rem; font-weight: 700; background: #fee2e2; color: #991b1b;
+      margin-inline-start: 6px;
+    }
+
+    .pass-cell { font-family: monospace; font-size: .85rem; letter-spacing: .05em; color: var(--navy); }
+    .empty-state { text-align: center; padding: 48px; color: var(--text-muted); }
+    .loading-row td { text-align: center; padding: 40px; color: var(--text-muted); }
+
+    /* ── Dark mode ── */
+    html.dark body { background: #0f172a; }
+    html.dark .login-card,
+    html.dark .stat-card,
+    html.dark .admin-table-wrap { background: #1e293b; }
+    html.dark .login-card h1,
+    html.dark .stat-num,
+    html.dark .admin-header h1,
+    html.dark .pass-cell,
+    html.dark .rsvp-count { color: #f0d080; }
+    html.dark .login-card input {
+      background: #0f172a; border-color: #334155; color: #e5e7eb;
+    }
+    html.dark .login-card input:focus { border-color: var(--gold); }
+    html.dark .admin-header button { background: #334155; color: #e5e7eb; }
+    html.dark .search-bar { background: #1e293b; border-color: #334155; color: #e5e7eb; }
+    html.dark .search-bar:focus { border-color: var(--gold); }
+    html.dark td { border-bottom-color: #334155; color: #e5e7eb; }
+    html.dark tr:hover td { background: #263449; }
+    html.dark .login-card p,
+    html.dark .stat-lbl,
+    html.dark .empty-state,
+    html.dark .loading-row td { color: #94a3b8; }
+  </style>
+</head>
+<body>
+
+<nav class="landing-nav">
+  <a class="logo" href="/">🎉 אישורי הגעה</a>
+  <span id="adminBadge" style="display:none;background:var(--gold);color:#fff;padding:4px 12px;border-radius:20px;font-size:.8rem;font-weight:700">Super Admin</span>
+</nav>
+
+<!-- Login -->
+<div class="login-wrap" id="loginSection">
+  <div class="login-card">
+    <h1>🔐 כניסת מנהל</h1>
+    <p>גישה לפאנל הניהול הכולל</p>
+    <input type="password" id="adminPass" placeholder="סיסמת מנהל" onkeydown="if(event.key==='Enter')login()" />
+    <button onclick="login()">כניסה</button>
+    <div class="login-err" id="loginErr"></div>
+  </div>
+</div>
+
+<!-- Admin Panel -->
+<div class="admin-wrap" id="adminSection" style="display:none">
+
+  <div class="admin-header">
+    <h1>לוח בקרה — כל האירועים</h1>
+    <button onclick="logout()">יציאה</button>
+  </div>
+
+  <div class="stats-bar">
+    <div class="stat-card">
+      <div class="stat-num" id="statEvents">—</div>
+      <div class="stat-lbl">אירועים פעילים</div>
+    </div>
+    <div class="stat-card">
+      <div class="stat-num" id="statRsvps">—</div>
+      <div class="stat-lbl">סה״כ אישורי הגעה</div>
+    </div>
+    <div class="stat-card">
+      <div class="stat-num" id="statRevenue">—</div>
+      <div class="stat-lbl">הכנסות (₪99 לאירוע)</div>
+    </div>
+  </div>
+
+  <input class="search-bar" type="search" id="searchInput" placeholder="חיפוש לפי שם אירוע, לקוח, אימייל..." oninput="renderTable()" />
+
+  <div class="admin-table-wrap">
+    <table>
+      <thead>
+        <tr>
+          <th>#</th>
+          <th>אירוע</th>
+          <th>סוג</th>
+          <th>תאריך</th>
+          <th>לקוח</th>
+          <th>אימייל</th>
+          <th>אישורים</th>
+          <th>סיסמת ממשק <button onclick="togglePasswords()" id="toggleBtn" style="background:none;border:1px solid rgba(255,255,255,.4);color:#fff;border-radius:6px;padding:2px 8px;font-size:.72rem;cursor:pointer;margin-right:4px">הצג</button></th>
+          <th>נרשם</th>
+          <th>פעולות</th>
+        </tr>
+      </thead>
+      <tbody id="eventsBody">
+        <tr class="loading-row"><td colspan="9">טוען...</td></tr>
+      </tbody>
+    </table>
+    <div class="empty-state" id="emptyState" style="display:none">אין אירועים עדיין</div>
+  </div>
+</div>
+
+<script>
+  const BASE = window.location.origin;
+
+  const EVENT_EMOJI = {
+    bar_mitzvah:"🎉", bat_mitzvah:"🌸", wedding:"💍", brit:"👶",
+    brit_bat:"🎀", birthday:"🎂", bachelor:"🕺", bachelorette:"💃", henna:"🪬",
+    family:"🎊", other:"🎉",
+  };
+  const EVENT_LABELS = {
+    bar_mitzvah:"בר מצווה", bat_mitzvah:"בת מצווה", wedding:"חתונה", brit:"ברית מילה",
+    brit_bat:"בריתה", birthday:"יום הולדת", bachelor:"מסיבת רווקים",
+    bachelorette:"מסיבת רווקות", henna:"חינה", family:"אירוע משפחתי", other:"אחר",
+  };
+
+  let token = sessionStorage.getItem("admin_token") || "";
+  let allEvents = [];
+
+  if (token) attemptLoad();
+
+  async function login() {
+    const pass = document.getElementById("adminPass").value;
+    if (!pass) return;
+    token = pass;
+
+    const res = await fetch("/api/admin-events", {
+      headers: { Authorization: `Bearer ${token}` },
+    });
+    if (res.status === 401) {
+      document.getElementById("loginErr").textContent = "סיסמה שגויה";
+      token = "";
+      return;
+    }
+    sessionStorage.setItem("admin_token", token);
+    const data = await res.json();
+    allEvents = data.events || [];
+    showAdmin();
+  }
+
+  async function attemptLoad() {
+    const res = await fetch("/api/admin-events", {
+      headers: { Authorization: `Bearer ${token}` },
+    });
+    if (!res.ok) { token = ""; sessionStorage.removeItem("admin_token"); return; }
+    const data = await res.json();
+    allEvents = data.events || [];
+    showAdmin();
+  }
+
+  function showAdmin() {
+    document.getElementById("loginSection").style.display = "none";
+    document.getElementById("adminSection").style.display = "block";
+    document.getElementById("adminBadge").style.display = "inline";
+    updateStats();
+    renderTable();
+  }
+
+  function logout() {
+    sessionStorage.removeItem("admin_token");
+    token = "";
+    document.getElementById("adminSection").style.display = "none";
+    document.getElementById("loginSection").style.display = "flex";
+    document.getElementById("adminPass").value = "";
+  }
+
+  function updateStats() {
+    const totalRsvps = allEvents.reduce((s, e) => s + (e.rsvp_count || 0), 0);
+    document.getElementById("statEvents").textContent  = allEvents.length;
+    document.getElementById("statRsvps").textContent   = totalRsvps;
+    document.getElementById("statRevenue").textContent = `₪${allEvents.length * 99}`;
+  }
+
+  function renderTable() {
+    const q = (document.getElementById("searchInput").value || "").toLowerCase();
+    const filtered = allEvents.filter(e =>
+      !q ||
+      (e.event_name || "").toLowerCase().includes(q) ||
+      (e.customer_name || "").toLowerCase().includes(q) ||
+      (e.customer_email || "").toLowerCase().includes(q) ||
+      (e.slug || "").toLowerCase().includes(q)
+    );
+
+    const body = document.getElementById("eventsBody");
+    document.getElementById("emptyState").style.display = filtered.length ? "none" : "block";
+
+    if (!filtered.length) { body.innerHTML = ""; return; }
+
+    body.innerHTML = filtered.map((e, i) => {
+      const date = e.gregorian_date
+        ? new Date(e.gregorian_date + "T12:00:00").toLocaleDateString("he-IL", { day:"numeric", month:"short", year:"numeric" })
+        : "—";
+      const registered = e.paid_at
+        ? new Date(e.paid_at).toLocaleDateString("he-IL", { day:"numeric", month:"short", year:"numeric" })
+        : "—";
+      const emoji = EVENT_EMOJI[e.event_type] || "🎉";
+      const label = EVENT_LABELS[e.event_type] || e.event_type;
+
+      const inactive = e.active === false;
+      return `<tr class="${inactive ? "inactive" : ""}">
+        <td style="color:var(--text-muted)">${i + 1}</td>
+        <td><strong>${e.event_name || "—"}</strong>${inactive ? '<span class="badge-inactive">מושבת</span>' : ""}<br/><span style="font-size:.78rem;color:var(--text-muted)">${e.slug}</span></td>
+        <td><span class="badge">${emoji} ${label}</span></td>
+        <td style="white-space:nowrap">${date}</td>
+        <td>${e.customer_name || "—"}</td>
+        <td style="font-size:.82rem;direction:ltr;text-align:right">${e.customer_email || "—"}</td>
+        <td class="rsvp-count" style="text-align:center">${e.rsvp_count}</td>
+        <td><span class="pass-cell" data-pass="${e.dashboard_password || '—'}">••••••</span></td>
+        <td style="white-space:nowrap;font-size:.82rem">${registered}</td>
+        <td style="white-space:nowrap">
+          <a class="action-btn btn-rsvp" href="${BASE}/rsvp/${e.slug}" target="_blank">RSVP</a>
+          <a class="action-btn btn-dash" href="${BASE}/dashboard/${e.slug}" target="_blank">ממשק</a>
+          <button class="action-btn btn-receipt" onclick="downloadReceipt('${e.slug}', false)">📄 קבלה</button>
+          <button class="action-btn btn-refund"  onclick="downloadReceipt('${e.slug}', true)">↩️ זיכוי</button>
+          <button class="action-btn btn-toggle" onclick="toggleActive('${e.slug}', ${inactive})">${inactive ? "▶️ הפעל" : "⏸️ השבת"}</button>
+          <button class="action-btn btn-del" onclick="deleteEvent('${e.slug}', '${(e.event_name||"").replace(/'/g,"\\'")}')">מחק</button>
+        </td>
+      </tr>`;
+    }).join("");
+  }
+
+  async function toggleActive(slug, activate) {
+    const res = await fetch(`/api/admin-events?slug=${encodeURIComponent(slug)}`, {
+      method: "PATCH",
+      headers: { Authorization: `Bearer ${token}`, "Content-Type": "application/json" },
+      body: JSON.stringify({ active: activate }),
+    });
+    if (!res.ok) { alert("שגיאה בעדכון הסטטוס"); return; }
+    const ev = allEvents.find(e => e.slug === slug);
+    if (ev) ev.active = activate;
+    renderTable();
+  }
+
+  async function downloadReceipt(slug, isRefund = false) {
+    const param    = isRefund ? "refund" : "receipt";
+    const label    = isRefund ? "זיכוי" : "קבלה";
+    const res = await fetch(`/api/admin-events?${param}=1&slug=${encodeURIComponent(slug)}`, {
+      headers: { Authorization: `Bearer ${token}` },
+    });
+    if (!res.ok) { alert(`שגיאה בהורדת ${label}`); return; }
+    const blob = await res.blob();
+    const url  = URL.createObjectURL(blob);
+    const a    = document.createElement("a");
+    a.href     = url;
+    a.download = `${label}-${slug}.pdf`;
+    a.click();
+    URL.revokeObjectURL(url);
+  }
+
+  let passwordsVisible = false;
+  function togglePasswords() {
+    passwordsVisible = !passwordsVisible;
+    document.querySelectorAll(".pass-cell").forEach(el => {
+      el.textContent = passwordsVisible ? el.dataset.pass : "••••••";
+    });
+    document.getElementById("toggleBtn").textContent = passwordsVisible ? "הסתר" : "הצג";
+  }
+
+  async function deleteEvent(slug, name) {
+    if (!confirm(`למחוק את האירוע "${name}" ואת כל אישורי ההגעה שלו?\n\nפעולה זו אינה הפיכה.`)) return;
+
+    const res = await fetch(`/api/admin-events?slug=${encodeURIComponent(slug)}`, {
+      method: "DELETE",
+      headers: { Authorization: `Bearer ${token}` },
+    });
+    if (!res.ok) { alert("שגיאה במחיקה"); return; }
+
+    allEvents = allEvents.filter(e => e.slug !== slug);
+    updateStats();
+    renderTable();
+  }
+</script>
+
+<footer class="landing-footer">
+  © 2026 rsvp.kupernet.com — Admin Panel
+</footer>
+</body>
+</html>

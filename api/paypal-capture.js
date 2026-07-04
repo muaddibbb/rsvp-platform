@@ -40,7 +40,7 @@ const EVENT_TYPE_LABELS = {
   bar_mitzvah:"בר מצווה", bat_mitzvah:"בת מצווה", wedding:"חתונה",
   brit:"ברית מילה", brit_bat:"בריתה", birthday:"יום הולדת",
   bachelor:"מסיבת רווקים", bachelorette:"מסיבת רווקות",
-  family:"אירוע משפחתי", other:"אחר",
+  henna:"חינה", family:"אירוע משפחתי", other:"אחר",
 };
 
 async function getAccessToken() {
@@ -84,7 +84,7 @@ module.exports = async (req, res) => {
 
     // 2. Generate slug
     const year = new Date(formData.gregorian_date + "T12:00:00").getFullYear();
-    const typeMap = { bar_mitzvah:"bm", bat_mitzvah:"btm", wedding:"wedding", brit:"brit", brit_bat:"britb", birthday:"bday", bachelor:"bach", bachelorette:"bachette", family:"family", other:"event" };
+    const typeMap = { bar_mitzvah:"bm", bat_mitzvah:"btm", wedding:"wedding", brit:"brit", brit_bat:"britb", birthday:"bday", bachelor:"bach", bachelorette:"bachette", henna:"henna", family:"family", other:"event" };
     const prefix = typeMap[formData.event_type] || "event";
     const lastName = (formData.customer_name || "").trim().split(/\s+/).pop();
     const base = `${prefix}-${hebrewToLatin(lastName) || "il"}-${year}`;
@@ -134,9 +134,9 @@ module.exports = async (req, res) => {
         <strong>תאריך:</strong> ${formData.gregorian_date}<br/>
         <strong>מקום:</strong> ${formData.location}</p>
         <p><a href="${rsvpUrl}" style="background:#c9993a;color:#fff;padding:12px 20px;border-radius:8px;text-decoration:none;display:inline-block;margin-bottom:8px">🔗 קישור לאורחים</a></p>
-        <p><a href="${dashUrl}" style="background:#1a2744;color:#fff;padding:12px 20px;border-radius:8px;text-decoration:none;display:inline-block">📊 דשבורד ניהול</a></p>
+        <p><a href="${dashUrl}" style="background:#1a2744;color:#fff;padding:12px 20px;border-radius:8px;text-decoration:none;display:inline-block">📊 ממשק ניהול הזמנה</a></p>
         <p style="background:#fdf5e0;border:2px dashed #c9993a;border-radius:8px;padding:16px;text-align:center">
-          סיסמת דשבורד: <strong style="font-size:1.3rem;letter-spacing:.1em">${dashboard_password}</strong>
+          סיסמת ממשק ניהול הזמנה: <strong style="font-size:1.3rem;letter-spacing:.1em">${dashboard_password}</strong>
         </p>
         <p style="font-size:.82rem;color:#6b7280;background:#f3f4f6;border-radius:8px;padding:10px 14px;margin-top:16px;line-height:1.6">
           🗓️ תזכורת: האירוע ונתוני האורחים יימחקו אוטומטית חודש אחד לאחר תאריך האירוע (${formData.gregorian_date}).
@@ -169,6 +169,26 @@ module.exports = async (req, res) => {
       );
     } catch (e) {
       console.error("Receipt email error:", e);
+    }
+
+    // 4c. Admin notification
+    try {
+      await sendEmail(
+        "kuperoy@gmail.com",
+        `💰 הזמנה חדשה: ${formData.event_name} (₪99)`,
+        `<div dir="rtl" style="font-family:Arial;padding:24px;max-width:520px">
+          <h2 style="color:#1a2744">הזמנה חדשה התקבלה 💰</h2>
+          <p><strong>אירוע:</strong> ${formData.event_name} (${typeLabel})<br/>
+          <strong>תאריך האירוע:</strong> ${formData.gregorian_date}<br/>
+          <strong>לקוח:</strong> ${name}<br/>
+          <strong>אימייל:</strong> ${email}<br/>
+          <strong>טלפון:</strong> ${formData.customer_phone || "—"}<br/>
+          <strong>Slug:</strong> ${slug}</p>
+          <p><a href="${BASE_URL}/admin">פתח את פאנל הניהול</a></p>
+        </div>`
+      );
+    } catch (e) {
+      console.error("Admin notification error:", e);
     }
 
     console.log(`✅ Event created via PayPal: ${slug}`);

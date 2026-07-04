@@ -5,18 +5,172 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>יצירת אירוע | אישורי הגעה</title>
   <link rel="stylesheet" href="style.css" />
-  <script src="https://www.paypal.com/sdk/js?client-id=Ad-TcQioZH3mgDeSQRlmfCwecLBOjikftYqeM2xI4U4NzEaGRw8feDyC3lJW7rW8UTf7lldAX_Ayq2sM&currency=ILS"></script>
+  <script>
+    window.PAGE_I18N = {
+      he: {
+        pageTitle: "יצירת אירוע | אישורי הגעה",
+        navLogo: "🎉 אישורי הגעה",
+        headerTitle: "יצירת אירוע חדש",
+        headerSub: "מלאו את הפרטים ותוך דקות האירוע שלכם מוכן",
+        step1Title: "פרטי האירוע",
+        eventTypeLabel: "סוג האירוע *",
+        et_bar_mitzvah: "בר מצווה",
+        et_bat_mitzvah: "בת מצווה",
+        et_wedding: "חתונה",
+        et_brit: "ברית מילה",
+        et_brit_bat: "בריתה",
+        et_birthday: "יום הולדת",
+        et_bachelor: "מסיבת רווקים",
+        et_bachelorette: "מסיבת רווקות",
+        et_henna: "חינה",
+        et_family: "אירוע משפחתי",
+        et_other: "אחר",
+        eventNameLabel: "שם האירוע *",
+        eventNamePh: "למשל: בר המצווה של יונתן",
+        dateLabel: "תאריך *",
+        timeLabel: "שעה *",
+        hebrewDateLabel: "תאריך עברי (אופציונלי)",
+        hebrewDatePh: "למשל: כ״ח בסיוון תשפ״ו",
+        locationLabel: "שם האולם / המקום *",
+        locationPh: "למשל: אולם טרומפטה",
+        addressLabel: "כתובת *",
+        addressPh: "למשל: רחוב הדגן 22, חיפה",
+        extraNoteLabel: "הערה נוספת לאורחים (אופציונלי)",
+        extraNotePh: "למשל: טקס הנחת תפילין בשעה 16:00 ב...",
+        toStep2Btn: "המשך לפרטי המארגן ←",
+        step2Title: "פרטי המארגן",
+        fullNameLabel: "שם מלא *",
+        fullNamePh: "שם ומשפחה",
+        emailLabel: "אימייל *",
+        emailHint: "(לאן ישלח האימייל עם הקישורים)",
+        phoneLabel: "טלפון (אופציונלי)",
+        backBtn: "→ חזור",
+        toStep3Btn: "המשך לתצוגה מקדימה ←",
+        step3Title: "תצוגה מקדימה ואישור",
+        afterPayNote: "לאחר התשלום יישלח אימייל עם קישור האורחים וקישור ממשק ניהול הזמנה. התשלום מאובטח דרך PayPal.",
+        retentionNote: "🗓️ האירוע ונתוני האורחים יימחקו אוטומטית חודש אחד לאחר תאריך האירוע.",
+        tosPrefix: "קראתי ואני מסכים/ה ל",
+        tosLink: "תנאי השימוש ומדיניות הפרטיות",
+        footerText: "נוצר ע״י Kupernet Systems",
+        errSelectType: "נא לבחור סוג אירוע",
+        errEventName: "נא להזין שם אירוע",
+        errDate: "נא לבחור תאריך",
+        errPastDate: "לא ניתן לבחור תאריך שעבר",
+        errTime: "נא להזין שעה",
+        errLocation: "נא להזין שם המקום",
+        errAddress: "נא להזין כתובת",
+        errFullName: "נא להזין שם מלא",
+        errEmail: "נא להזין אימייל תקין",
+        errPhone: "מספר טלפון לא תקין. הכנס מספר ישראלי כגון 050-1234567",
+        errTos: "יש לאשר את תנאי השימוש לפני התשלום",
+        errPaypalPrefix: "שגיאת PayPal: ",
+        errPrefix: "שגיאה: ",
+        errServer: "שגיאה בשרת",
+        errPaypalLoad: "שגיאה בטעינת PayPal: ",
+        prevType: "סוג",
+        prevDate: "תאריך",
+        prevTime: "שעה",
+        prevLocation: "מיקום",
+        prevAddress: "כתובת",
+        prevNote: "הערה",
+        prevEmail: "אימייל",
+      },
+      en: {
+        pageTitle: "Create Event | RSVP",
+        navLogo: "🎉 RSVP",
+        headerTitle: "Create a New Event",
+        headerSub: "Fill in the details and your event will be ready in minutes",
+        step1Title: "Event Details",
+        eventTypeLabel: "Event Type *",
+        et_bar_mitzvah: "Bar Mitzvah",
+        et_bat_mitzvah: "Bat Mitzvah",
+        et_wedding: "Wedding",
+        et_brit: "Brit Milah",
+        et_brit_bat: "Brita",
+        et_birthday: "Birthday",
+        et_bachelor: "Bachelor Party",
+        et_bachelorette: "Bachelorette Party",
+        et_henna: "Henna",
+        et_family: "Family Event",
+        et_other: "Other",
+        eventNameLabel: "Event Name *",
+        eventNamePh: "e.g. Jonathan's Bar Mitzvah",
+        dateLabel: "Date *",
+        timeLabel: "Time *",
+        hebrewDateLabel: "Hebrew Date (optional)",
+        hebrewDatePh: "e.g. 28 Sivan 5786",
+        locationLabel: "Venue / Place Name *",
+        locationPh: "e.g. Trumpeta Hall",
+        addressLabel: "Address *",
+        addressPh: "e.g. 22 Hadagan St., Haifa",
+        extraNoteLabel: "Additional note for guests (optional)",
+        extraNotePh: "e.g. Tefillin ceremony at 16:00 at...",
+        toStep2Btn: "Continue to Organizer Details →",
+        step2Title: "Organizer Details",
+        fullNameLabel: "Full Name *",
+        fullNamePh: "First and last name",
+        emailLabel: "Email *",
+        emailHint: "(where the email with the links will be sent)",
+        phoneLabel: "Phone (optional)",
+        backBtn: "← Back",
+        toStep3Btn: "Continue to Preview →",
+        step3Title: "Preview & Confirm",
+        afterPayNote: "After payment, an email will be sent with the guest link and the event management link. Payment is secured via PayPal.",
+        retentionNote: "🗓️ The event and guest data will be deleted automatically one month after the event date.",
+        tosPrefix: "I have read and agree to the ",
+        tosLink: "Terms of Use & Privacy Policy",
+        footerText: "Created by Kupernet Systems",
+        errSelectType: "Please select an event type",
+        errEventName: "Please enter an event name",
+        errDate: "Please choose a date",
+        errPastDate: "You cannot choose a date in the past",
+        errTime: "Please enter a time",
+        errLocation: "Please enter the venue name",
+        errAddress: "Please enter an address",
+        errFullName: "Please enter your full name",
+        errEmail: "Please enter a valid email",
+        errPhone: "Invalid phone number. Enter an Israeli number such as 050-1234567",
+        errTos: "Please accept the Terms of Use before paying",
+        errPaypalPrefix: "PayPal error: ",
+        errPrefix: "Error: ",
+        errServer: "Server error",
+        errPaypalLoad: "Error loading PayPal: ",
+        prevType: "Type",
+        prevDate: "Date",
+        prevTime: "Time",
+        prevLocation: "Location",
+        prevAddress: "Address",
+        prevNote: "Note",
+        prevEmail: "Email",
+      },
+    };
+  </script>
+  <script src="/theme.js" defer></script>
+  <style>
+    /* Page-specific dark-mode overrides for hardcoded light inline styles */
+    html.dark .retention-note { background: #374151 !important; }
+    html.dark .preview-divider { border-top-color: #4b5563 !important; }
+    html.dark .page-footer { color: #6b7280 !important; }
+  </style>
+  <!-- Google tag (gtag.js) -->
+  <script async src="https://www.googletagmanager.com/gtag/js?id=AW-18293655759"></script>
+  <script>
+    window.dataLayer = window.dataLayer || [];
+    function gtag(){dataLayer.push(arguments);}
+    gtag('js', new Date());
+    gtag('config', 'AW-18293655759');
+  </script>
 </head>
 <body>
 
   <nav class="landing-nav">
-    <a class="logo" href="/">✡ אישורי הגעה</a>
+    <a class="logo" href="/" data-i18n="navLogo">🎉 אישורי הגעה</a>
   </nav>
 
   <div class="register-page">
     <div class="register-header">
-      <h1>יצירת אירוע חדש</h1>
-      <p>מלאו את הפרטים ותוך דקות האירוע שלכם מוכן</p>
+      <h1 data-i18n="headerTitle">יצירת אירוע חדש</h1>
+      <p data-i18n="headerSub">מלאו את הפרטים ותוך דקות האירוע שלכם מוכן</p>
     </div>
 
     <!-- Wizard Steps Indicator -->
@@ -31,117 +185,121 @@
     <!-- Step 1: Event Details -->
     <div class="step-panel active" id="panel1">
       <div class="reg-card">
-        <h2>פרטי האירוע</h2>
+        <h2 data-i18n="step1Title">פרטי האירוע</h2>
 
         <div class="form-group">
-          <label>סוג האירוע *</label>
+          <label data-i18n="eventTypeLabel">סוג האירוע *</label>
           <div class="event-type-grid" id="eventTypeGrid">
             <div class="event-type-card" data-value="bar_mitzvah" onclick="selectEventType(this)">
               <div class="et-icon">🎉</div>
-              <div class="et-label">בר מצווה</div>
+              <div class="et-label" data-i18n="et_bar_mitzvah">בר מצווה</div>
             </div>
             <div class="event-type-card" data-value="bat_mitzvah" onclick="selectEventType(this)">
               <div class="et-icon">🌸</div>
-              <div class="et-label">בת מצווה</div>
+              <div class="et-label" data-i18n="et_bat_mitzvah">בת מצווה</div>
             </div>
             <div class="event-type-card" data-value="wedding" onclick="selectEventType(this)">
               <div class="et-icon">💍</div>
-              <div class="et-label">חתונה</div>
+              <div class="et-label" data-i18n="et_wedding">חתונה</div>
             </div>
             <div class="event-type-card" data-value="brit" onclick="selectEventType(this)">
               <div class="et-icon">👶</div>
-              <div class="et-label">ברית מילה</div>
+              <div class="et-label" data-i18n="et_brit">ברית מילה</div>
             </div>
             <div class="event-type-card" data-value="brit_bat" onclick="selectEventType(this)">
               <div class="et-icon">🎀</div>
-              <div class="et-label">בריתה</div>
+              <div class="et-label" data-i18n="et_brit_bat">בריתה</div>
             </div>
             <div class="event-type-card" data-value="birthday" onclick="selectEventType(this)">
               <div class="et-icon">🎂</div>
-              <div class="et-label">יום הולדת</div>
+              <div class="et-label" data-i18n="et_birthday">יום הולדת</div>
             </div>
             <div class="event-type-card" data-value="bachelor" onclick="selectEventType(this)">
               <div class="et-icon">🕺</div>
-              <div class="et-label">מסיבת רווקים</div>
+              <div class="et-label" data-i18n="et_bachelor">מסיבת רווקים</div>
             </div>
             <div class="event-type-card" data-value="bachelorette" onclick="selectEventType(this)">
               <div class="et-icon">💃</div>
-              <div class="et-label">מסיבת רווקות</div>
+              <div class="et-label" data-i18n="et_bachelorette">מסיבת רווקות</div>
+            </div>
+            <div class="event-type-card" data-value="henna" onclick="selectEventType(this)">
+              <div class="et-icon">🪬</div>
+              <div class="et-label" data-i18n="et_henna">חינה</div>
             </div>
             <div class="event-type-card" data-value="family" onclick="selectEventType(this)">
               <div class="et-icon">🎊</div>
-              <div class="et-label">אירוע משפחתי</div>
+              <div class="et-label" data-i18n="et_family">אירוע משפחתי</div>
             </div>
             <div class="event-type-card" data-value="other" onclick="selectEventType(this)">
-              <div class="et-icon">✡</div>
-              <div class="et-label">אחר</div>
+              <div class="et-icon">🎉</div>
+              <div class="et-label" data-i18n="et_other">אחר</div>
             </div>
           </div>
         </div>
 
         <div class="form-group">
-          <label for="eventName">שם האירוע *</label>
-          <input type="text" id="eventName" placeholder='למשל: בר המצווה של יונתן' />
+          <label for="eventName" data-i18n="eventNameLabel">שם האירוע *</label>
+          <input type="text" id="eventName" placeholder='למשל: בר המצווה של יונתן' data-i18n-ph="eventNamePh" />
         </div>
 
         <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px">
           <div class="form-group">
-            <label for="gregorianDate">תאריך *</label>
+            <label for="gregorianDate" data-i18n="dateLabel">תאריך *</label>
             <input type="date" id="gregorianDate" />
           </div>
           <div class="form-group">
-            <label for="eventTime">שעה *</label>
+            <label for="eventTime" data-i18n="timeLabel">שעה *</label>
             <input type="time" id="eventTime" />
           </div>
         </div>
 
         <div class="form-group">
-          <label for="hebrewDate">תאריך עברי (אופציונלי)</label>
-          <input type="text" id="hebrewDate" placeholder='למשל: כ״ח בסיוון תשפ״ו' />
+          <label for="hebrewDate" data-i18n="hebrewDateLabel">תאריך עברי (אופציונלי)</label>
+          <input type="text" id="hebrewDate" placeholder='למשל: כ״ח בסיוון תשפ״ו' data-i18n-ph="hebrewDatePh" />
         </div>
 
         <div class="form-group">
-          <label for="location">שם האולם / המקום *</label>
-          <input type="text" id="location" placeholder='למשל: אולם טרומפטה' />
+          <label for="location" data-i18n="locationLabel">שם האולם / המקום *</label>
+          <input type="text" id="location" placeholder='למשל: אולם טרומפטה' data-i18n-ph="locationPh" />
         </div>
 
         <div class="form-group">
-          <label for="address">כתובת *</label>
-          <input type="text" id="address" placeholder='למשל: רחוב הדגן 22, חיפה' />
+          <label for="address" data-i18n="addressLabel">כתובת *</label>
+          <input type="text" id="address" placeholder='למשל: רחוב הדגן 22, חיפה' data-i18n-ph="addressPh" />
         </div>
 
         <div class="form-group">
-          <label for="extraNote">הערה נוספת לאורחים (אופציונלי)</label>
-          <textarea id="extraNote" rows="2" placeholder='למשל: טקס הנחת תפילין בשעה 16:00 ב...'></textarea>
+          <label for="extraNote" data-i18n="extraNoteLabel">הערה נוספת לאורחים (אופציונלי)</label>
+          <textarea id="extraNote" rows="2" placeholder='למשל: טקס הנחת תפילין בשעה 16:00 ב...' data-i18n-ph="extraNotePh"></textarea>
         </div>
 
-        <button class="submit-btn" onclick="goToStep2()">המשך לפרטי המארגן ←</button>
+        <button class="submit-btn" onclick="goToStep2()" data-i18n="toStep2Btn">המשך לפרטי המארגן ←</button>
       </div>
     </div>
 
     <!-- Step 2: Organizer Details -->
     <div class="step-panel" id="panel2">
       <div class="reg-card">
-        <h2>פרטי המארגן</h2>
+        <h2 data-i18n="step2Title">פרטי המארגן</h2>
 
         <div class="form-group">
-          <label for="customerName">שם מלא *</label>
-          <input type="text" id="customerName" placeholder='שם ומשפחה' autocomplete="name" />
+          <label for="customerName" data-i18n="fullNameLabel">שם מלא *</label>
+          <input type="text" id="customerName" placeholder='שם ומשפחה' autocomplete="name" data-i18n-ph="fullNamePh" />
         </div>
 
         <div class="form-group">
-          <label for="customerEmail">אימייל * <span style="font-weight:400;color:var(--text-muted)">(לאן ישלח האימייל עם הקישורים)</span></label>
+          <label for="customerEmail"><span data-i18n="emailLabel">אימייל *</span> <span style="font-weight:400;color:var(--text-muted)" data-i18n="emailHint">(לאן ישלח האימייל עם הקישורים)</span></label>
           <input type="email" id="customerEmail" placeholder='your@email.com' autocomplete="email" />
         </div>
 
         <div class="form-group">
-          <label for="customerPhone">טלפון (אופציונלי)</label>
+          <label for="customerPhone" data-i18n="phoneLabel">טלפון (אופציונלי)</label>
           <input type="tel" id="customerPhone" placeholder='050-0000000' autocomplete="tel" />
         </div>
 
         <div class="btn-row">
-          <button class="back-btn" onclick="goToStep(1)">→ חזור</button>
-          <button class="submit-btn next-btn" onclick="goToStep3()">המשך לתצוגה מקדימה ←</button>
+          <button class="back-btn" onclick="goToStep(1)" data-i18n="backBtn">→ חזור</button>
+          <button class="submit-btn next-btn" onclick="goToStep3()" data-i18n="toStep3Btn">המשך לתצוגה מקדימה ←</button>
         </div>
       </div>
     </div>
@@ -149,28 +307,28 @@
     <!-- Step 3: Preview + Checkout -->
     <div class="step-panel" id="panel3">
       <div class="reg-card">
-        <h2>תצוגה מקדימה ואישור</h2>
+        <h2 data-i18n="step3Title">תצוגה מקדימה ואישור</h2>
 
         <div class="preview-card" id="previewCard">
           <!-- filled by JS -->
         </div>
 
-        <p style="color:var(--text-muted);font-size:.9rem;margin-bottom:12px;line-height:1.6">
-          לאחר התשלום יישלח אימייל עם קישור האורחים וקישור הדשבורד.
+        <p style="color:var(--text-muted);font-size:.9rem;margin-bottom:12px;line-height:1.6" data-i18n="afterPayNote">
+          לאחר התשלום יישלח אימייל עם קישור האורחים וקישור ממשק ניהול הזמנה.
           התשלום מאובטח דרך PayPal.
         </p>
-        <p style="font-size:.82rem;color:var(--text-muted);background:#f3f4f6;border-radius:8px;padding:10px 14px;margin-bottom:20px;line-height:1.6">
+        <p class="retention-note" style="font-size:.82rem;color:var(--text-muted);background:#f3f4f6;border-radius:8px;padding:10px 14px;margin-bottom:20px;line-height:1.6" data-i18n="retentionNote">
           🗓️ האירוע ונתוני האורחים יימחקו אוטומטית חודש אחד לאחר תאריך האירוע.
         </p>
 
         <div class="btn-row" style="margin-bottom:12px">
-          <button class="back-btn" onclick="goToStep(2)">→ חזור</button>
+          <button class="back-btn" onclick="goToStep(2)" data-i18n="backBtn">→ חזור</button>
         </div>
 
         <div style="margin-bottom:16px;font-size:.85rem;color:var(--text-muted)">
           <label style="display:flex;align-items:flex-start;gap:8px;cursor:pointer">
             <input type="checkbox" id="tosCheck" style="margin-top:3px;flex-shrink:0" />
-            <span>קראתי ואני מסכים/ה ל<a href="/tos.html" target="_blank" style="color:var(--gold)">תנאי השימוש ומדיניות הפרטיות</a></span>
+            <span><span data-i18n="tosPrefix">קראתי ואני מסכים/ה ל</span><a href="/tos.html" target="_blank" style="color:var(--gold)" data-i18n="tosLink">תנאי השימוש ומדיניות הפרטיות</a></span>
           </label>
         </div>
         <div id="paypal-button-container"></div>
@@ -189,6 +347,7 @@
       birthday:     "יום הולדת",
       bachelor:     "מסיבת רווקים",
       bachelorette: "מסיבת רווקות",
+      henna:        "חינה",
       family:       "אירוע משפחתי",
       other:        "אחר",
     };
@@ -210,17 +369,18 @@
     }
 
     function goToStep2() {
-      if (!formData.event_type) return showError("נא לבחור סוג אירוע");
+      if (!formData.event_type) return showError(t("errSelectType"));
       const name = document.getElementById("eventName").value.trim();
       const date = document.getElementById("gregorianDate").value;
       const time = document.getElementById("eventTime").value;
       const loc  = document.getElementById("location").value.trim();
       const addr = document.getElementById("address").value.trim();
-      if (!name) return showError("נא להזין שם אירוע");
-      if (!date) return showError("נא לבחור תאריך");
-      if (!time) return showError("נא להזין שעה");
-      if (!loc)  return showError("נא להזין שם המקום");
-      if (!addr) return showError("נא להזין כתובת");
+      if (!name) return showError(t("errEventName"));
+      if (!date) return showError(t("errDate"));
+      if (date < new Date().toISOString().slice(0, 10)) return showError(t("errPastDate"));
+      if (!time) return showError(t("errTime"));
+      if (!loc)  return showError(t("errLocation"));
+      if (!addr) return showError(t("errAddress"));
 
       formData.event_name     = name;
       formData.gregorian_date = date;
@@ -236,12 +396,19 @@
     function goToStep3() {
       const name  = document.getElementById("customerName").value.trim();
       const email = document.getElementById("customerEmail").value.trim();
-      if (!name)  return showError("נא להזין שם מלא");
-      if (!email || !/^\S+@\S+\.\S+$/.test(email)) return showError("נא להזין אימייל תקין");
+      if (!name)  return showError(t("errFullName"));
+      if (!email || !/^\S+@\S+\.\S+$/.test(email)) return showError(t("errEmail"));
 
+      const phone = document.getElementById("customerPhone").value.trim();
+      if (phone) {
+        const digits = phone.replace(/[\s\-().+]/g, "");
+        const local  = digits.startsWith("972") ? "0" + digits.slice(3) : digits;
+        if (!/^0[0-9]{8,9}$/.test(local))
+          return showError(t("errPhone"));
+      }
       formData.customer_name  = name;
       formData.customer_email = email;
-      formData.customer_phone = document.getElementById("customerPhone").value.trim();
+      formData.customer_phone = phone;
 
       renderPreview();
       goToStep(3);
@@ -249,24 +416,32 @@
     }
 
     function renderPreview() {
-      const typeLabel = EVENT_TYPE_LABELS[formData.event_type] || formData.event_type;
+      const typeKey   = "et_" + formData.event_type;
+      let typeLabel   = t(typeKey);
+      if (typeLabel === typeKey) typeLabel = EVENT_TYPE_LABELS[formData.event_type] || formData.event_type;
+      const dateLocale = (window.getLang && getLang() === "en") ? "en-US" : "he-IL";
       const dateFormatted = formData.gregorian_date
-        ? new Date(formData.gregorian_date + "T12:00:00").toLocaleDateString("he-IL", { day:"numeric", month:"long", year:"numeric" })
+        ? new Date(formData.gregorian_date + "T12:00:00").toLocaleDateString(dateLocale, { day:"numeric", month:"long", year:"numeric" })
         : "";
 
       document.getElementById("previewCard").innerHTML = `
         <div class="preview-title">${formData.event_name}</div>
-        <div class="preview-row"><span class="preview-lbl">סוג</span><span class="preview-val">${typeLabel}</span></div>
-        <div class="preview-row"><span class="preview-lbl">תאריך</span><span class="preview-val">${formData.hebrew_date ? formData.hebrew_date + " · " : ""}${dateFormatted}</span></div>
-        <div class="preview-row"><span class="preview-lbl">שעה</span><span class="preview-val">${formData.event_time}</span></div>
-        <div class="preview-row"><span class="preview-lbl">מיקום</span><span class="preview-val">${formData.location}</span></div>
-        <div class="preview-row"><span class="preview-lbl">כתובת</span><span class="preview-val">${formData.address}</span></div>
-        ${formData.extra_note ? `<div class="preview-row"><span class="preview-lbl">הערה</span><span class="preview-val">${formData.extra_note}</span></div>` : ""}
-        <div class="preview-row" style="margin-top:4px;border-top:2px solid #e5e7eb;padding-top:12px">
-          <span class="preview-lbl">אימייל</span><span class="preview-val">${formData.customer_email}</span>
+        <div class="preview-row"><span class="preview-lbl">${t("prevType")}</span><span class="preview-val">${typeLabel}</span></div>
+        <div class="preview-row"><span class="preview-lbl">${t("prevDate")}</span><span class="preview-val">${formData.hebrew_date ? formData.hebrew_date + " · " : ""}${dateFormatted}</span></div>
+        <div class="preview-row"><span class="preview-lbl">${t("prevTime")}</span><span class="preview-val">${formData.event_time}</span></div>
+        <div class="preview-row"><span class="preview-lbl">${t("prevLocation")}</span><span class="preview-val">${formData.location}</span></div>
+        <div class="preview-row"><span class="preview-lbl">${t("prevAddress")}</span><span class="preview-val">${formData.address}</span></div>
+        ${formData.extra_note ? `<div class="preview-row"><span class="preview-lbl">${t("prevNote")}</span><span class="preview-val">${formData.extra_note}</span></div>` : ""}
+        <div class="preview-row preview-divider" style="margin-top:4px;border-top:2px solid #e5e7eb;padding-top:12px">
+          <span class="preview-lbl">${t("prevEmail")}</span><span class="preview-val">${formData.customer_email}</span>
         </div>
       `;
     }
+
+    // Re-render the preview card in the new language if it's already populated
+    window.addEventListener("langchange", () => {
+      if (formData.customer_email) renderPreview();
+    });
 
     function goToStep(n) {
       // Hide all panels
@@ -289,26 +464,53 @@
     }
 
     let paypalInitialized = false;
+    let lastPaypalError   = null;
 
-    function initPayPalButtons() {
+    async function initPayPalButtons() {
       if (paypalInitialized) return;
-      if (typeof paypal === "undefined") { setTimeout(initPayPalButtons, 150); return; }
+
+      // Load SDK dynamically using client ID from server (works for both sandbox & live)
+      if (typeof paypal === "undefined") {
+        const { clientId } = await fetch("/api/paypal-config").then(r => r.json());
+        await new Promise((resolve, reject) => {
+          const s = document.createElement("script");
+          s.src = `https://www.paypal.com/sdk/js?client-id=${clientId}&currency=ILS&intent=capture`;
+          s.onload = resolve;
+          s.onerror = reject;
+          document.head.appendChild(s);
+        });
+      }
+
       paypalInitialized = true;
 
       paypal.Buttons({
         style: { layout: "vertical", color: "gold", shape: "rect", label: "pay" },
 
         createOrder: async () => {
+          lastPaypalError = null;
           if (!document.getElementById("tosCheck").checked) {
-            document.getElementById("checkoutError").textContent = "יש לאשר את תנאי השימוש לפני התשלום";
+            lastPaypalError = t("errTos");
+            document.getElementById("checkoutError").textContent = lastPaypalError;
             document.getElementById("checkoutError").style.display = "block";
-            throw new Error("ToS not accepted");
+            throw new Error(lastPaypalError);
           }
           document.getElementById("checkoutError").style.display = "none";
-          const res = await fetch("/api/paypal-create-order", { method: "POST" });
-          const data = await res.json();
-          if (!data.id) throw new Error("שגיאה ביצירת הזמנה");
-          return data.id;
+          try {
+            const res  = await fetch("/api/paypal-create-order", { method: "POST" });
+            const data = await res.json();
+            if (!data.id) {
+              lastPaypalError = data.error + (data.raw ? " → " + JSON.stringify(data.raw) : "");
+              document.getElementById("checkoutError").textContent = t("errPaypalPrefix") + lastPaypalError;
+              document.getElementById("checkoutError").style.display = "block";
+              throw new Error(lastPaypalError);
+            }
+            return data.id;
+          } catch (e) {
+            if (!lastPaypalError) lastPaypalError = e.message;
+            document.getElementById("checkoutError").textContent = t("errPrefix") + lastPaypalError;
+            document.getElementById("checkoutError").style.display = "block";
+            throw e;
+          }
         },
 
         onApprove: async (data) => {
@@ -321,29 +523,30 @@
               body: JSON.stringify({ orderID: data.orderID, ...formData }),
             });
             const json = await res.json();
-            if (!res.ok || !json.slug) throw new Error(json.error || "שגיאה בשרת");
+            if (!res.ok || !json.slug) throw new Error(json.error || t("errServer"));
             window.location.href = `/success?slug=${json.slug}`;
           } catch (e) {
-            errEl.textContent = "שגיאה: " + e.message;
+            errEl.textContent = t("errPrefix") + e.message;
             errEl.style.display = "block";
           }
         },
 
         onError: (err) => {
-          console.error("PayPal error:", err);
+          console.error("PayPal onError:", err);
+          if (lastPaypalError) return; // already shown from createOrder
           const errEl = document.getElementById("checkoutError");
-          errEl.textContent = "שגיאה בתשלום, נסה שוב";
+          errEl.textContent = t("errPaypalPrefix") + (typeof err === "string" ? err : JSON.stringify(err));
           errEl.style.display = "block";
         },
       }).render("#paypal-button-container").catch(err => {
         console.error("PayPal render error:", err);
-        document.getElementById("checkoutError").textContent = "שגיאה בטעינת PayPal: " + err;
+        document.getElementById("checkoutError").textContent = t("errPaypalLoad") + err;
         document.getElementById("checkoutError").style.display = "block";
       });
     }
   </script>
 
-  <footer style="text-align:center;padding:24px;color:#9ca3af;font-size:.8rem;margin-top:32px">
+  <footer class="page-footer" style="text-align:center;padding:24px;color:#9ca3af;font-size:.8rem;margin-top:32px" data-i18n="footerText">
     נוצר ע״י Kupernet Systems
   </footer>
 </body>

@@ -38,7 +38,12 @@ module.exports = async (req, res) => {
     const orderData = await order.json();
     console.log("PayPal order response:", JSON.stringify(orderData));
     if (!orderData.id) {
-      return res.status(500).json({ error: orderData.message || "PayPal rejected order", details: orderData });
+      const issue = orderData.details?.[0]?.issue
+        || orderData.details?.[0]?.description
+        || orderData.message
+        || orderData.name
+        || "PayPal rejected order";
+      return res.status(500).json({ error: issue, raw: orderData });
     }
     res.status(200).json({ id: orderData.id });
   } catch (e) {

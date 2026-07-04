@@ -5,47 +5,94 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>תשלום התקבל | אישורי הגעה</title>
   <link rel="stylesheet" href="style.css" />
+  <script>
+    window.PAGE_I18N = {
+      he: {
+        pageTitle: "תשלום התקבל | אישורי הגעה",
+        logo: "אישורי הגעה",
+        readyTitle: "האירוע מוכן!",
+        readySub: "שלחנו אימייל עם כל הפרטים — קישור האורחים, קישור ממשק ניהול הזמנה וסיסמת הניהול. בדוק את תיבת הדואר (ואולי תיקיית ספאם).",
+        rsvpLink: "🔗 קישור לאורחים (לשתף בוואטסאפ)",
+        dashLink: "📊 כניסה לממשק ניהול הזמנה",
+        waLink: "💬 שתף ישירות בוואטסאפ",
+        saveNote: "שמור את הקישורים — הם נשלחו גם לאימייל שלך",
+        spamNote: "📬 אם אינך רואה את המייל, יתכן והוא הגיע לתיבת דואר הזבל שלך.",
+        errTitle: "התשלום התקבל",
+        errText: "האירוע שלך נוצר. בדוק את האימייל לקישורים.",
+        errContact: "אם לא קיבלת אימייל תוך כמה דקות, צור קשר עם",
+        credit: "נוצר ע״י Kupernet Systems",
+        tosLink: "תנאי שימוש ופרטיות",
+      },
+      en: {
+        pageTitle: "Payment Received | RSVP",
+        logo: "RSVP",
+        readyTitle: "Your event is ready!",
+        readySub: "We've sent an email with all the details — the guest link, the management dashboard link and your dashboard password. Check your inbox (and maybe the spam folder).",
+        rsvpLink: "🔗 Guest link (share on WhatsApp)",
+        dashLink: "📊 Open management dashboard",
+        waLink: "💬 Share directly on WhatsApp",
+        saveNote: "Save these links — they were also sent to your email",
+        spamNote: "📬 If you don't see the email, it may have landed in your spam folder.",
+        errTitle: "Payment received",
+        errText: "Your event has been created. Check your email for the links.",
+        errContact: "If you don't receive an email within a few minutes, contact",
+        credit: "Created by Kupernet Systems",
+        tosLink: "Terms & Privacy",
+      },
+    };
+  </script>
+  <script src="/theme.js" defer></script>
+  <style>
+    .spam-note {
+      margin-top: 10px; color: var(--text-muted); font-size: .8rem;
+      background: #fdf5e0; border: 1px solid #e8d9a0; border-radius: 8px; padding: 10px 14px;
+    }
+    .err-title { color: var(--navy); margin-bottom: 8px; }
+    html.dark .spam-note { background: #3a3320; border-color: #5c512e; }
+    html.dark .err-title { color: #f0d080; }
+  </style>
+  <!-- Google tag (gtag.js) -->
+  <script async src="https://www.googletagmanager.com/gtag/js?id=AW-18293655759"></script>
+  <script>
+    window.dataLayer = window.dataLayer || [];
+    function gtag(){dataLayer.push(arguments);}
+    gtag('js', new Date());
+    gtag('config', 'AW-18293655759');
+  </script>
 </head>
 <body>
 
   <nav class="landing-nav">
-    <a class="logo" href="/">✡ אישורי הגעה</a>
+    <a class="logo" href="/">🎉 <span data-i18n="logo">אישורי הגעה</span></a>
   </nav>
 
   <div class="success-page">
 
-    <!-- Pending state -->
-    <div id="pendingState">
-      <div class="pending-state">
-        מעבד את האירוע שלך<span class="spinner"></span>
-      </div>
-    </div>
-
     <!-- Success state -->
     <div id="successState" style="display:none;width:100%;max-width:480px">
       <div class="big-check">🎉</div>
-      <h1>האירוע מוכן!</h1>
-      <p class="sub" id="successSub">
-        שלחנו אימייל עם כל הפרטים — קישור האורחים, קישור הדשבורד וסיסמת הניהול.
+      <h1 data-i18n="readyTitle">האירוע מוכן!</h1>
+      <p class="sub" data-i18n="readySub">
+        שלחנו אימייל עם כל הפרטים — קישור האורחים, קישור ממשק ניהול הזמנה וסיסמת הניהול.
         בדוק את תיבת הדואר (ואולי תיקיית ספאם).
       </p>
 
       <div class="success-links">
-        <a id="rsvpLinkBtn" class="success-link-btn gold" href="#">
+        <a id="rsvpLinkBtn" class="success-link-btn gold" href="#" data-i18n="rsvpLink">
           🔗 קישור לאורחים (לשתף בוואטסאפ)
         </a>
-        <a id="dashboardLinkBtn" class="success-link-btn navy" href="#">
-          📊 כניסה לדשבורד הניהול
+        <a id="dashboardLinkBtn" class="success-link-btn navy" href="#" data-i18n="dashLink">
+          📊 כניסה לממשק ניהול הזמנה
         </a>
-        <a id="waBtn" class="success-link-btn whatsapp" href="#" target="_blank">
+        <a id="waBtn" class="success-link-btn whatsapp" href="#" target="_blank" data-i18n="waLink">
           💬 שתף ישירות בוואטסאפ
         </a>
       </div>
 
-      <p style="margin-top:24px;color:var(--text-muted);font-size:.85rem">
+      <p style="margin-top:24px;color:var(--text-muted);font-size:.85rem" data-i18n="saveNote">
         שמור את הקישורים — הם נשלחו גם לאימייל שלך
       </p>
-      <p style="margin-top:10px;color:var(--text-muted);font-size:.8rem;background:#fdf5e0;border:1px solid #e8d9a0;border-radius:8px;padding:10px 14px">
+      <p class="spam-note" data-i18n="spamNote">
         📬 אם אינך רואה את המייל, יתכן והוא הגיע לתיבת דואר הזבל שלך.
       </p>
     </div>
@@ -53,10 +100,10 @@
     <!-- Error state -->
     <div id="errorState" style="display:none;text-align:center">
       <div style="font-size:3rem;margin-bottom:12px">⚠️</div>
-      <h2 style="color:var(--navy);margin-bottom:8px">התשלום התקבל</h2>
+      <h2 class="err-title" data-i18n="errTitle">התשלום התקבל</h2>
       <p style="color:var(--text-muted)">
-        האירוע שלך נוצר. בדוק את האימייל לקישורים.<br/>
-        אם לא קיבלת אימייל תוך כמה דקות, צור קשר עם <a href="mailto:info@kupernet.com">info@kupernet.com</a>
+        <span data-i18n="errText">האירוע שלך נוצר. בדוק את האימייל לקישורים.</span><br/>
+        <span data-i18n="errContact">אם לא קיבלת אימייל תוך כמה דקות, צור קשר עם</span> <a href="mailto:kupernetservice@gmail.com">kupernetservice@gmail.com</a>
       </p>
     </div>
   </div>
@@ -66,28 +113,30 @@
     const params = new URLSearchParams(window.location.search);
     const slug   = params.get("slug");
 
-    function init() {
-      document.getElementById("pendingState").style.display = "none";
-
-      if (!slug) {
-        document.getElementById("errorState").style.display = "block";
-        return;
-      }
-
+    if (!slug) {
+      document.getElementById("errorState").style.display = "block";
+    } else {
       const rsvpUrl = `${BASE}/rsvp/${slug}`;
       const dashUrl = `${BASE}/dashboard/${slug}`;
       const waText  = encodeURIComponent(`אתם מוזמנים!\nלאישור הגעה: ${rsvpUrl}`);
 
-      document.getElementById("rsvpLinkBtn").href      = rsvpUrl;
-      document.getElementById("dashboardLinkBtn").href  = dashUrl;
-      document.getElementById("waBtn").href             = `https://wa.me/?text=${waText}`;
+      document.getElementById("rsvpLinkBtn").href     = rsvpUrl;
+      document.getElementById("dashboardLinkBtn").href = dashUrl;
+      document.getElementById("waBtn").href            = `https://wa.me/?text=${waText}`;
       document.getElementById("successState").style.display = "block";
-    }
 
-    init();
+      // Google Ads purchase conversion (slug as transaction_id dedupes refreshes)
+      gtag('event', 'conversion', {
+        'send_to': 'AW-18293655759/t6piCIOmuMkcEM-RjJNE',
+        'value': 99.0,
+        'currency': 'ILS',
+        'transaction_id': slug,
+      });
+    }
   </script>
+
   <footer style="text-align:center;padding:24px;color:#9ca3af;font-size:.8rem;margin-top:32px">
-    נוצר ע״י Kupernet Systems · <a href="/tos.html" style="color:#9ca3af">תנאי שימוש ופרטיות</a>
+    <span data-i18n="credit">נוצר ע״י Kupernet Systems</span> · <a href="/tos.html" style="color:#9ca3af" data-i18n="tosLink">תנאי שימוש ופרטיות</a>
   </footer>
 </body>
 </html>

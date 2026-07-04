@@ -27,6 +27,7 @@ module.exports = async (req, res) => {
       .select("id")
       .eq("slug", slug)
       .not("paid_at", "is", null)
+      .neq("active", false)
       .maybeSingle();
 
     if (evErr) throw evErr;

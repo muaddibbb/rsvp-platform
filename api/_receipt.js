@@ -11,7 +11,7 @@ function pad(n) {
   return String(n).padStart(6, "0");
 }
 
-module.exports = function generateReceiptPDF({ receiptNumber, customerName, paymentDate }) {
+module.exports = function generateReceiptPDF({ receiptNumber, customerName, paymentDate, isRefund = false }) {
   const PDFDocument = require("pdfkit");
 
   return new Promise((resolve, reject) => {
@@ -54,12 +54,13 @@ module.exports = function generateReceiptPDF({ receiptNumber, customerName, paym
     };
 
     // ── Header ────────────────────────────────────────────────
-    doc.rect(0, 0, W, 80).fill("#1a2744");
+    doc.rect(0, 0, W, 80).fill(isRefund ? "#7f1d1d" : "#1a2744");
 
-    doc.fontSize(28).fillColor("#f0d080");
-    doc.text("קבלה", 0, 18, { width: W, align: "center" });
+    doc.fontSize(28).fillColor(isRefund ? "#fca5a5" : "#f0d080");
+    doc.text(isRefund ? h("קבלת זיכוי") : "קבלה", 0, 18, { width: W, align: "center" });
 
-    drawCentered(h("קבלה מספר"), num, 52, 12, "#ffffff", "#ffffff");
+    const receiptLabel = isRefund ? h("זיכוי מספר") : h("קבלה מספר");
+    drawCentered(receiptLabel, num, 52, 12, "#ffffff", "#ffffff");
 
     // ── Business ──────────────────────────────────────────────
     let y = 98;
@@ -128,19 +129,19 @@ module.exports = function generateReceiptPDF({ receiptNumber, customerName, paym
       return rowH + 12;
     };
 
-    drawRow("תאריך", date);
-    drawRow(h("שם המשלם"), h(customerName));
+    drawRow(isRefund ? h("תאריך הזיכוי") : "תאריך", date);
+    drawRow(isRefund ? h("שם מקבל הזיכוי") : h("שם המשלם"), h(customerName));
     const amtH = drawAmountRow(y);
     doc.moveTo(ML, y + amtH - 5).lineTo(W - MR, y + amtH - 5).lineWidth(0.3).strokeColor("#e5e7eb").stroke();
     y += amtH;
-    drawRow(h("אמצעי תשלום"), "PayPal");
+    drawRow(isRefund ? h("סיבת הזיכוי") : h("אמצעי תשלום"), isRefund ? h("ביטול עסקה") : "PayPal");
 
     // ── Total ─────────────────────────────────────────────────
     y += 4;
     doc.rect(ML, y, CW, 40).fill("#fdf5e0");
 
     doc.fontSize(13).fillColor("#1a2744");
-    doc.text(h("סה״כ שולם"), LABEL_X, y + 12, { width: LABEL_W, align: "right" });
+    doc.text(isRefund ? h("סה״כ זוכה") : h("סה״כ שולם"), LABEL_X, y + 12, { width: LABEL_W, align: "right" });
 
     // "99 ש״ח" — position explicitly so space is physical
     doc.fontSize(16).fillColor("#c9993a");
