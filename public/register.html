@@ -3,6 +3,7 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <link rel="icon" href="/favicon.svg" type="image/svg+xml" />
   <title>יצירת אירוע | אישורי הגעה</title>
   <link rel="stylesheet" href="style.css" />
   <script>
@@ -67,6 +68,7 @@
         errPrefix: "שגיאה: ",
         errServer: "שגיאה בשרת",
         errPaypalLoad: "שגיאה בטעינת PayPal: ",
+        errPaypalBlocked: "לא ניתן לטעון את כפתור התשלום של PayPal. ייתכן שהחיבור שלך (רשת ארגונית / VPN / חוסם פרסומות) חוסם את paypal.com. נסה רשת אחרת או דפדפן ללא תוספים.",
         prevType: "סוג",
         prevDate: "תאריך",
         prevTime: "שעה",
@@ -135,6 +137,7 @@
         errPrefix: "Error: ",
         errServer: "Server error",
         errPaypalLoad: "Error loading PayPal: ",
+        errPaypalBlocked: "Couldn't load the PayPal payment button. Your connection (corporate network / VPN / ad-blocker) may be blocking paypal.com. Try a different network or a browser with no extensions.",
         prevType: "Type",
         prevDate: "Date",
         prevTime: "Time",
@@ -354,6 +357,8 @@
 
     let formData = { event_type: "" };
     let currentStep = 1;
+    const checkoutId = (crypto.randomUUID && crypto.randomUUID())
+      || String(Date.now()) + Math.random().toString(16).slice(2);
 
     // Block past dates
     document.getElementById("gregorianDate").min = new Date().toISOString().slice(0, 10);
@@ -413,6 +418,20 @@
       renderPreview();
       goToStep(3);
       initPayPalButtons();
+      recordPendingCheckout();
+    }
+
+    // Record that the user completed all fields and reached checkout. If they never pay,
+    // a server-side sweep emails the owner about the abandoned checkout. Fire-and-forget.
+    function recordPendingCheckout() {
+      try {
+        fetch("/api/paypal-capture?pending=1", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ checkoutId, ...formData }),
+          keepalive: true,
+        }).catch(() => {});
+      } catch (e) { /* never block checkout on this */ }
     }
 
     function renderPreview() {
@@ -466,20 +485,37 @@
     let paypalInitialized = false;
     let lastPaypalError   = null;
 
+    function showCheckoutError(msg) {
+      const el = document.getElementById("checkoutError");
+      el.textContent = msg;
+      el.style.display = "block";
+    }
+
     async function initPayPalButtons() {
       if (paypalInitialized) return;
 
       // Load SDK dynamically using client ID from server (works for both sandbox & live)
       if (typeof paypal === "undefined") {
-        const { clientId } = await fetch("/api/paypal-config").then(r => r.json());
-        await new Promise((resolve, reject) => {
-          const s = document.createElement("script");
-          s.src = `https://www.paypal.com/sdk/js?client-id=${clientId}&currency=ILS&intent=capture`;
-          s.onload = resolve;
-          s.onerror = reject;
-          document.head.appendChild(s);
-        });
+        try {
+          const { clientId } = await fetch("/api/paypal-config").then(r => r.json());
+          if (!clientId) throw new Error("missing client id");
+          await new Promise((resolve, reject) => {
+            const s = document.createElement("script");
+            s.src = `https://www.paypal.com/sdk/js?client-id=${clientId}&currency=ILS&intent=capture`;
+            s.onload = resolve;
+            s.onerror = () => reject(new Error("script blocked or failed to load"));
+            document.head.appendChild(s);
+            // If paypal.com is unreachable (network/VPN/ad-blocker), onerror may never fire — time out.
+            setTimeout(() => { if (typeof paypal === "undefined") reject(new Error("timeout")); }, 8000);
+          });
+        } catch (e) {
+          console.error("PayPal SDK load failed:", e);
+          showCheckoutError(t("errPaypalBlocked"));
+          return;
+        }
       }
+
+      if (typeof paypal === "undefined") { showCheckoutError(t("errPaypalBlocked")); return; }
 
       paypalInitialized = true;
 
@@ -520,7 +556,7 @@
             const res = await fetch("/api/paypal-capture", {
               method: "POST",
               headers: { "Content-Type": "application/json" },
-              body: JSON.stringify({ orderID: data.orderID, ...formData }),
+              body: JSON.stringify({ orderID: data.orderID, checkoutId, ...formData }),
             });
             const json = await res.json();
             if (!res.ok || !json.slug) throw new Error(json.error || t("errServer"));

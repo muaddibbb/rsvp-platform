@@ -60,7 +60,32 @@ module.exports = async (req, res) => {
   if (req.method === "OPTIONS") return res.status(200).end();
   if (req.method !== "POST") return res.status(405).end();
 
-  const { orderID, ...formData } = req.body || {};
+  // Record a pending checkout: fired when the user reaches step 3 (all fields filled)
+  // but before payment completes. A sweep in cleanup.js later emails about ones never paid.
+  if (req.query.pending) {
+    const p = req.body || {};
+    if (!p.checkoutId) return res.status(400).json({ error: "missing checkoutId" });
+    const { error: pErr } = await supabase.from("pending_checkouts").upsert({
+      id:             String(p.checkoutId),
+      customer_name:  p.customer_name?.trim()  || null,
+      customer_email: p.customer_email?.trim() || null,
+      customer_phone: p.customer_phone?.trim() || null,
+      event_type:     p.event_type             || null,
+      event_name:     p.event_name?.trim()     || null,
+      gregorian_date: p.gregorian_date          || null,
+      event_time:     p.event_time              || null,
+      location:       p.location?.trim()        || null,
+      updated_at:     new Date().toISOString(),
+      notified:       false,
+    }, { onConflict: "id" });
+    if (pErr) {
+      console.error("pending upsert error:", pErr);
+      return res.status(500).json({ ok: false, error: pErr.message });
+    }
+    return res.status(200).json({ ok: true });
+  }
+
+  const { orderID, checkoutId, ...formData } = req.body || {};
   if (!orderID) return res.status(400).json({ error: "חסר מזהה הזמנה" });
   const today = new Date().toISOString().slice(0, 10);
   if (formData.gregorian_date && formData.gregorian_date < today)
@@ -113,6 +138,11 @@ module.exports = async (req, res) => {
     if (dbErr) {
       console.error("DB error:", dbErr);
       return res.status(500).json({ error: "שגיאת מסד נתונים" });
+    }
+
+    // Payment completed — remove the pending-checkout record so no abandonment email fires
+    if (checkoutId) {
+      await supabase.from("pending_checkouts").delete().eq("id", String(checkoutId));
     }
 
     // 4. Send confirmation + receipt emails (must complete before responding — Vercel kills the

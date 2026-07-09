@@ -1,0 +1,10 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100">
+  <rect width="100" height="100" rx="22" fill="#1a2744"/>
+  <!-- gold checkmark = RSVP confirmed -->
+  <path d="M28 52 L44 68 L74 34" fill="none" stroke="#f0d080"
+        stroke-width="10" stroke-linecap="round" stroke-linejoin="round"/>
+  <!-- confetti dots -->
+  <circle cx="24" cy="30" r="4" fill="#e8536d"/>
+  <circle cx="78" cy="66" r="4" fill="#4a9de8"/>
+  <circle cx="70" cy="22" r="3.5" fill="#5bc98a"/>
+</svg>
