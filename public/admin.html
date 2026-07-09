@@ -156,7 +156,10 @@
 
   <div class="admin-header">
     <h1>לוח בקרה — כל האירועים</h1>
-    <button onclick="logout()">יציאה</button>
+    <div style="display:flex;gap:8px">
+      <button onclick="sendAbandonReport(this)">📧 שלח דוח נטישות</button>
+      <button onclick="logout()">יציאה</button>
+    </div>
   </div>
 
   <div class="stats-bar">
@@ -329,6 +332,28 @@
     const ev = allEvents.find(e => e.slug === slug);
     if (ev) ev.active = activate;
     renderTable();
+  }
+
+  async function sendAbandonReport(btn) {
+    const original = btn.textContent;
+    btn.disabled = true;
+    btn.textContent = "שולח...";
+    try {
+      const res = await fetch("/api/admin-events?sweep=1", {
+        method: "POST",
+        headers: { Authorization: `Bearer ${token}` },
+      });
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.error || "שגיאה");
+      alert(data.sent > 0
+        ? `נשלח דוח על ${data.sent} הרשמות שלא הושלמו לאימייל שלך.`
+        : "אין כרגע הרשמות שלא הושלמו לדיווח.");
+    } catch (e) {
+      alert("שגיאה בשליחת הדוח: " + e.message);
+    } finally {
+      btn.disabled = false;
+      btn.textContent = original;
+    }
   }
 
   async function downloadReceipt(slug, isRefund = false) {

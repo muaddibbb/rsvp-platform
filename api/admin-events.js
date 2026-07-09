@@ -1,6 +1,7 @@
 const { createClient } = require("@supabase/supabase-js");
 const crypto = require("crypto");
 const generateReceiptPDF = require("./_receipt");
+const { sweepAbandonedCheckouts } = require("./_sweep");
 
 const supabase = createClient(process.env.SUPABASE_URL, process.env.SUPABASE_SERVICE_ROLE_KEY);
 
@@ -50,6 +51,12 @@ module.exports = async (req, res) => {
     res.setHeader("Content-Disposition", `attachment; filename*=UTF-8''${encodeURIComponent(filename)}`);
     res.setHeader("Content-Length", pdfBuffer.length);
     return res.status(200).end(pdfBuffer);
+  }
+
+  // POST ?sweep=1 — manually send the abandoned-checkout report now (ignores grace period)
+  if (req.method === "POST" && req.query.sweep) {
+    const count = await sweepAbandonedCheckouts({ ignoreGrace: true });
+    return res.status(200).json({ sent: count });
   }
 
   // PATCH ?slug=xxx {active: true/false} — activate/deactivate event
