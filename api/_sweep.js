@@ -15,18 +15,35 @@ const EVENT_TYPE_LABELS = {
   henna:"חינה", family:"אירוע משפחתי", other:"אחר",
 };
 
-async function sendEmail(to, subject, html) {
+async function sendEmail(to, subject, html, fromName = "אישורי הגעה") {
   if (!process.env.BREVO_API_KEY) return;
   await fetch("https://api.brevo.com/v3/smtp/email", {
     method: "POST",
     headers: { "api-key": process.env.BREVO_API_KEY, "Content-Type": "application/json" },
     body: JSON.stringify({
-      sender: { name: "אישורי הגעה", email: "kupernetservice@gmail.com" },
+      sender:  { name: fromName, email: "kupernetservice@gmail.com" },
+      replyTo: { name: fromName, email: "kupernetservice@gmail.com" },
       to: [{ email: to }],
       subject,
       htmlContent: html,
     }),
   }).catch(e => console.error("Brevo error:", e));
+}
+
+// Friendly recovery email sent to the customer who started but didn't finish checkout.
+async function sendRecoveryEmail(p) {
+  const email = (p.customer_email || "").trim();
+  if (!email || !/^\S+@\S+\.\S+$/.test(email)) return;
+  await sendEmail(
+    email,
+    `אישורי הגעה לאירוע ${p.event_name || ""}`.trim(),
+    `<div dir="rtl" style="font-family:Arial;font-size:15px;line-height:1.9;color:#1a1a2e;padding:8px 4px;max-width:520px">
+      <p>היי, זה רועי מ <a href="https://rsvp.kupernet.com" style="color:#c9993a">rsvp.kupernet.com</a></p>
+      <p>ראינו שהתחלת הרשמה לאישורי הגעה לאירוע ב99 ש״ח דרך האתר שלנו, ולא סיימת. יש משהו שאני יכול לעזור כדי להשלים?</p>
+      <p>תודה.</p>
+    </div>`,
+    "רועי מ-rsvp.kupernet.com"
+  );
 }
 
 // Email the owner about checkouts where all fields were filled but payment never completed.
@@ -44,24 +61,49 @@ async function sweepAbandonedCheckouts(opts = {}) {
   if (error) { console.error("pending fetch error:", error); return 0; }
   if (!rows || !rows.length) return 0;
 
+  // Send each abandoning customer their own recovery email, and build one digest row per checkout.
+  const digestRows = [];
   for (const p of rows) {
+    await sendRecoveryEmail(p);
     const typeLabel = EVENT_TYPE_LABELS[p.event_type] || p.event_type || "—";
-    await sendEmail(
-      "kuperoy@gmail.com",
-      `🛒 הרשמה שלא הושלמה: ${p.event_name || "ללא שם"}`,
-      `<div dir="rtl" style="font-family:Arial;padding:24px;max-width:520px">
-        <h2 style="color:#1a2744">לקוח מילא את כל הפרטים אך לא השלים תשלום 🛒</h2>
-        <p><strong>אירוע:</strong> ${p.event_name || "—"} (${typeLabel})<br/>
-        <strong>תאריך האירוע:</strong> ${p.gregorian_date || "—"}<br/>
-        <strong>לקוח:</strong> ${p.customer_name || "—"}<br/>
-        <strong>אימייל:</strong> ${p.customer_email || "—"}<br/>
-        <strong>טלפון:</strong> ${p.customer_phone || "—"}<br/>
-        <strong>הגיע לתשלום:</strong> ${new Date(p.updated_at).toLocaleString("he-IL")}</p>
-        <p style="color:#6b7280;font-size:.9rem">כדאי ליצור קשר ולעזור להם להשלים את ההרשמה.</p>
-      </div>`
-    );
-    await supabase.from("pending_checkouts").update({ notified: true }).eq("id", p.id);
+    digestRows.push(`<tr>
+      <td style="padding:8px 10px;border-bottom:1px solid #eee">${p.customer_name || "—"}</td>
+      <td style="padding:8px 10px;border-bottom:1px solid #eee">${p.customer_email || "—"}</td>
+      <td style="padding:8px 10px;border-bottom:1px solid #eee">${p.customer_phone || "—"}</td>
+      <td style="padding:8px 10px;border-bottom:1px solid #eee">${p.event_name || "—"} (${typeLabel})</td>
+      <td style="padding:8px 10px;border-bottom:1px solid #eee">${p.gregorian_date || "—"}</td>
+      <td style="padding:8px 10px;border-bottom:1px solid #eee;white-space:nowrap">${new Date(p.updated_at).toLocaleString("he-IL")}</td>
+    </tr>`);
   }
+
+  // One consolidated report to the owner listing every abandoned checkout in this sweep.
+  await sendEmail(
+    "kuperoy@gmail.com",
+    `🛒 דוח הרשמות שלא הושלמו — ${rows.length} ${rows.length === 1 ? "לקוח" : "לקוחות"}`,
+    `<div dir="rtl" style="font-family:Arial;padding:24px;max-width:720px">
+      <h2 style="color:#1a2744">הרשמות שלא הושלמו 🛒</h2>
+      <p>${rows.length} לקוחות מילאו את כל הפרטים אך לא השלימו תשלום. כל אחד קיבל אימייל אוטומטי עם הצעת עזרה.</p>
+      <table style="border-collapse:collapse;width:100%;font-size:14px;margin-top:12px">
+        <thead>
+          <tr style="background:#1a2744;color:#fff">
+            <th style="padding:8px 10px;text-align:right">לקוח</th>
+            <th style="padding:8px 10px;text-align:right">אימייל</th>
+            <th style="padding:8px 10px;text-align:right">טלפון</th>
+            <th style="padding:8px 10px;text-align:right">אירוע</th>
+            <th style="padding:8px 10px;text-align:right">תאריך האירוע</th>
+            <th style="padding:8px 10px;text-align:right">הגיע לתשלום</th>
+          </tr>
+        </thead>
+        <tbody>${digestRows.join("")}</tbody>
+      </table>
+    </div>`
+  );
+
+  // Mark all as notified in one batch so they aren't reported again
+  await supabase.from("pending_checkouts")
+    .update({ notified: true })
+    .in("id", rows.map(r => r.id));
+
   // Purge fully-aged rows (7+ days) to keep the table small
   await supabase.from("pending_checkouts")
     .delete()

@@ -104,6 +104,33 @@ module.exports = async (req, res) => {
     const capture = await captureRes.json();
     if (capture.status !== "COMPLETED") {
       console.error("PayPal capture not completed:", capture);
+
+      // Extract a human-readable decline/failure reason from PayPal's response
+      const cap    = capture?.purchase_units?.[0]?.payments?.captures?.[0];
+      const detail = capture?.details?.[0] || {};
+      const issue  = detail.issue || cap?.status_details?.reason || cap?.status || capture?.name || capture?.status || "UNKNOWN";
+      const desc   = detail.description || capture?.message || "";
+
+      // Alert the owner about the failed payment attempt (await — Vercel kills the fn after the response)
+      const typeLabel = EVENT_TYPE_LABELS[formData.event_type] || formData.event_type || "—";
+      await sendEmail(
+        "kuperoy@gmail.com",
+        `⚠️ תשלום נכשל: ${formData.event_name || "ללא שם"}`,
+        `<div dir="rtl" style="font-family:Arial;padding:24px;max-width:520px">
+          <h2 style="color:#991b1b">ניסיון תשלום נכשל ⚠️</h2>
+          <p><strong>סיבה (PayPal):</strong> ${issue}${desc ? `<br/><span style="color:#6b7280">${desc}</span>` : ""}</p>
+          <hr style="border:none;border-top:1px solid #eee;margin:14px 0"/>
+          <p><strong>אירוע:</strong> ${formData.event_name || "—"} (${typeLabel})<br/>
+          <strong>תאריך האירוע:</strong> ${formData.gregorian_date || "—"}<br/>
+          <strong>לקוח:</strong> ${formData.customer_name || "—"}<br/>
+          <strong>אימייל:</strong> ${formData.customer_email || "—"}<br/>
+          <strong>טלפון:</strong> ${formData.customer_phone || "—"}<br/>
+          <strong>מזהה הזמנה:</strong> ${orderID}<br/>
+          <strong>מזהה תקלה (debug_id):</strong> ${capture?.debug_id || "—"}</p>
+          <p style="color:#6b7280;font-size:.9rem">כדאי ליצור קשר עם הלקוח ולעזור לו להשלים את התשלום.</p>
+        </div>`
+      );
+
       return res.status(400).json({ error: "התשלום לא הושלם" });
     }
 
