@@ -52,6 +52,10 @@
         retentionNote: "🗓️ האירוע ונתוני האורחים יימחקו אוטומטית חודש אחד לאחר תאריך האירוע.",
         tosPrefix: "קראתי ואני מסכים/ה ל",
         tosLink: "תנאי השימוש ומדיניות הפרטיות",
+        trustSecure: "🔒 תשלום מאובטח דרך PayPal",
+        trustRefund: "↩️ החזר כספי מלא תוך 14 יום",
+        trustBusiness: "🧾 עוסק פטור מס׳ 036409084",
+        trustSupport: "✉️ תמיכה: kupernetservice@gmail.com",
         footerText: "נוצר ע״י Kupernet Systems",
         errSelectType: "נא לבחור סוג אירוע",
         errEventName: "נא להזין שם אירוע",
@@ -76,6 +80,11 @@
         prevAddress: "כתובת",
         prevNote: "הערה",
         prevEmail: "אימייל",
+        previewHeading: "👇 כך ייראה דף ההזמנה שהאורחים שלך יקבלו",
+        previewInvite: "אתם מוזמנים!",
+        previewRsvpQ: "האם תגיעו?",
+        previewYes: "✓ מגיעים",
+        previewNo: "✕ לא מגיעים",
       },
       en: {
         pageTitle: "Create Event | RSVP",
@@ -121,6 +130,10 @@
         retentionNote: "🗓️ The event and guest data will be deleted automatically one month after the event date.",
         tosPrefix: "I have read and agree to the ",
         tosLink: "Terms of Use & Privacy Policy",
+        trustSecure: "🔒 Secure payment via PayPal",
+        trustRefund: "↩️ Full refund within 14 days",
+        trustBusiness: "🧾 Registered business 036409084",
+        trustSupport: "✉️ Support: kupernetservice@gmail.com",
         footerText: "Created by Kupernet Systems",
         errSelectType: "Please select an event type",
         errEventName: "Please enter an event name",
@@ -145,6 +158,11 @@
         prevAddress: "Address",
         prevNote: "Note",
         prevEmail: "Email",
+        previewHeading: "👇 Here's the invitation page your guests will see",
+        previewInvite: "You're invited!",
+        previewRsvpQ: "Will you attend?",
+        previewYes: "✓ Attending",
+        previewNo: "✕ Can't make it",
       },
     };
   </script>
@@ -154,6 +172,36 @@
     html.dark .retention-note { background: #374151 !important; }
     html.dark .preview-divider { border-top-color: #4b5563 !important; }
     html.dark .page-footer { color: #6b7280 !important; }
+
+    /* Live guest-page mockup shown before payment */
+    .gp-frame-note { text-align:center; font-size:.9rem; color:var(--text-muted); margin-bottom:12px; font-weight:600; }
+    .guest-preview {
+      border:1px solid #e5e7eb; border-radius:16px; overflow:hidden;
+      box-shadow:0 6px 24px rgba(0,0,0,.10); background:#fff;
+    }
+    html.dark .guest-preview { border-color:#334155; background:#1e293b; }
+    .gp-hero {
+      background:linear-gradient(150deg,#1a2744 0%,#243360 60%,#2d4a8a 100%);
+      color:#fff; text-align:center; padding:28px 20px 24px;
+    }
+    .gp-emoji { font-size:44px; margin-bottom:8px; filter:drop-shadow(0 2px 8px rgba(240,208,128,.5)); }
+    .gp-title { font-size:1.5rem; font-weight:800; color:#f0d080; line-height:1.2; }
+    .gp-invite { font-size:.95rem; opacity:.85; margin-top:6px; }
+    .gp-details { padding:16px 20px; }
+    .gp-row { display:flex; align-items:flex-start; gap:12px; padding:9px 0; border-bottom:1px solid #f0ece4; }
+    html.dark .gp-row { border-bottom-color:#334155; }
+    .gp-row:last-child { border-bottom:none; }
+    .gp-ico { font-size:1.2rem; flex-shrink:0; margin-top:1px; }
+    .gp-lbl { font-size:.72rem; color:var(--text-muted); font-weight:600; text-transform:uppercase; letter-spacing:.04em; }
+    .gp-val { font-size:1rem; font-weight:600; color:var(--text); margin-top:1px; }
+    .gp-rsvp { padding:8px 20px 22px; text-align:center; }
+    .gp-rsvp-q { font-weight:700; color:var(--text); margin-bottom:12px; }
+    .gp-rsvp-btns { display:flex; gap:10px; justify-content:center; }
+    .gp-btn { padding:10px 22px; border-radius:10px; font-weight:700; font-size:.95rem; }
+    .gp-btn.yes { background:#dcfce7; color:#166534; }
+    .gp-btn.no  { background:#fee2e2; color:#991b1b; }
+    html.dark .gp-btn.yes { background:#14331f; color:#86efac; }
+    html.dark .gp-btn.no  { background:#3a1c1c; color:#fca5a5; }
   </style>
   <!-- Google tag (gtag.js) -->
   <script async src="https://www.googletagmanager.com/gtag/js?id=AW-18293655759"></script>
@@ -336,6 +384,12 @@
         </div>
         <div id="paypal-button-container"></div>
         <div id="checkoutError" style="display:none;margin-top:12px;color:var(--red);font-size:.9rem;text-align:center"></div>
+        <div class="trust-row">
+          <span data-i18n="trustSecure">🔒 תשלום מאובטח דרך PayPal</span>
+          <span data-i18n="trustRefund">↩️ החזר כספי מלא תוך 14 יום</span>
+          <span data-i18n="trustBusiness">🧾 עוסק פטור מס׳ 036409084</span>
+          <span data-i18n="trustSupport">✉️ תמיכה: kupernetservice@gmail.com</span>
+        </div>
       </div>
     </div>
   </div>
@@ -434,25 +488,50 @@
       } catch (e) { /* never block checkout on this */ }
     }
 
+    const PREVIEW_EMOJI = {
+      bar_mitzvah:"🎉", bat_mitzvah:"🌸", wedding:"💍", brit:"👶", brit_bat:"🎀",
+      birthday:"🎂", bachelor:"🕺", bachelorette:"💃", henna:"🪬", family:"🎊", other:"🎉",
+    };
+
+    function esc(s) {
+      return String(s == null ? "" : s).replace(/[&<>"]/g, c =>
+        ({ "&":"&amp;", "<":"&lt;", ">":"&gt;", '"':"&quot;" }[c]));
+    }
+
     function renderPreview() {
-      const typeKey   = "et_" + formData.event_type;
-      let typeLabel   = t(typeKey);
-      if (typeLabel === typeKey) typeLabel = EVENT_TYPE_LABELS[formData.event_type] || formData.event_type;
       const dateLocale = (window.getLang && getLang() === "en") ? "en-US" : "he-IL";
       const dateFormatted = formData.gregorian_date
         ? new Date(formData.gregorian_date + "T12:00:00").toLocaleDateString(dateLocale, { day:"numeric", month:"long", year:"numeric" })
         : "";
+      const emoji = PREVIEW_EMOJI[formData.event_type] || "🎉";
+      const dateLine = `${formData.hebrew_date ? esc(formData.hebrew_date) + " · " : ""}${dateFormatted}`;
+
+      const row = (icon, label, value) => value
+        ? `<div class="gp-row"><span class="gp-ico">${icon}</span><div><div class="gp-lbl">${label}</div><div class="gp-val">${esc(value)}</div></div></div>`
+        : "";
 
       document.getElementById("previewCard").innerHTML = `
-        <div class="preview-title">${formData.event_name}</div>
-        <div class="preview-row"><span class="preview-lbl">${t("prevType")}</span><span class="preview-val">${typeLabel}</span></div>
-        <div class="preview-row"><span class="preview-lbl">${t("prevDate")}</span><span class="preview-val">${formData.hebrew_date ? formData.hebrew_date + " · " : ""}${dateFormatted}</span></div>
-        <div class="preview-row"><span class="preview-lbl">${t("prevTime")}</span><span class="preview-val">${formData.event_time}</span></div>
-        <div class="preview-row"><span class="preview-lbl">${t("prevLocation")}</span><span class="preview-val">${formData.location}</span></div>
-        <div class="preview-row"><span class="preview-lbl">${t("prevAddress")}</span><span class="preview-val">${formData.address}</span></div>
-        ${formData.extra_note ? `<div class="preview-row"><span class="preview-lbl">${t("prevNote")}</span><span class="preview-val">${formData.extra_note}</span></div>` : ""}
-        <div class="preview-row preview-divider" style="margin-top:4px;border-top:2px solid #e5e7eb;padding-top:12px">
-          <span class="preview-lbl">${t("prevEmail")}</span><span class="preview-val">${formData.customer_email}</span>
+        <div class="gp-frame-note">${t("previewHeading")}</div>
+        <div class="guest-preview">
+          <div class="gp-hero">
+            <div class="gp-emoji">${emoji}</div>
+            <div class="gp-title">${esc(formData.event_name)}</div>
+            <div class="gp-invite">${t("previewInvite")}</div>
+          </div>
+          <div class="gp-details">
+            ${row("📅", t("prevDate"), dateLine)}
+            ${row("🕐", t("prevTime"), formData.event_time)}
+            ${row("📍", t("prevLocation"), formData.location)}
+            ${row("🗺️", t("prevAddress"), formData.address)}
+            ${row("📝", t("prevNote"), formData.extra_note)}
+          </div>
+          <div class="gp-rsvp">
+            <div class="gp-rsvp-q">${t("previewRsvpQ")}</div>
+            <div class="gp-rsvp-btns">
+              <span class="gp-btn yes">${t("previewYes")}</span>
+              <span class="gp-btn no">${t("previewNo")}</span>
+            </div>
+          </div>
         </div>
       `;
     }

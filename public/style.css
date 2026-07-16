@@ -354,6 +354,19 @@ textarea { resize: vertical; }
   gap: 14px;
   flex-wrap: wrap;
 }
+.trust-row {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  gap: 8px 18px;
+  margin-top: 20px;
+  padding-top: 16px;
+  border-top: 1px solid #eee;
+  font-size: .82rem;
+  color: var(--text-muted);
+}
+html.dark .trust-row { border-top-color: #334155; }
+
 .promo-guarantee {
   display: inline-block;
   background: #1a2744;
