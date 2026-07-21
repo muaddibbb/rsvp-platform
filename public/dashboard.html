@@ -52,6 +52,10 @@
         serverErr: "שגיאת שרת",
         errPrefix: "שגיאה: ",
         loadError: "שגיאה בטעינת הנתונים",
+        payBlocked: "לא ניתן לטעון את כפתור התשלום. ייתכן שהחיבור שלך (רשת / VPN / חוסם פרסומות) חוסם את paypal.com. נסה רשת אחרת.",
+        publishTitle: "האירוע שלך מוכן לפרסום",
+        publishSub: "כדי לקבל קישור לשליחה לאורחים ולהתחיל לאסוף אישורי הגעה, יש להשלים תשלום חד-פעמי של ₪99.",
+        publishSubtitle: "האירוע עדיין לא פורסם",
         badgeYes: "✅ מגיע",
         badgeNo: "❌ לא מגיע",
         deleteTitle: "מחק",
@@ -110,6 +114,10 @@
         serverErr: "Server error",
         errPrefix: "Error: ",
         loadError: "Error loading data",
+        payBlocked: "Couldn't load the payment button. Your connection (network / VPN / ad-blocker) may be blocking paypal.com. Try another network.",
+        publishTitle: "Your event is ready to publish",
+        publishSub: "To get a link to share with your guests and start collecting RSVPs, complete a one-time ₪99 payment.",
+        publishSubtitle: "This event isn't published yet",
         badgeYes: "✅ Attending",
         badgeNo: "❌ Not attending",
         deleteTitle: "Delete",
@@ -187,11 +195,27 @@
         <h1 class="dash-title" id="dashTitle">ממשק ניהול הזמנה</h1>
         <p class="dash-sub" id="dashSub" data-i18n="dashSub">רשימת אישורי הגעה</p>
       </div>
-      <div class="dash-actions">
+      <div class="dash-actions" id="dashActions">
         <button class="icon-btn" onclick="loadRSVPs()" title="רענן" data-i18n="refreshBtn">🔄 רענן</button>
         <button class="icon-btn" onclick="exportCSV()" title="ייצא" data-i18n="exportBtn">📥 ייצא CSV</button>
         <button class="icon-btn" onclick="openEditModal()" title="עריכת פרטים" data-i18n="editBtn">✏️ עריכה</button>
         <a href="#" id="rsvpPageLink" class="icon-btn" target="_blank" data-i18n="guestPageLink">🔗 דף האורחים</a>
+      </div>
+    </div>
+
+    <!-- Publish panel (shown only for unpaid drafts) -->
+    <div id="publishPanel" style="display:none;max-width:560px;margin:24px auto;padding:0 16px">
+      <div class="details-card" style="text-align:center">
+        <div style="font-size:2.6rem">🚀</div>
+        <h2 data-i18n="publishTitle" style="color:var(--navy);margin:10px 0 6px">האירוע שלך מוכן לפרסום</h2>
+        <p data-i18n="publishSub" style="color:var(--text-muted);line-height:1.7;margin-bottom:8px">כדי לקבל קישור לשליחה לאורחים ולהתחיל לאסוף אישורי הגעה, יש להשלים תשלום חד-פעמי של ₪99.</p>
+        <div id="dash-paypal" style="margin-top:16px"></div>
+        <div id="dashPayError" style="display:none;color:var(--red);margin-top:10px;font-size:.9rem"></div>
+        <div class="trust-row">
+          <span data-i18n="trustSecure">🔒 תשלום מאובטח דרך PayPal</span>
+          <span data-i18n="trustRefund">↩️ החזר כספי מלא תוך 14 יום</span>
+          <span data-i18n="trustSupport">✉️ תמיכה: kupernetservice@gmail.com</span>
+        </div>
       </div>
     </div>
 
@@ -339,7 +363,76 @@
       }
       document.getElementById("loginPage").style.display = "none";
       document.getElementById("dashboardPage").style.display = "block";
+
+      const paid = !data.event || data.event.paid !== false;
+      // Unpaid draft → show publish panel, hide RSVP management
+      const publishPanel = document.getElementById("publishPanel");
+      const rsvpSections = [document.getElementById("dashActions"),
+                            document.querySelector(".stats-row"),
+                            document.querySelector(".filter-row"),
+                            document.querySelector(".table-wrap")];
+      if (!paid) {
+        publishPanel.style.display = "block";
+        rsvpSections.forEach(el => { if (el) el.style.display = "none"; });
+        document.getElementById("dashSub").textContent = t("publishSubtitle");
+        currentEvent = data.event || {};
+        initDashPayPal();
+        return;
+      }
+      publishPanel.style.display = "none";
+      rsvpSections.forEach(el => { if (el) el.style.display = ""; });
       processData(data);
+    }
+
+    // PayPal "publish" button on the dashboard — lets owners return via their emailed link and pay.
+    let dashPaypalInit = false;
+    async function initDashPayPal() {
+      if (dashPaypalInit) return;
+      const errEl = document.getElementById("dashPayError");
+      try {
+        if (typeof paypal === "undefined") {
+          const { clientId } = await fetch("/api/paypal-config").then(r => r.json());
+          if (!clientId) throw new Error("no client id");
+          await new Promise((resolve, reject) => {
+            const s = document.createElement("script");
+            s.src = `https://www.paypal.com/sdk/js?client-id=${clientId}&currency=ILS&intent=capture&locale=he_IL`;
+            s.onload = resolve;
+            s.onerror = () => reject(new Error("blocked"));
+            document.head.appendChild(s);
+            setTimeout(() => { if (typeof paypal === "undefined") reject(new Error("timeout")); }, 8000);
+          });
+        }
+        dashPaypalInit = true;
+        paypal.Buttons({
+          style: { layout: "vertical", color: "gold", shape: "rect", label: "pay" },
+          createOrder: async () => {
+            const res = await fetch("/api/paypal-create-order", { method: "POST" });
+            const d = await res.json();
+            if (!d.id) throw new Error(d.error || "order failed");
+            return d.id;
+          },
+          onApprove: async (data) => {
+            errEl.style.display = "none";
+            try {
+              const res = await fetch("/api/paypal-capture", {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({ orderID: data.orderID, slug }),
+              });
+              const json = await res.json();
+              if (!res.ok || !json.slug) throw new Error(json.error || t("serverErr"));
+              window.location.href = `/success?slug=${json.slug}`;
+            } catch (e) {
+              errEl.textContent = t("errPrefix") + e.message;
+              errEl.style.display = "block";
+            }
+          },
+          onError: () => { errEl.textContent = t("payBlocked"); errEl.style.display = "block"; },
+        }).render("#dash-paypal").catch(() => { errEl.textContent = t("payBlocked"); errEl.style.display = "block"; });
+      } catch (e) {
+        errEl.textContent = t("payBlocked");
+        errEl.style.display = "block";
+      }
     }
 
     async function loadRSVPs() {

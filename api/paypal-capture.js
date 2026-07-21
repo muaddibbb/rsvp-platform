@@ -85,7 +85,7 @@ module.exports = async (req, res) => {
     return res.status(200).json({ ok: true });
   }
 
-  const { orderID, checkoutId, ...formData } = req.body || {};
+  const { orderID, checkoutId, slug: publishSlug, ...formData } = req.body || {};
   if (!orderID) return res.status(400).json({ error: "חסר מזהה הזמנה" });
   const today = new Date().toISOString().slice(0, 10);
   if (formData.gregorian_date && formData.gregorian_date < today)
@@ -134,37 +134,63 @@ module.exports = async (req, res) => {
       return res.status(400).json({ error: "התשלום לא הושלם" });
     }
 
-    // 2. Generate slug
-    const year = new Date(formData.gregorian_date + "T12:00:00").getFullYear();
-    const typeMap = { bar_mitzvah:"bm", bat_mitzvah:"btm", wedding:"wedding", brit:"brit", brit_bat:"britb", birthday:"bday", bachelor:"bach", bachelorette:"bachette", henna:"henna", family:"family", other:"event" };
-    const prefix = typeMap[formData.event_type] || "event";
-    const lastName = (formData.customer_name || "").trim().split(/\s+/).pop();
-    const base = `${prefix}-${hebrewToLatin(lastName) || "il"}-${year}`;
-    const { data: existing } = await supabase.from("events").select("slug").eq("slug", base).maybeSingle();
-    const slug = existing ? `${base}-${crypto.randomBytes(2).toString("hex")}` : base;
-    const dashboard_password = crypto.randomBytes(6).toString("base64url");
+    // 2. Publish an existing draft (create-then-pay), or legacy create-on-capture.
+    const EDITABLE = ["customer_name","customer_email","customer_phone","event_type","event_name","hebrew_date","gregorian_date","event_time","location","address","extra_note"];
+    let slug, dashboard_password;
 
-    // 3. Save to Supabase
-    const { error: dbErr } = await supabase.from("events").insert({
-      slug,
-      customer_name:  formData.customer_name?.trim(),
-      customer_email: formData.customer_email?.trim(),
-      customer_phone: formData.customer_phone?.trim() || null,
-      event_type:     formData.event_type,
-      event_name:     formData.event_name?.trim(),
-      hebrew_date:    formData.hebrew_date?.trim() || null,
-      gregorian_date: formData.gregorian_date,
-      event_time:     formData.event_time,
-      location:       formData.location?.trim(),
-      address:        formData.address?.trim(),
-      extra_note:     formData.extra_note?.trim() || null,
-      dashboard_password,
-      paid_at:        new Date().toISOString(),
-    });
+    if (publishSlug) {
+      // Publish: find the unpaid draft, apply any last-minute edits, mark it paid (live).
+      const { data: ev, error: exErr } = await supabase
+        .from("events").select("*").eq("slug", publishSlug).maybeSingle();
+      if (exErr || !ev) {
+        console.error("publish: draft not found", publishSlug, exErr);
+        return res.status(404).json({ error: "האירוע לא נמצא" });
+      }
+      slug = ev.slug;
+      dashboard_password = ev.dashboard_password;
 
-    if (dbErr) {
-      console.error("DB error:", dbErr);
-      return res.status(500).json({ error: "שגיאת מסד נתונים" });
+      const upd = { paid_at: new Date().toISOString() };
+      for (const f of EDITABLE) {
+        if (formData[f] !== undefined && formData[f] !== null && String(formData[f]).trim() !== "") {
+          upd[f] = String(formData[f]).trim();
+        }
+      }
+      const { error: uErr } = await supabase.from("events").update(upd).eq("id", ev.id);
+      if (uErr) { console.error("publish update error:", uErr); return res.status(500).json({ error: "שגיאת מסד נתונים" }); }
+
+      // Backfill formData from the draft for the emails below (in case client omitted fields)
+      for (const f of EDITABLE) if (formData[f] === undefined || formData[f] === null || formData[f] === "") formData[f] = ev[f];
+    } else {
+      // Legacy path: generate slug + insert a fresh paid event.
+      const year = new Date(formData.gregorian_date + "T12:00:00").getFullYear();
+      const typeMap = { bar_mitzvah:"bm", bat_mitzvah:"btm", wedding:"wedding", brit:"brit", brit_bat:"britb", birthday:"bday", bachelor:"bach", bachelorette:"bachette", henna:"henna", family:"family", other:"event" };
+      const prefix = typeMap[formData.event_type] || "event";
+      const lastName = (formData.customer_name || "").trim().split(/\s+/).pop();
+      const base = `${prefix}-${hebrewToLatin(lastName) || "il"}-${year}`;
+      const { data: existing } = await supabase.from("events").select("slug").eq("slug", base).maybeSingle();
+      slug = existing ? `${base}-${crypto.randomBytes(2).toString("hex")}` : base;
+      dashboard_password = crypto.randomBytes(6).toString("base64url");
+
+      const { error: dbErr } = await supabase.from("events").insert({
+        slug,
+        customer_name:  formData.customer_name?.trim(),
+        customer_email: formData.customer_email?.trim(),
+        customer_phone: formData.customer_phone?.trim() || null,
+        event_type:     formData.event_type,
+        event_name:     formData.event_name?.trim(),
+        hebrew_date:    formData.hebrew_date?.trim() || null,
+        gregorian_date: formData.gregorian_date,
+        event_time:     formData.event_time,
+        location:       formData.location?.trim(),
+        address:        formData.address?.trim(),
+        extra_note:     formData.extra_note?.trim() || null,
+        dashboard_password,
+        paid_at:        new Date().toISOString(),
+      });
+      if (dbErr) {
+        console.error("DB error:", dbErr);
+        return res.status(500).json({ error: "שגיאת מסד נתונים" });
+      }
     }
 
     // Payment completed — remove the pending-checkout record so no abandonment email fires
@@ -204,7 +230,8 @@ module.exports = async (req, res) => {
     // 4b. Receipt email with PDF attachment
     try {
       const { count } = await supabase
-        .from("events").select("*", { count: "exact", head: true });
+        .from("events").select("*", { count: "exact", head: true })
+        .not("paid_at", "is", null);   // count only paid events, not unpaid drafts
       const receiptNumber = count || 1;
       const pdfBuffer = await generateReceiptPDF({
         receiptNumber,

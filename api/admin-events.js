@@ -75,6 +75,7 @@ module.exports = async (req, res) => {
     const { data: events, error } = await supabase
       .from("events")
       .select("id, slug, event_name, event_type, gregorian_date, event_time, location, customer_name, customer_email, dashboard_password, paid_at, active, rsvps(count)")
+      .not("paid_at", "is", null)   // paid events only — hide unpaid drafts
       .order("paid_at", { ascending: false });
 
     if (error) return res.status(500).json({ error: error.message });

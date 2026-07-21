@@ -34,9 +34,8 @@ module.exports = async (req, res) => {
     // Fetch event
     const { data: event, error: evErr } = await supabase
       .from("events")
-      .select("id, event_name, event_type, hebrew_date, gregorian_date, event_time, location, address, extra_note, dashboard_password")
+      .select("id, event_name, event_type, hebrew_date, gregorian_date, event_time, location, address, extra_note, dashboard_password, paid_at")
       .eq("slug", slug)
-      .not("paid_at", "is", null)
       .maybeSingle();
 
     if (evErr) throw evErr;
@@ -69,6 +68,7 @@ module.exports = async (req, res) => {
           location:       event.location,
           address:        event.address,
           extra_note:     event.extra_note,
+          paid:           !!event.paid_at,
         },
         stats: {
           total:       rsvps.length,

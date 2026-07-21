@@ -48,7 +48,7 @@
         backBtn: "→ חזור",
         toStep3Btn: "המשך לתצוגה מקדימה ←",
         step3Title: "תצוגה מקדימה ואישור",
-        afterPayNote: "לאחר התשלום יישלח אימייל עם קישור האורחים וקישור ממשק ניהול הזמנה. התשלום מאובטח דרך PayPal.",
+        afterPayNote: "✅ האירוע שלך נשמר! השלמת תשלום חד-פעמי של ₪99 מפרסמת אותו ומפיקה קישור לשליחה לאורחים. שלחנו לך גם אימייל כדי שתוכל לחזור ולפרסם בכל עת. התשלום מאובטח דרך PayPal.",
         retentionNote: "🗓️ האירוע ונתוני האורחים יימחקו אוטומטית חודש אחד לאחר תאריך האירוע.",
         tosPrefix: "קראתי ואני מסכים/ה ל",
         tosLink: "תנאי השימוש ומדיניות הפרטיות",
@@ -126,7 +126,7 @@
         backBtn: "← Back",
         toStep3Btn: "Continue to Preview →",
         step3Title: "Preview & Confirm",
-        afterPayNote: "After payment, an email will be sent with the guest link and the event management link. Payment is secured via PayPal.",
+        afterPayNote: "✅ Your event is saved! A one-time ₪99 payment publishes it and generates the link to share with your guests. We've also emailed you so you can come back and publish anytime. Payment is secured via PayPal.",
         retentionNote: "🗓️ The event and guest data will be deleted automatically one month after the event date.",
         tosPrefix: "I have read and agree to the ",
         tosLink: "Terms of Use & Privacy Policy",
@@ -473,6 +473,24 @@
       goToStep(3);
       initPayPalButtons();
       recordPendingCheckout();
+      saveDraft();
+    }
+
+    // Create-then-pay: save the event as an unpaid draft as soon as the customer reaches
+    // the publish step. They get an email with their dashboard link so they can return and
+    // publish later. Created once per session; final edits are applied at publish time.
+    let draftSlug = null;
+    async function saveDraft() {
+      if (draftSlug) return;
+      try {
+        const res = await fetch("/api/create-event", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify(formData),
+        });
+        const data = await res.json();
+        if (res.ok && data.slug) draftSlug = data.slug;
+      } catch (e) { /* non-blocking — payment can still create the event via legacy path */ }
     }
 
     // Record that the user completed all fields and reached checkout. If they never pay,
@@ -635,7 +653,7 @@
             const res = await fetch("/api/paypal-capture", {
               method: "POST",
               headers: { "Content-Type": "application/json" },
-              body: JSON.stringify({ orderID: data.orderID, checkoutId, ...formData }),
+              body: JSON.stringify({ orderID: data.orderID, checkoutId, slug: draftSlug, ...formData }),
             });
             const json = await res.json();
             if (!res.ok || !json.slug) throw new Error(json.error || t("errServer"));
