@@ -111,4 +111,4 @@ async function sweepAbandonedCheckouts(opts = {}) {
   return rows.length;
 }
 
-module.exports = { sweepAbandonedCheckouts };
+module.exports = { sweepAbandonedCheckouts, sendEmail };

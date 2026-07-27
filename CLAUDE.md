@@ -70,6 +70,7 @@ digest, marks `notified`, purges pending rows >7 days old.
 - **Owner order notification** → `kuperoy@gmail.com`, on publish.
 - **Failed-payment alert** → `kuperoy@gmail.com`, on capture failure (includes PayPal reason).
 - **Abandonment**: owner **digest** (one email listing all) + per-customer **recovery** email (from "רועי").
+- **Post-event thank-you** → organizer, 1 day after the event date (cron, paid events only, from "רועי"), asking for feedback/testimonial.
 
 Owner/admin alerts → **kuperoy@gmail.com**. Public support/contact address → **kupernetservice@gmail.com**.
 
