@@ -222,7 +222,7 @@ module.exports = async (req, res) => {
           סיסמת ממשק ניהול הזמנה: <strong style="font-size:1.3rem;letter-spacing:.1em">${dashboard_password}</strong>
         </p>
         <p style="font-size:.82rem;color:#6b7280;background:#f3f4f6;border-radius:8px;padding:10px 14px;margin-top:16px;line-height:1.6">
-          🗓️ תזכורת: האירוע ונתוני האורחים יימחקו אוטומטית חודש אחד לאחר תאריך האירוע (${formData.gregorian_date}).
+          🗓️ תזכורת: רשימת האורחים תימחק אוטומטית חודש אחד לאחר תאריך האירוע (${formData.gregorian_date}).
         </p>
       </div>`
     );

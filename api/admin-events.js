@@ -1,7 +1,7 @@
 const { createClient } = require("@supabase/supabase-js");
 const crypto = require("crypto");
 const generateReceiptPDF = require("./_receipt");
-const { sweepAbandonedCheckouts } = require("./_sweep");
+const { sweepAbandonedCheckouts, sendPostEventThankYous } = require("./_sweep");
 
 const supabase = createClient(process.env.SUPABASE_URL, process.env.SUPABASE_SERVICE_ROLE_KEY);
 
@@ -59,6 +59,12 @@ module.exports = async (req, res) => {
     return res.status(200).json({ sent: count });
   }
 
+  // POST ?thankyou=1 — manually send post-event thank-you emails now (last 2 days of events)
+  if (req.method === "POST" && req.query.thankyou) {
+    const sent = await sendPostEventThankYous(2);
+    return res.status(200).json({ sent });
+  }
+
   // PATCH ?slug=xxx {active: true/false} — activate/deactivate event
   if (req.method === "PATCH") {
     const { slug } = req.query;
@@ -74,7 +80,7 @@ module.exports = async (req, res) => {
   if (req.method === "GET") {
     const { data: events, error } = await supabase
       .from("events")
-      .select("id, slug, event_name, event_type, gregorian_date, event_time, location, customer_name, customer_email, dashboard_password, paid_at, active, rsvps(count)")
+      .select("id, slug, event_name, event_type, gregorian_date, event_time, location, customer_name, customer_email, dashboard_password, paid_at, active, final_responses, final_guests, rsvps(count)")
       .not("paid_at", "is", null)   // paid events only — hide unpaid drafts
       .order("paid_at", { ascending: false });
 

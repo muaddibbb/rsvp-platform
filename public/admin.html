@@ -157,6 +157,7 @@
   <div class="admin-header">
     <h1>לוח בקרה — כל האירועים</h1>
     <div style="display:flex;gap:8px">
+      <button onclick="sendThankYous(this)">🎉 שלח תודות (אירועי אתמול)</button>
       <button onclick="sendAbandonReport(this)">📧 שלח דוח נטישות</button>
       <button onclick="logout()">יציאה</button>
     </div>
@@ -300,6 +301,10 @@
       const label = EVENT_LABELS[e.event_type] || e.event_type;
 
       const inactive = e.active === false;
+      // Live count while active; snapshot (final_responses/guests) for closed past events.
+      const countCell = (e.rsvp_count > 0 || e.final_responses == null)
+        ? `${e.rsvp_count}`
+        : `${e.final_responses}<br/><span style="font-size:.7rem;color:var(--text-muted)">${e.final_guests} אורחים</span>`;
       return `<tr class="${inactive ? "inactive" : ""}">
         <td style="color:var(--text-muted)">${i + 1}</td>
         <td><strong>${e.event_name || "—"}</strong>${inactive ? '<span class="badge-inactive">מושבת</span>' : ""}<br/><span style="font-size:.78rem;color:var(--text-muted)">${e.slug}</span></td>
@@ -307,7 +312,7 @@
         <td style="white-space:nowrap">${date}</td>
         <td>${e.customer_name || "—"}</td>
         <td style="font-size:.82rem;direction:ltr;text-align:right">${e.customer_email || "—"}</td>
-        <td class="rsvp-count" style="text-align:center">${e.rsvp_count}</td>
+        <td class="rsvp-count" style="text-align:center">${countCell}</td>
         <td><span class="pass-cell" data-pass="${e.dashboard_password || '—'}">••••••</span></td>
         <td style="white-space:nowrap;font-size:.82rem">${registered}</td>
         <td style="white-space:nowrap">
@@ -332,6 +337,28 @@
     const ev = allEvents.find(e => e.slug === slug);
     if (ev) ev.active = activate;
     renderTable();
+  }
+
+  async function sendThankYous(btn) {
+    const original = btn.textContent;
+    btn.disabled = true;
+    btn.textContent = "שולח...";
+    try {
+      const res = await fetch("/api/admin-events?thankyou=1", {
+        method: "POST",
+        headers: { Authorization: `Bearer ${token}` },
+      });
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.error || "שגיאה");
+      alert(data.sent > 0
+        ? `נשלחו ${data.sent} מיילי תודה ללקוחות שהאירוע שלהם היה אתמול/שלשום.`
+        : "אין אירועים מהיומיים האחרונים לשליחת תודה.");
+    } catch (e) {
+      alert("שגיאה בשליחת התודות: " + e.message);
+    } finally {
+      btn.disabled = false;
+      btn.textContent = original;
+    }
   }
 
   async function sendAbandonReport(btn) {

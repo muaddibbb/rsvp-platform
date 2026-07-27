@@ -111,4 +111,39 @@ async function sweepAbandonedCheckouts(opts = {}) {
   return rows.length;
 }
 
-module.exports = { sweepAbandonedCheckouts, sendEmail };
+// One day after the event, thank the organizer and ask for feedback (paid events only).
+// Default matches events dated exactly "yesterday". A manual run can pass windowDays>1
+// to also catch events from the last few days (e.g. if a cron run was missed).
+async function sendPostEventThankYous(windowDays = 1) {
+  const today = new Date();
+  const startYmd = new Date(today.getTime() - windowDays * 24 * 60 * 60 * 1000).toISOString().slice(0, 10);
+  const endYmd   = new Date(today.getTime() - 1 * 24 * 60 * 60 * 1000).toISOString().slice(0, 10);
+  const { data: events, error } = await supabase
+    .from("events")
+    .select("customer_name, customer_email, event_name")
+    .gte("gregorian_date", startYmd)
+    .lte("gregorian_date", endYmd)
+    .not("paid_at", "is", null);
+  if (error) { console.error("thank-you fetch error:", error); return 0; }
+  if (!events || !events.length) return 0;
+
+  let sent = 0;
+  for (const e of events) {
+    if (!e.customer_email) continue;
+    await sendEmail(
+      e.customer_email,
+      `תודה שבחרת ב-rsvp.kupernet.com 🎉`,
+      `<div dir="rtl" style="font-family:Arial;font-size:15px;line-height:1.9;color:#1a1a2e;padding:8px 4px;max-width:520px">
+        <p>היי, כאן רועי מהאתר <a href="https://rsvp.kupernet.com" style="color:#c9993a">rsvp.kupernet.com</a>.</p>
+        <p>תודה שהשתמשת בשירות אישורי ההגעה לאירוע של rsvp.kupernet.com</p>
+        <p>נשמח לשמוע ממך חוות דעת על המוצר שלנו, הצעות לשיפור (וכמובן, מחמאות יתקבלו בברכה...)</p>
+        <p>המון מזל טוב, ונתראה באירוע הבא 🎉</p>
+      </div>`,
+      "רועי מ-rsvp.kupernet.com"
+    );
+    sent++;
+  }
+  return sent;
+}
+
+module.exports = { sweepAbandonedCheckouts, sendEmail, sendPostEventThankYous };
