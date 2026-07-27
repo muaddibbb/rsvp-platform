@@ -423,6 +423,14 @@
       formData.event_type = card.dataset.value;
     }
 
+    // Pre-select an event type from ?type= (set by the landing-page cards)
+    (function preselectType() {
+      const type = new URLSearchParams(window.location.search).get("type");
+      if (!type) return;
+      const card = document.querySelector(`.event-type-card[data-value="${type}"]`);
+      if (card) selectEventType(card);
+    })();
+
     function showError(msg) {
       alert(msg);
     }
