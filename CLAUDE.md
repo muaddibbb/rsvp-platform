@@ -47,8 +47,10 @@ Unpaid drafts and deactivated events return 404 to guests.
 8. **admin-events.js** — Bearer `ADMIN_PASSWORD`. GET = list **paid** events + rsvp counts.
    `?receipt=1&slug=` / `?refund=1&slug=` → PDF. `?sweep=1` (POST) → send abandonment report now
    (ignores grace). PATCH `?slug=` `{active}` → activate/deactivate. DELETE `?slug=` → delete event + rsvps.
-9. **cleanup.js** — cron, Bearer `CRON_SECRET`. Runs the abandonment sweep + purges events whose
-   `gregorian_date` is >30 days past. Scheduled daily 02:00 (`vercel.json` cron `0 2 * * *`).
+9. **cleanup.js** — cron, Bearer `CRON_SECRET`. Runs the abandonment sweep + retention: 30 days after
+   the event date it **closes** paid events (deletes guest RSVPs, sets `active=false`, keeps the event +
+   receipt record for admin) and **deletes** unpaid past drafts outright. Scheduled daily 02:00
+   (`vercel.json` cron `0 2 * * *`).
 
 **Helpers:** `_receipt.js` = `generateReceiptPDF({receiptNumber, customerName, paymentDate, isRefund})`
 (Hebrew A5 PDF, business "Kupernet", עוסק פטור 036409084). `_sweep.js` =
@@ -89,7 +91,8 @@ Owner/admin alerts → **kuperoy@gmail.com**. Public support/contact address →
 
 ## Business rules
 - Price **₪99** one-time per event (ILS). PayPal live, `locale=he_IL`.
-- Event & RSVP data **auto-deleted 1 month after the event date** (cleanup cron).
+- **Retention:** 30 days after the event date, guest RSVP lists are deleted (privacy), but the paid
+  event's record + receipt are kept in admin (event set to `active=false` = "closed"). Unpaid drafts are deleted.
 - Refund policy: full refund within **14 days if no RSVPs collected** (`refund.html`).
 - Abandonment grace: **20 min** (daily cron). Admin "send report" button ignores grace.
 - **Event types** (value → Hebrew): bar_mitzvah בר מצווה, bat_mitzvah בת מצווה, wedding חתונה,
@@ -107,4 +110,6 @@ Owner/admin alerts → **kuperoy@gmail.com**. Public support/contact address →
 - Deploy only from `/Users/rkuperman/rsvp-platform` (cwd resets between bash calls — always `cd` first).
 - Vercel Hobby crons run at most **once per day**.
 - Never put secrets in code, git, or chat. Credentials pasted in chat must be rotated.
-- Known follow-up: future-dated **unpaid drafts** that never convert linger in the DB (no auto-cleanup yet).
+- **Policy wording note:** tos.html / privacy.html / pricing FAQ still say "all event AND guest data
+  deleted after a month." Reality now: guest data deleted, but the paid event/receipt record is kept.
+  Update that wording for accuracy when convenient.
