@@ -3,24 +3,25 @@
   "nodes": [
     {
       "parameters": {
-        "rule": { "interval": [ { "field": "days", "triggerAtHour": 5 } ] }
+        "content": "## RSVP Ads Campaign Manager (complete)\nHard limits enforced in code: ≤₪400/mo ads, ₪13/day budget pin, never pause converting keywords, website = GitHub proposal only, DRY_RUN until you flip it.\n\n### To finish after import (one-time)\n1. Credentials: create **Google Ads OAuth2** credential (client id/secret + developer token) and select it on the 5 Google nodes. Create **GitHub** credential → select on 'Propose website change'. Create **SMTP** credential (Brevo: smtp-relay.brevo.com:587) → select on 'Report email'.\n2. Replace **CUSTOMER_ID** (digits only) in: the 4 Read nodes' login-customer-id header + the CID const in 'Validate & Gate'.\n3. Ollama: n8n runs in Docker, so use the host IP — default set to http://192.168.1.114:11434. Install: `curl -fsSL https://ollama.com/install.sh | sh && ollama pull llama3.1:8b`.\n4. Run once manually → read the report email → after a few good days set DRY_RUN=false in 'Validate & Gate' → activate the schedule.\n\nIf a Google node 404s, bump /v18/ to the current API version in the 4 Read nodes + 'Validate & Gate'.",
+        "height": 420,
+        "width": 520
       },
-      "id": "a1000000-0000-0000-0000-000000000001",
-      "name": "Daily 05:00",
-      "type": "n8n-nodes-base.scheduleTrigger",
-      "typeVersion": 1.2,
-      "position": [ -600, 300 ]
+      "id": "b2000000-0000-0000-0000-0000000000ff",
+      "name": "SETUP README",
+      "type": "n8n-nodes-base.stickyNote",
+      "typeVersion": 1,
+      "position": [-940, -140]
     },
     {
       "parameters": {
-        "content": "## RSVP Ads Campaign Manager\nRules + AI-reviewer. Hard limits: ≤₪400/mo ad spend, no site spend, never pause converting keywords, website changes as GitHub PRs only.\n\n### Before enabling the schedule\n1. Wire credentials into the HTTP nodes (Google Ads OAuth2 + developer-token header; Ollama at http://localhost:11434; GitHub PAT).\n2. Set CUSTOMER_ID / CAMPAIGN_ID / BUDGET_ID / AD_GROUP_ID in the Code nodes.\n3. Keep 'Validate & Gate' DRY_RUN=true until the reports look right for a few days.\n\nQueries: see automation/gaql-and-api.md · Rules: automation/rules-engine.js · Prompt: automation/ai-reviewer-prompt.md",
-        "height": 320, "width": 460
+        "rule": { "interval": [{ "field": "days", "triggerAtHour": 5 }] }
       },
-      "id": "a1000000-0000-0000-0000-0000000000ff",
-      "name": "README",
-      "type": "n8n-nodes-base.stickyNote",
-      "typeVersion": 1,
-      "position": [ -600, -80 ]
+      "id": "b2000000-0000-0000-0000-000000000001",
+      "name": "Daily 05:00",
+      "type": "n8n-nodes-base.scheduleTrigger",
+      "typeVersion": 1.2,
+      "position": [-940, 320]
     },
     {
       "parameters": {
@@ -29,107 +30,222 @@
         "authentication": "predefinedCredentialType",
         "nodeCredentialType": "googleAdsOAuth2Api",
         "sendHeaders": true,
-        "headerParameters": { "parameters": [ { "name": "developer-token", "value": "={{$env.GOOGLE_ADS_DEV_TOKEN}}" }, { "name": "login-customer-id", "value": "CUSTOMER_ID" } ] },
+        "headerParameters": { "parameters": [{ "name": "login-customer-id", "value": "CUSTOMER_ID" }] },
         "sendBody": true,
         "specifyBody": "json",
-        "jsonBody": "={ \"query\": \"SELECT campaign.id, campaign.name, campaign.status, campaign_budget.amount_micros, metrics.cost_micros, metrics.conversions, metrics.clicks FROM campaign WHERE campaign.name = 'RSVP Search Campaign' AND segments.date DURING THIS_MONTH\" }",
-        "options": { "allowUnauthorizedCerts": false }
+        "jsonBody": "={ \"query\": \"SELECT campaign.id, campaign.name, campaign.status, campaign.resource_name, campaign_budget.resource_name, campaign_budget.amount_micros, metrics.cost_micros, metrics.conversions, metrics.clicks FROM campaign WHERE campaign.name = 'RSVP Search Campaign' AND segments.date DURING THIS_MONTH\" }",
+        "options": {}
       },
-      "id": "a1000000-0000-0000-0000-000000000002",
+      "id": "b2000000-0000-0000-0000-000000000002",
       "name": "Read: Campaign+MTD",
       "type": "n8n-nodes-base.httpRequest",
       "typeVersion": 4.2,
-      "position": [ -320, 200 ]
-    },
-    {
-      "parameters": {
-        "content": "### READ (3 GAQL queries)\nDuplicate this node for the Keyword (LAST_30_DAYS), Keyword-90d (winner protection), and Search-terms queries in gaql-and-api.md, then feed all into 'Normalize'.",
-        "height": 200, "width": 300
-      },
-      "id": "a1000000-0000-0000-0000-0000000000fa",
-      "name": "Read note",
-      "type": "n8n-nodes-base.stickyNote",
-      "typeVersion": 1,
-      "position": [ -320, -80 ]
-    },
-    {
-      "parameters": {
-        "jsCode": "// Normalize the GAQL response(s) into the shape rules-engine.js expects.\n// Divide every *_micros by 1e6 to get ₪. Assemble: campaign, keywords[], searchTerms[],\n// monthToDateSpendILS, dayOfMonth, daysInMonth. See gaql-and-api.md.\n// TODO: map real API results here once credentials are wired. Placeholder passthrough below.\nconst now = new Date();\nreturn [{ json: {\n  campaign: { name: 'RSVP Search Campaign', status: 'ENABLED', dailyBudgetILS: 13, costILS: 0, conversions: 0 },\n  keywords: [], searchTerms: [],\n  monthToDateSpendILS: 0,\n  dayOfMonth: now.getUTCDate(),\n  daysInMonth: new Date(now.getUTCFullYear(), now.getUTCMonth()+1, 0).getUTCDate()\n} }];"
-      },
-      "id": "a1000000-0000-0000-0000-000000000003",
-      "name": "Normalize",
-      "type": "n8n-nodes-base.code",
-      "typeVersion": 2,
-      "position": [ -80, 300 ]
-    },
-    {
-      "parameters": {
-        "jsCode": "// Deterministic guardrails + candidate actions.\n// PASTE the full contents of automation/rules-engine.js here (the decide() function + CONFIG),\n// then end with:  return [{ json: decide($input.first().json) }];\n// Kept as a pointer to avoid drift — rules-engine.js is the source of truth for all limits."
-      },
-      "id": "a1000000-0000-0000-0000-000000000004",
-      "name": "Rules Engine",
-      "type": "n8n-nodes-base.code",
-      "typeVersion": 2,
-      "position": [ 160, 300 ]
+      "position": [-720, 320]
     },
     {
       "parameters": {
         "method": "POST",
-        "url": "http://localhost:11434/api/chat",
+        "url": "https://googleads.googleapis.com/v18/customers/CUSTOMER_ID/googleAds:search",
+        "authentication": "predefinedCredentialType",
+        "nodeCredentialType": "googleAdsOAuth2Api",
+        "sendHeaders": true,
+        "headerParameters": { "parameters": [{ "name": "login-customer-id", "value": "CUSTOMER_ID" }] },
         "sendBody": true,
         "specifyBody": "json",
-        "jsonBody": "={ \"model\": \"llama3.1:8b\", \"stream\": false, \"format\": \"json\", \"messages\": [ { \"role\": \"system\", \"content\": \"<<PASTE ai-reviewer-prompt.md>>\" }, { \"role\": \"user\", \"content\": {{ JSON.stringify($json) }} } ] }",
+        "jsonBody": "={ \"query\": \"SELECT ad_group_criterion.resource_name, ad_group_criterion.criterion_id, ad_group_criterion.keyword.text, ad_group_criterion.keyword.match_type, ad_group_criterion.status, metrics.cost_micros, metrics.conversions, metrics.clicks FROM keyword_view WHERE segments.date DURING LAST_30_DAYS AND campaign.name = 'RSVP Search Campaign'\" }",
         "options": {}
       },
-      "id": "a1000000-0000-0000-0000-000000000005",
+      "id": "b2000000-0000-0000-0000-000000000003",
+      "name": "Read: Keywords 30d",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [-500, 320]
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "https://googleads.googleapis.com/v18/customers/CUSTOMER_ID/googleAds:search",
+        "authentication": "predefinedCredentialType",
+        "nodeCredentialType": "googleAdsOAuth2Api",
+        "sendHeaders": true,
+        "headerParameters": { "parameters": [{ "name": "login-customer-id", "value": "CUSTOMER_ID" }] },
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={ \"query\": \"SELECT ad_group_criterion.resource_name, metrics.conversions FROM keyword_view WHERE segments.date DURING LAST_90_DAYS AND campaign.name = 'RSVP Search Campaign'\" }",
+        "options": {}
+      },
+      "id": "b2000000-0000-0000-0000-000000000004",
+      "name": "Read: Keywords 90d",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [-280, 320]
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "https://googleads.googleapis.com/v18/customers/CUSTOMER_ID/googleAds:search",
+        "authentication": "predefinedCredentialType",
+        "nodeCredentialType": "googleAdsOAuth2Api",
+        "sendHeaders": true,
+        "headerParameters": { "parameters": [{ "name": "login-customer-id", "value": "CUSTOMER_ID" }] },
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={ \"query\": \"SELECT search_term_view.search_term, metrics.clicks, metrics.cost_micros, metrics.conversions FROM search_term_view WHERE segments.date DURING LAST_30_DAYS AND campaign.name = 'RSVP Search Campaign'\" }",
+        "options": {}
+      },
+      "id": "b2000000-0000-0000-0000-000000000005",
+      "name": "Read: Search terms",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [-60, 320]
+    },
+    {
+      "parameters": {
+        "jsCode": "// Normalize Google Ads responses into the rules-engine input shape. ₪ = micros / 1e6.\nconst r2 = (n) => Math.round(n * 100) / 100;\nconst cRows = ($('Read: Campaign+MTD').first().json.results) || [];\nconst c = cRows[0] || {};\nconst campaign = {\n  name: c.campaign?.name || 'RSVP Search Campaign',\n  status: c.campaign?.status || 'UNKNOWN',\n  resourceName: c.campaign?.resourceName || null,\n  budgetResourceName: c.campaignBudget?.resourceName || null,\n  dailyBudgetILS: r2((Number(c.campaignBudget?.amountMicros) || 0) / 1e6),\n  costILS: r2((Number(c.metrics?.costMicros) || 0) / 1e6),\n  conversions: Number(c.metrics?.conversions) || 0,\n};\nconst kw90 = {};\nfor (const r of ($('Read: Keywords 90d').first().json.results) || []) {\n  const rn = r.adGroupCriterion?.resourceName;\n  if (rn) kw90[rn] = Number(r.metrics?.conversions) || 0;\n}\nconst keywords = (($('Read: Keywords 30d').first().json.results) || []).map((r) => {\n  const rn = r.adGroupCriterion?.resourceName;\n  return {\n    criterionId: rn, // full resource name — used directly in the pause mutation\n    text: r.adGroupCriterion?.keyword?.text,\n    matchType: r.adGroupCriterion?.keyword?.matchType,\n    status: r.adGroupCriterion?.status,\n    costILS: r2((Number(r.metrics?.costMicros) || 0) / 1e6),\n    conversions: Number(r.metrics?.conversions) || 0,\n    clicks: Number(r.metrics?.clicks) || 0,\n    conversionsAllTime: kw90[rn] || 0,\n  };\n});\nconst searchTerms = (($('Read: Search terms').first().json.results) || []).map((r) => ({\n  term: r.searchTermView?.searchTerm,\n  clicks: Number(r.metrics?.clicks) || 0,\n  costILS: r2((Number(r.metrics?.costMicros) || 0) / 1e6),\n  conversions: Number(r.metrics?.conversions) || 0,\n  alreadyNegative: false,\n}));\nconst now = new Date();\nreturn [{ json: {\n  campaign, keywords, searchTerms,\n  monthToDateSpendILS: campaign.costILS,\n  dayOfMonth: now.getUTCDate(),\n  daysInMonth: new Date(now.getUTCFullYear(), now.getUTCMonth() + 1, 0).getUTCDate(),\n} }];"
+      },
+      "id": "b2000000-0000-0000-0000-000000000006",
+      "name": "Normalize",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [160, 320]
+    },
+    {
+      "parameters": {
+        "jsCode": "// Deterministic guardrails + candidate actions (mirror of automation/rules-engine.js).\nconst CONFIG = {\n  CAMPAIGN_NAME: 'RSVP Search Campaign',\n  MONTHLY_BUDGET_CAP_ILS: 400,\n  DAILY_BUDGET_ILS: 13,\n  PRICE_ILS: 99,\n  LOOKBACK_DAYS: 30,\n  KEYWORD_PAUSE_MIN_SPEND_ILS: 60,\n  NEGATIVE_MIN_CLICKS: 4,\n  NEGATIVE_MIN_SPEND_ILS: 15,\n  MAX_ACTIONS_PER_RUN: 8,\n};\nconst { campaign, keywords = [], searchTerms = [], monthToDateSpendILS = 0, dayOfMonth = 1, daysInMonth = 30 } = $input.first().json;\nconst actions = [];\nconst notes = [];\nconst remainingDays = Math.max(1, daysInMonth - dayOfMonth + 1);\nconst projectedMonth = monthToDateSpendILS + CONFIG.DAILY_BUDGET_ILS * remainingDays;\nlet budgetStatus = 'ok';\nif (monthToDateSpendILS >= CONFIG.MONTHLY_BUDGET_CAP_ILS) {\n  actions.push({ type: 'pause_campaign', reason: `MTD ₪${monthToDateSpendILS} reached the ₪${CONFIG.MONTHLY_BUDGET_CAP_ILS} cap` });\n  budgetStatus = 'cap_reached';\n} else if (projectedMonth > CONFIG.MONTHLY_BUDGET_CAP_ILS) {\n  const safeDaily = Math.max(1, Math.floor((CONFIG.MONTHLY_BUDGET_CAP_ILS - monthToDateSpendILS) / remainingDays));\n  if (Math.round(campaign.dailyBudgetILS) !== safeDaily) {\n    actions.push({ type: 'set_daily_budget', valueILS: safeDaily, reason: `Throttle: projected ₪${Math.round(projectedMonth)} > ₪${CONFIG.MONTHLY_BUDGET_CAP_ILS}` });\n  }\n  budgetStatus = 'throttling';\n} else if (Math.round(campaign.dailyBudgetILS) > CONFIG.DAILY_BUDGET_ILS) {\n  actions.push({ type: 'set_daily_budget', valueILS: CONFIG.DAILY_BUDGET_ILS, reason: `Enforce ≤₪${CONFIG.DAILY_BUDGET_ILS}/day (was ₪${Math.round(campaign.dailyBudgetILS)})` });\n}\nconst losers = keywords\n  .filter((k) => k.status === 'ENABLED' && (k.conversions || 0) === 0 && (k.conversionsAllTime || 0) === 0 && (k.costILS || 0) >= CONFIG.KEYWORD_PAUSE_MIN_SPEND_ILS)\n  .sort((a, b) => b.costILS - a.costILS);\nfor (const k of losers) actions.push({ type: 'pause_keyword', criterionId: k.criterionId, keyword: k.text, matchType: k.matchType, reason: `₪${k.costILS}, 0 conv in ${CONFIG.LOOKBACK_DAYS}d` });\nconst waste = searchTerms\n  .filter((t) => (t.conversions || 0) === 0 && (t.clicks || 0) >= CONFIG.NEGATIVE_MIN_CLICKS && (t.costILS || 0) >= CONFIG.NEGATIVE_MIN_SPEND_ILS && !t.alreadyNegative)\n  .sort((a, b) => b.costILS - a.costILS);\nfor (const t of waste) actions.push({ type: 'add_negative', text: t.term, matchType: 'PHRASE', reason: `₪${t.costILS}, ${t.clicks} clicks, 0 conv` });\nconst winners = keywords.filter((k) => (k.conversionsAllTime || 0) > 0).map((k) => ({ keyword: k.text, matchType: k.matchType, cpaILS: k.conversions ? Math.round(k.costILS / k.conversions) : null }));\nconst totalConv = campaign.conversions || 0;\nconst cpaILS = totalConv ? Math.round((campaign.costILS || 0) / totalConv) : null;\nif (budgetStatus === 'cap_reached') notes.push('Budget cap reached — campaign paused until next month.');\nif (cpaILS != null && cpaILS < CONFIG.PRICE_ILS) notes.push(`CPA ₪${cpaILS} < ₪${CONFIG.PRICE_ILS} price — profitable.`);\nconst candidateActions = actions.slice(0, CONFIG.MAX_ACTIONS_PER_RUN);\nreturn [{ json: { budgetStatus, monthToDateSpendILS, projectedMonthILS: Math.round(projectedMonth), cpaILS, profitable: cpaILS != null && cpaILS < CONFIG.PRICE_ILS, winners, candidateActions, droppedActions: Math.max(0, actions.length - candidateActions.length), config: CONFIG, notes } }];"
+      },
+      "id": "b2000000-0000-0000-0000-000000000007",
+      "name": "Rules Engine",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [380, 320]
+    },
+    {
+      "parameters": {
+        "jsCode": "// Build the local-LLM (Ollama) review request. The model may only approve/reject/reorder\n// the engine's candidateActions and optionally draft ONE website PR proposal.\nconst data = $input.first().json;\nconst SYSTEM = `You are the review layer of an autonomous Google Ads manager for rsvp.kupernet.com, a Hebrew RSVP web app selling one-time event pages for ₪99. A deterministic rules engine computed the ONLY allowed ad changes this run.\\nHARD LIMITS (violations are dropped by a validator):\\n1. Ad actions must be a subset of candidateActions — approve/reject/reorder only; never invent actions, change values, or raise budgets.\\n2. Never approve pausing any keyword listed in winners.\\n3. Monthly ad spend cap is ₪400; you never propose more spend anywhere.\\n4. Website changes are PROPOSALS for a human; never touch payment/checkout code (api/paypal-*, create-event, capture flow).\\n5. Never propose anything that costs money to run.\\nGOAL: drive CPA (cpaILS) below ₪99 while keeping conversions. winners shows converting keywords — protect them and lean into their themes (esp. digital/דיגיטלי intent, historically cheapest).\\nREVIEW: approve candidates unless a reason is clearly wrong (explain rejections); order by impact; if budgetStatus is cap_reached or throttling, approve the budget action verbatim.\\nWEBSITE PR (optional, max one): only a concrete, safe, content-level improvement (headline matching winning intent, trust element, copy fix). Else websitePR: null.\\nOUTPUT STRICT JSON ONLY: {\\\"approvedActions\\\":[...subset unchanged...],\\\"rejectedActions\\\":[{\\\"action\\\":{},\\\"why\\\":\\\"\\\"}],\\\"websitePR\\\":null|{\\\"title\\\":\\\"\\\",\\\"rationale\\\":\\\"\\\",\\\"files_hint\\\":\\\"\\\",\\\"change_description\\\":\\\"\\\"},\\\"summary\\\":\\\"1-3 sentences: CPA, changes, spend vs cap\\\"}`;\nreturn [{ json: { model: 'llama3.1:8b', stream: false, format: 'json', options: { temperature: 0.2 }, messages: [ { role: 'system', content: SYSTEM }, { role: 'user', content: JSON.stringify(data) } ] } }];"
+      },
+      "id": "b2000000-0000-0000-0000-000000000008",
+      "name": "Build LLM request",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [600, 320]
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "http://192.168.1.114:11434/api/chat",
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={{ JSON.stringify($json) }}",
+        "options": { "timeout": 120000 }
+      },
+      "id": "b2000000-0000-0000-0000-000000000009",
       "name": "AI Reviewer (Ollama)",
       "type": "n8n-nodes-base.httpRequest",
       "typeVersion": 4.2,
-      "position": [ 400, 300 ]
+      "position": [820, 320],
+      "onError": "continueRegularOutput"
     },
     {
       "parameters": {
-        "jsCode": "// FINAL SAFETY GATE. Parse the LLM JSON (message.content) and re-check against hard limits:\n//  - drop any ad action not in the engine's candidateActions\n//  - reject set_daily_budget > 13000000 micros unless budgetStatus === 'throttling'\n//  - reject pause_keyword whose keyword is in winners\n//  - honor DRY_RUN: when true, do NOT emit mutate operations, only the report\nconst DRY_RUN = true; // flip to false to let it act\n// TODO: implement parse+validate; output { approvedActions, websitePR, summary, DRY_RUN }.\nreturn [{ json: { DRY_RUN, approvedActions: [], websitePR: null, summary: 'dry-run scaffold' } }];"
+        "jsCode": "// FINAL SAFETY GATE — re-validates the LLM plan against the engine's sanctioned set,\n// then builds the exact Google Ads mutation payloads. Nothing outside this passes.\nconst DRY_RUN = true; // ← flip to false to let the agent act\nconst CID = 'CUSTOMER_ID'; // ← digits only\nconst API = 'v18';\nconst engine = $('Rules Engine').first().json;\nconst norm = $('Normalize').first().json;\nlet review = { approvedActions: engine.candidateActions || [], rejectedActions: [], websitePR: null, summary: 'LLM unavailable — engine plan used verbatim.' };\ntry {\n  const raw = $input.first().json || {};\n  const content = raw.message?.content ?? raw.choices?.[0]?.message?.content;\n  if (content) { const parsed = typeof content === 'string' ? JSON.parse(content) : content; if (parsed && Array.isArray(parsed.approvedActions)) review = parsed; }\n} catch (e) { /* fall back to engine plan */ }\nconst key = (a) => JSON.stringify([a.type, a.criterionId || a.text || '', a.valueILS ?? '']);\nconst sanctioned = new Map((engine.candidateActions || []).map((a) => [key(a), a]));\nconst winners = new Set((engine.winners || []).map((w) => w.keyword));\nconst approved = [];\nfor (const a of review.approvedActions || []) {\n  const s = sanctioned.get(key(a));\n  if (!s) continue; // not sanctioned by the engine → dropped\n  if (s.type === 'pause_keyword' && winners.has(s.keyword)) continue;\n  if (s.type === 'set_daily_budget' && s.valueILS > engine.config.DAILY_BUDGET_ILS && engine.budgetStatus !== 'throttling') continue;\n  approved.push(s); // use the ENGINE'S copy, not the LLM's\n}\nconst base = `https://googleads.googleapis.com/${API}/customers/${CID}`;\nconst mutations = approved.map((a) => {\n  if (a.type === 'pause_keyword') return { url: `${base}/adGroupCriteria:mutate`, body: { operations: [{ updateMask: 'status', update: { resourceName: a.criterionId, status: 'PAUSED' } }] }, label: `pause: ${a.keyword}` };\n  if (a.type === 'add_negative') return { url: `${base}/campaignCriteria:mutate`, body: { operations: [{ create: { campaign: norm.campaign.resourceName, negative: true, keyword: { text: a.text, matchType: a.matchType || 'PHRASE' } } }] }, label: `negative: ${a.text}` };\n  if (a.type === 'set_daily_budget') return { url: `${base}/campaignBudgets:mutate`, body: { operations: [{ updateMask: 'amountMicros', update: { resourceName: norm.campaign.budgetResourceName, amountMicros: String(Math.round(a.valueILS * 1e6)) } }] }, label: `budget: ₪${a.valueILS}/day` };\n  if (a.type === 'pause_campaign') return { url: `${base}/campaigns:mutate`, body: { operations: [{ updateMask: 'status', update: { resourceName: norm.campaign.resourceName, status: 'PAUSED' } }] }, label: 'PAUSE CAMPAIGN (monthly cap)' };\n  return null;\n}).filter(Boolean);\nconst websitePR = review.websitePR && review.websitePR.title ? review.websitePR : null;\nreturn [{ json: {\n  DRY_RUN,\n  summary: review.summary || '(no summary)',\n  cpaILS: engine.cpaILS, profitable: engine.profitable,\n  budgetStatus: engine.budgetStatus, monthToDateSpendILS: engine.monthToDateSpendILS, projectedMonthILS: engine.projectedMonthILS,\n  approvedCount: approved.length, mutations, websitePR,\n  rejected: review.rejectedActions || [], engineNotes: engine.notes || [], winners: engine.winners || [],\n} }];"
       },
-      "id": "a1000000-0000-0000-0000-000000000006",
+      "id": "b2000000-0000-0000-0000-00000000000a",
       "name": "Validate & Gate",
       "type": "n8n-nodes-base.code",
       "typeVersion": 2,
-      "position": [ 640, 300 ]
+      "position": [1040, 320]
     },
     {
       "parameters": {
-        "content": "### ACT (only when DRY_RUN=false)\nAdd HTTP mutate nodes per gaql-and-api.md: adGroupCriteria:mutate (pause kw), campaignCriteria:mutate (add negative), campaignBudgets:mutate (budget), campaigns:mutate (pause at cap). Branch each off 'Validate & Gate' by action type.\n\n### PROPOSE (website)\nIf websitePR != null → GitHub node: create a branch + PR on muaddibbb/rsvp-platform. Never deploy.",
-        "height": 240, "width": 360
+        "jsCode": "// Emit one item per mutation — only when live (DRY_RUN=false). Empty output = nothing runs.\nconst j = $input.first().json;\nif (j.DRY_RUN || !(j.mutations || []).length) return [];\nreturn j.mutations.map((m) => ({ json: m }));"
       },
-      "id": "a1000000-0000-0000-0000-0000000000fb",
-      "name": "Act note",
-      "type": "n8n-nodes-base.stickyNote",
-      "typeVersion": 1,
-      "position": [ 900, 120 ]
+      "id": "b2000000-0000-0000-0000-00000000000b",
+      "name": "Gate: mutations",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [1280, 160]
     },
     {
       "parameters": {
-        "subject": "=RSVP Ads agent — {{$json.summary}}",
-        "toEmail": "kuperoy@gmail.com",
-        "fromEmail": "kupernetservice@gmail.com",
-        "text": "={{ JSON.stringify($json, null, 2) }}",
+        "method": "POST",
+        "url": "={{ $json.url }}",
+        "authentication": "predefinedCredentialType",
+        "nodeCredentialType": "googleAdsOAuth2Api",
+        "sendHeaders": true,
+        "headerParameters": { "parameters": [{ "name": "login-customer-id", "value": "CUSTOMER_ID" }] },
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={{ JSON.stringify($json.body) }}",
         "options": {}
       },
-      "id": "a1000000-0000-0000-0000-000000000007",
+      "id": "b2000000-0000-0000-0000-00000000000c",
+      "name": "Apply to Google Ads",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [1500, 160],
+      "onError": "continueRegularOutput"
+    },
+    {
+      "parameters": {
+        "jsCode": "// Emit one item when the reviewer proposed a website change — becomes a GitHub issue\n// (a proposal for a human; the agent never deploys website code).\nconst j = $input.first().json;\nif (!j.websitePR) return [];\nconst pr = j.websitePR;\nreturn [{ json: {\n  title: `[ads-agent] ${pr.title}`.slice(0, 120),\n  body: `**Rationale:** ${pr.rationale || ''}\\n\\n**Files:** ${pr.files_hint || 'n/a'}\\n\\n**Proposed change:**\\n${pr.change_description || ''}\\n\\n---\\n_Proposed automatically by the ads agent (CPA ₪${j.cpaILS ?? '—'}, spend ₪${j.monthToDateSpendILS}). Review before implementing — never touches checkout/payment code._`,\n} }];"
+      },
+      "id": "b2000000-0000-0000-0000-00000000000d",
+      "name": "Gate: website proposal",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [1280, 320]
+    },
+    {
+      "parameters": {
+        "resource": "issue",
+        "operation": "create",
+        "owner": { "__rl": true, "value": "muaddibbb", "mode": "name" },
+        "repository": { "__rl": true, "value": "rsvp-platform", "mode": "name" },
+        "title": "={{ $json.title }}",
+        "body": "={{ $json.body }}",
+        "labels": [],
+        "assignees": []
+      },
+      "id": "b2000000-0000-0000-0000-00000000000e",
+      "name": "Propose website change",
+      "type": "n8n-nodes-base.github",
+      "typeVersion": 1,
+      "position": [1500, 320],
+      "onError": "continueRegularOutput"
+    },
+    {
+      "parameters": {
+        "fromEmail": "kupernetservice@gmail.com",
+        "toEmail": "kuperoy@gmail.com",
+        "subject": "=🤖 Ads agent{{ $json.DRY_RUN ? ' [DRY-RUN]' : '' }} — CPA ₪{{ $json.cpaILS ?? '—' }}, spend ₪{{ $json.monthToDateSpendILS }}/400",
+        "emailFormat": "text",
+        "text": "={{ 'Summary: ' + $json.summary + '\\n\\nBudget: ' + $json.budgetStatus + ' | MTD ₪' + $json.monthToDateSpendILS + ' | projected ₪' + $json.projectedMonthILS + ' / cap ₪400\\nCPA: ₪' + ($json.cpaILS ?? '—') + ($json.profitable ? ' (PROFITABLE)' : '') + '\\n\\nActions (' + $json.approvedCount + ')' + ($json.DRY_RUN ? ' — DRY RUN, nothing applied:' : ' applied:') + '\\n' + ($json.mutations || []).map(m => ' • ' + m.label).join('\\n') + '\\n\\nWebsite proposal: ' + ($json.websitePR ? $json.websitePR.title : 'none') + '\\n\\nWinners: ' + ($json.winners || []).map(w => w.keyword + (w.cpaILS ? ' (₪' + w.cpaILS + ')' : '')).join(', ') + '\\nNotes: ' + ($json.engineNotes || []).join(' | ') }}",
+        "options": {}
+      },
+      "id": "b2000000-0000-0000-0000-00000000000f",
       "name": "Report email",
       "type": "n8n-nodes-base.emailSend",
       "typeVersion": 2.1,
-      "position": [ 900, 420 ]
+      "position": [1280, 480]
     }
   ],
   "connections": {
-    "Daily 05:00": { "main": [ [ { "node": "Read: Campaign+MTD", "type": "main", "index": 0 } ] ] },
-    "Read: Campaign+MTD": { "main": [ [ { "node": "Normalize", "type": "main", "index": 0 } ] ] },
-    "Normalize": { "main": [ [ { "node": "Rules Engine", "type": "main", "index": 0 } ] ] },
-    "Rules Engine": { "main": [ [ { "node": "AI Reviewer (Ollama)", "type": "main", "index": 0 } ] ] },
-    "AI Reviewer (Ollama)": { "main": [ [ { "node": "Validate & Gate", "type": "main", "index": 0 } ] ] },
-    "Validate & Gate": { "main": [ [ { "node": "Report email", "type": "main", "index": 0 } ] ] }
+    "Daily 05:00": { "main": [[{ "node": "Read: Campaign+MTD", "type": "main", "index": 0 }]] },
+    "Read: Campaign+MTD": { "main": [[{ "node": "Read: Keywords 30d", "type": "main", "index": 0 }]] },
+    "Read: Keywords 30d": { "main": [[{ "node": "Read: Keywords 90d", "type": "main", "index": 0 }]] },
+    "Read: Keywords 90d": { "main": [[{ "node": "Read: Search terms", "type": "main", "index": 0 }]] },
+    "Read: Search terms": { "main": [[{ "node": "Normalize", "type": "main", "index": 0 }]] },
+    "Normalize": { "main": [[{ "node": "Rules Engine", "type": "main", "index": 0 }]] },
+    "Rules Engine": { "main": [[{ "node": "Build LLM request", "type": "main", "index": 0 }]] },
+    "Build LLM request": { "main": [[{ "node": "AI Reviewer (Ollama)", "type": "main", "index": 0 }]] },
+    "AI Reviewer (Ollama)": { "main": [[{ "node": "Validate & Gate", "type": "main", "index": 0 }]] },
+    "Validate & Gate": { "main": [[
+      { "node": "Gate: mutations", "type": "main", "index": 0 },
+      { "node": "Gate: website proposal", "type": "main", "index": 0 },
+      { "node": "Report email", "type": "main", "index": 0 }
+    ]] },
+    "Gate: mutations": { "main": [[{ "node": "Apply to Google Ads", "type": "main", "index": 0 }]] },
+    "Gate: website proposal": { "main": [[{ "node": "Propose website change", "type": "main", "index": 0 }]] }
   },
   "active": false,
   "settings": { "executionOrder": "v1" },
