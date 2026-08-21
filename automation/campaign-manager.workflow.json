@@ -1,0 +1,138 @@
+{
+  "name": "RSVP Ads Campaign Manager",
+  "nodes": [
+    {
+      "parameters": {
+        "rule": { "interval": [ { "field": "days", "triggerAtHour": 5 } ] }
+      },
+      "id": "a1000000-0000-0000-0000-000000000001",
+      "name": "Daily 05:00",
+      "type": "n8n-nodes-base.scheduleTrigger",
+      "typeVersion": 1.2,
+      "position": [ -600, 300 ]
+    },
+    {
+      "parameters": {
+        "content": "## RSVP Ads Campaign Manager\nRules + AI-reviewer. Hard limits: ≤₪400/mo ad spend, no site spend, never pause converting keywords, website changes as GitHub PRs only.\n\n### Before enabling the schedule\n1. Wire credentials into the HTTP nodes (Google Ads OAuth2 + developer-token header; Ollama at http://localhost:11434; GitHub PAT).\n2. Set CUSTOMER_ID / CAMPAIGN_ID / BUDGET_ID / AD_GROUP_ID in the Code nodes.\n3. Keep 'Validate & Gate' DRY_RUN=true until the reports look right for a few days.\n\nQueries: see automation/gaql-and-api.md · Rules: automation/rules-engine.js · Prompt: automation/ai-reviewer-prompt.md",
+        "height": 320, "width": 460
+      },
+      "id": "a1000000-0000-0000-0000-0000000000ff",
+      "name": "README",
+      "type": "n8n-nodes-base.stickyNote",
+      "typeVersion": 1,
+      "position": [ -600, -80 ]
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "https://googleads.googleapis.com/v18/customers/CUSTOMER_ID/googleAds:search",
+        "authentication": "predefinedCredentialType",
+        "nodeCredentialType": "googleAdsOAuth2Api",
+        "sendHeaders": true,
+        "headerParameters": { "parameters": [ { "name": "developer-token", "value": "={{$env.GOOGLE_ADS_DEV_TOKEN}}" }, { "name": "login-customer-id", "value": "CUSTOMER_ID" } ] },
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={ \"query\": \"SELECT campaign.id, campaign.name, campaign.status, campaign_budget.amount_micros, metrics.cost_micros, metrics.conversions, metrics.clicks FROM campaign WHERE campaign.name = 'RSVP Search Campaign' AND segments.date DURING THIS_MONTH\" }",
+        "options": { "allowUnauthorizedCerts": false }
+      },
+      "id": "a1000000-0000-0000-0000-000000000002",
+      "name": "Read: Campaign+MTD",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [ -320, 200 ]
+    },
+    {
+      "parameters": {
+        "content": "### READ (3 GAQL queries)\nDuplicate this node for the Keyword (LAST_30_DAYS), Keyword-90d (winner protection), and Search-terms queries in gaql-and-api.md, then feed all into 'Normalize'.",
+        "height": 200, "width": 300
+      },
+      "id": "a1000000-0000-0000-0000-0000000000fa",
+      "name": "Read note",
+      "type": "n8n-nodes-base.stickyNote",
+      "typeVersion": 1,
+      "position": [ -320, -80 ]
+    },
+    {
+      "parameters": {
+        "jsCode": "// Normalize the GAQL response(s) into the shape rules-engine.js expects.\n// Divide every *_micros by 1e6 to get ₪. Assemble: campaign, keywords[], searchTerms[],\n// monthToDateSpendILS, dayOfMonth, daysInMonth. See gaql-and-api.md.\n// TODO: map real API results here once credentials are wired. Placeholder passthrough below.\nconst now = new Date();\nreturn [{ json: {\n  campaign: { name: 'RSVP Search Campaign', status: 'ENABLED', dailyBudgetILS: 13, costILS: 0, conversions: 0 },\n  keywords: [], searchTerms: [],\n  monthToDateSpendILS: 0,\n  dayOfMonth: now.getUTCDate(),\n  daysInMonth: new Date(now.getUTCFullYear(), now.getUTCMonth()+1, 0).getUTCDate()\n} }];"
+      },
+      "id": "a1000000-0000-0000-0000-000000000003",
+      "name": "Normalize",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [ -80, 300 ]
+    },
+    {
+      "parameters": {
+        "jsCode": "// Deterministic guardrails + candidate actions.\n// PASTE the full contents of automation/rules-engine.js here (the decide() function + CONFIG),\n// then end with:  return [{ json: decide($input.first().json) }];\n// Kept as a pointer to avoid drift — rules-engine.js is the source of truth for all limits."
+      },
+      "id": "a1000000-0000-0000-0000-000000000004",
+      "name": "Rules Engine",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [ 160, 300 ]
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "http://localhost:11434/api/chat",
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={ \"model\": \"llama3.1:8b\", \"stream\": false, \"format\": \"json\", \"messages\": [ { \"role\": \"system\", \"content\": \"<<PASTE ai-reviewer-prompt.md>>\" }, { \"role\": \"user\", \"content\": {{ JSON.stringify($json) }} } ] }",
+        "options": {}
+      },
+      "id": "a1000000-0000-0000-0000-000000000005",
+      "name": "AI Reviewer (Ollama)",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [ 400, 300 ]
+    },
+    {
+      "parameters": {
+        "jsCode": "// FINAL SAFETY GATE. Parse the LLM JSON (message.content) and re-check against hard limits:\n//  - drop any ad action not in the engine's candidateActions\n//  - reject set_daily_budget > 13000000 micros unless budgetStatus === 'throttling'\n//  - reject pause_keyword whose keyword is in winners\n//  - honor DRY_RUN: when true, do NOT emit mutate operations, only the report\nconst DRY_RUN = true; // flip to false to let it act\n// TODO: implement parse+validate; output { approvedActions, websitePR, summary, DRY_RUN }.\nreturn [{ json: { DRY_RUN, approvedActions: [], websitePR: null, summary: 'dry-run scaffold' } }];"
+      },
+      "id": "a1000000-0000-0000-0000-000000000006",
+      "name": "Validate & Gate",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [ 640, 300 ]
+    },
+    {
+      "parameters": {
+        "content": "### ACT (only when DRY_RUN=false)\nAdd HTTP mutate nodes per gaql-and-api.md: adGroupCriteria:mutate (pause kw), campaignCriteria:mutate (add negative), campaignBudgets:mutate (budget), campaigns:mutate (pause at cap). Branch each off 'Validate & Gate' by action type.\n\n### PROPOSE (website)\nIf websitePR != null → GitHub node: create a branch + PR on muaddibbb/rsvp-platform. Never deploy.",
+        "height": 240, "width": 360
+      },
+      "id": "a1000000-0000-0000-0000-0000000000fb",
+      "name": "Act note",
+      "type": "n8n-nodes-base.stickyNote",
+      "typeVersion": 1,
+      "position": [ 900, 120 ]
+    },
+    {
+      "parameters": {
+        "subject": "=RSVP Ads agent — {{$json.summary}}",
+        "toEmail": "kuperoy@gmail.com",
+        "fromEmail": "kupernetservice@gmail.com",
+        "text": "={{ JSON.stringify($json, null, 2) }}",
+        "options": {}
+      },
+      "id": "a1000000-0000-0000-0000-000000000007",
+      "name": "Report email",
+      "type": "n8n-nodes-base.emailSend",
+      "typeVersion": 2.1,
+      "position": [ 900, 420 ]
+    }
+  ],
+  "connections": {
+    "Daily 05:00": { "main": [ [ { "node": "Read: Campaign+MTD", "type": "main", "index": 0 } ] ] },
+    "Read: Campaign+MTD": { "main": [ [ { "node": "Normalize", "type": "main", "index": 0 } ] ] },
+    "Normalize": { "main": [ [ { "node": "Rules Engine", "type": "main", "index": 0 } ] ] },
+    "Rules Engine": { "main": [ [ { "node": "AI Reviewer (Ollama)", "type": "main", "index": 0 } ] ] },
+    "AI Reviewer (Ollama)": { "main": [ [ { "node": "Validate & Gate", "type": "main", "index": 0 } ] ] },
+    "Validate & Gate": { "main": [ [ { "node": "Report email", "type": "main", "index": 0 } ] ] }
+  },
+  "active": false,
+  "settings": { "executionOrder": "v1" },
+  "meta": {},
+  "pinData": {}
+}
