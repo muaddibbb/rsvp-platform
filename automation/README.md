@@ -15,6 +15,13 @@ prioritizes; every ad change is applied automatically, every **website** change 
 3. **Never pauses a keyword that has ever converted** (winners are protected).
 4. **Website = propose only** — the agent opens a PR against `muaddibbb/rsvp-platform`; your merge is the gate. It never deploys.
 5. **Max 8 changes per run** — no wild swings.
+6. **Auto-resumes** a paused campaign once a new month's budget is available (spend resets near ₪0), so
+   the cap-pause isn't permanent — you don't have to manually re-enable it every month.
+
+## Status: live and proven working (Aug 2026)
+Deployed to the real account (`RSVP Search Campaign`, customer 3674361839, manager 4057140705). First
+live run applied 4/4 real mutations correctly (pause a keyword, add 3 negatives) after fixing the issues
+below. Daily schedule is active.
 
 ## Files
 - `campaign-manager.workflow.json` — importable n8n workflow (finalize after the API token is live).
@@ -76,6 +83,27 @@ credentials → set `CUSTOMER_ID` in the Code node config. Run once manually in 
    proposed actions look sane in the email for a few days.
 2. **Enable ad writes** (`DRY_RUN=false`) — negatives, pausing losers, budget throttle. Watch a week.
 3. **Enable website PRs** — start reviewing/merging its suggestions.
+
+## Hard-won lessons from the first real deployment
+These cost real debugging time — check them first if something similar happens again.
+1. **`developer-token` is a required header on every single Google Ads HTTP node**, separate from OAuth.
+   Missing it (or a typo in the header name) produces a generic "Bad request — please check your
+   parameters", not an auth-specific error.
+2. **The API version drifts.** Google retires versions yearly; a stale version 404s. It's hardcoded in
+   two places that are easy to miss during an update: the 4 Read nodes' URLs, AND a separate `API` const
+   inside the "Validate & Gate" code node (not a visible URL field).
+3. **OAuth consent screen must be "In production", not "Testing".** Testing-mode refresh tokens silently
+   expire after 7 days, surfacing as `invalid_grant` errors days later. Publishing requires an app
+   homepage + privacy policy URL filled in on the Branding page first.
+4. **`CONCURRENT_MODIFICATION` errors** — firing several mutate calls at the same campaign back-to-back
+   gets randomly rejected by Google's backend ("Multiple requests were attempting to modify the same
+   resource at once. Retry the request."). This looks identical to a real bug (generic 400, empty error
+   detail) and caused hours of chasing a phantom code issue. Fixed via **Batching** (Items per Batch=1,
+   Batch Interval=2000ms) + **Retry On Fail** on the "Apply to Google Ads" node.
+5. **n8n hides Google's detailed error body by default.** The real error (with the specific invalid
+   field, via `details[].errors[].location.fieldPathElements`) only shows up if you temporarily enable
+   **"Never Error"** + **"Include Response Headers and Status"** under the HTTP node's Options — revert
+   both after debugging, since "Never Error" would otherwise hide real future failures as fake successes.
 
 ## Tuning knobs (`rules-engine.js` CONFIG)
 Budget cap, daily budget, lookback window, pause/negative thresholds, and max-actions-per-run are all

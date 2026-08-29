@@ -72,6 +72,16 @@ function decide(input) {
     });
   }
 
+  // Auto-resume: if we're not freshly at/over the cap this run, and the campaign is
+  // currently paused (e.g. by this agent last month), turn it back on. Relies on
+  // monthToDateSpendILS naturally resetting near 0 at the start of each calendar month.
+  if (budgetStatus !== "cap_reached" && campaign.status === "PAUSED") {
+    actions.push({
+      type: "resume_campaign",
+      reason: `Budget available (₪${monthToDateSpendILS} of ₪${CONFIG.MONTHLY_BUDGET_CAP_ILS} spent this month) — resuming`,
+    });
+  }
+
   // ── 2. Pause proven money-losing keywords (never touch winners) ───────────
   const losers = keywords
     .filter(

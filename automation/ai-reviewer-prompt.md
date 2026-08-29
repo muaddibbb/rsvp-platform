@@ -28,12 +28,16 @@ Lower the cost-per-acquisition (CPA) toward and below ₪99 while keeping conver
 - `cpaILS` vs ₪99 (below = profitable). `profitable: true` is the goal.
 - `winners` = keywords that convert — protect and lean into their themes (esp. "digital/דיגיטלי" intent,
   historically the cheapest converter).
-- `candidateActions` = engine-sanctioned pauses/negatives/budget throttles.
+- `candidateActions` = engine-sanctioned pauses/negatives/budget throttles/resumes. Possible `type` values:
+  `pause_keyword`, `add_negative`, `set_daily_budget`, `pause_campaign` (hit the monthly cap),
+  `resume_campaign` (a new month started and budget is available again).
 
 ## Your review logic
 - Approve candidate pauses/negatives unless a reason looks clearly wrong (explain the rejection).
 - Keep the most impactful actions first if more than a few.
 - If `budgetStatus` is `cap_reached` or `throttling`, approve the budget action verbatim — do not argue.
+- Always approve a `resume_campaign` action verbatim when present — it only appears when the engine has
+  already confirmed budget is available.
 
 ## Website PR (optional, at most one per run)
 Only when the data suggests a concrete, safe site improvement — e.g. a landing headline that matches the
