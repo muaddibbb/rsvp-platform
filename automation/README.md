@@ -18,10 +18,14 @@ prioritizes; every ad change is applied automatically, every **website** change 
 6. **Auto-resumes** a paused campaign once a new month's budget is available (spend resets near ₪0), so
    the cap-pause isn't permanent — you don't have to manually re-enable it every month.
 
-## Status: live and proven working (Aug 2026)
-Deployed to the real account (`RSVP Search Campaign`, customer 3674361839, manager 4057140705). First
-live run applied 4/4 real mutations correctly (pause a keyword, add 3 negatives) after fixing the issues
-below. Daily schedule is active.
+## Status: live and proven working (Sep 2026)
+Deployed to the real account (`RSVP Search Campaign`, customer 3674361839, manager 4057140705). Has
+correctly applied real mutations end-to-end: paused a keyword, added negatives, paused the campaign at
+the ₪400 cap, and — after the fixes below — **auto-resumed it for real** once the new month's budget
+became available. AI reviewer (Ollama, `qwen2.5:3b-instruct`) is live and reasoning correctly (e.g. it
+independently caught and rejected a proposed negative keyword that would have blocked one of the two
+converting/winning keywords — the review layer is adding real value, not just rubber-stamping). Daily
+schedule is active.
 
 ## Files
 - `campaign-manager.workflow.json` — importable n8n workflow (finalize after the API token is live).
@@ -104,6 +108,26 @@ These cost real debugging time — check them first if something similar happens
    field, via `details[].errors[].location.fieldPathElements`) only shows up if you temporarily enable
    **"Never Error"** + **"Include Response Headers and Status"** under the HTTP node's Options — revert
    both after debugging, since "Never Error" would otherwise hide real future failures as fake successes.
+6. **A metrics-filtered query can silently return zero rows near the start of a month.** The original
+   "Read: Campaign+MTD" query filters `segments.date DURING THIS_MONTH` — when the campaign had no
+   activity yet this month (e.g. right after being paused), this returned no row at all, so
+   `campaign.status` silently defaulted to `'UNKNOWN'` instead of the real `'PAUSED'`. That broke the
+   resume logic (condition never matched) and would have broken every other mutation too (no
+   `resourceName` to target). **Fix:** a separate "Read: Campaign Status" query with no date filter at
+   all — it always returns exactly one row with the campaign's real current status/resourceName/budget.
+   "Read: Campaign+MTD" is now used only for the this-month cost/conversions metrics, which safely
+   default to 0 on empty results (that part was always fine — only the campaign-attributes reuse was the bug).
+7. **An 8B-parameter local model can be genuinely slow to cold-start on modest CPU-only hardware**
+   (4 cores, ~8GB RAM here). The first Ollama call after a restart can exceed a 120s timeout purely from
+   loading the model into memory. **Fix:** switched to `qwen2.5:3b-instruct` (much lighter, still solid
+   for structured JSON review) and raised the HTTP timeout to 300000ms as a safety margin.
+   Separately: **Ollama binds to `127.0.0.1` by default** — unreachable from n8n's Docker container. Fix:
+   `sudo systemctl edit ollama` → add `Environment="OLLAMA_HOST=0.0.0.0:11434"` → daemon-reload + restart.
+8. **n8n code-node edits sometimes silently fail to persist**, especially after a lot of back-and-forth
+   editing in one session. Twice during initial setup, a verified-correct code change (the resume-logic
+   block in "Rules Engine", then the `resume_campaign` mutation case in "Validate & Gate") turned out to
+   be missing from the live node on the next run, with no error or warning. **After editing critical
+   logic, close and reopen the node to confirm the change actually saved before trusting it.**
 
 ## Tuning knobs (`rules-engine.js` CONFIG)
 Budget cap, daily budget, lookback window, pause/negative thresholds, and max-actions-per-run are all
