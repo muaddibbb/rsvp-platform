@@ -27,6 +27,13 @@ const CONFIG = {
   NEGATIVE_MIN_SPEND_ILS: 15,
 
   MAX_ACTIONS_PER_RUN: 8, // no wild swings
+
+  // Two real incidents (a wrongly-paused converting keyword, a near-miss negative that
+  // would've blocked one) came from this section, both traced to the same lookback-window
+  // bug (README lesson 10). Fixed 2026-09-16 (all-time conversions query, no more rolling
+  // window), re-enabled 2026-09-23 after confirming winners now persist correctly. Budget
+  // enforcement (cap/throttle/resume) was never affected by the bug and stays on always.
+  ENABLE_KEYWORD_ACTIONS: true,
 };
 
 /**
@@ -83,42 +90,53 @@ function decide(input) {
   }
 
   // ── 2. Pause proven money-losing keywords (never touch winners) ───────────
-  const losers = keywords
-    .filter(
-      (k) =>
-        k.status === "ENABLED" &&
-        (k.conversions || 0) === 0 &&
-        (k.conversionsAllTime || 0) === 0 && // never converted → safe to pause
-        (k.costILS || 0) >= CONFIG.KEYWORD_PAUSE_MIN_SPEND_ILS
-    )
-    .sort((a, b) => b.costILS - a.costILS);
-  for (const k of losers) {
-    actions.push({
-      type: "pause_keyword",
-      criterionId: k.criterionId,
-      keyword: k.text,
-      matchType: k.matchType,
-      reason: `₪${k.costILS} spent, 0 conversions over ${CONFIG.LOOKBACK_DAYS}d`,
-    });
-  }
-
   // ── 3. Add negatives for wasteful search terms ────────────────────────────
-  const waste = searchTerms
-    .filter(
-      (t) =>
-        (t.conversions || 0) === 0 &&
-        (t.clicks || 0) >= CONFIG.NEGATIVE_MIN_CLICKS &&
-        (t.costILS || 0) >= CONFIG.NEGATIVE_MIN_SPEND_ILS &&
-        !t.alreadyNegative
-    )
-    .sort((a, b) => b.costILS - a.costILS);
-  for (const t of waste) {
-    actions.push({
-      type: "add_negative",
-      text: t.term,
-      matchType: "PHRASE",
-      reason: `₪${t.costILS}, ${t.clicks} clicks, 0 conversions`,
-    });
+  // Both gated behind ENABLE_KEYWORD_ACTIONS (see CONFIG) — disabled after two real
+  // incidents traced to the same lookback-window bug (now fixed, see README lesson 10),
+  // while manual keyword management is preferred over re-trusting full autonomy here.
+  if (CONFIG.ENABLE_KEYWORD_ACTIONS) {
+    const losers = keywords
+      .filter(
+        (k) =>
+          k.status === "ENABLED" &&
+          (k.conversions || 0) === 0 &&
+          (k.conversionsAllTime || 0) === 0 && // never converted → safe to pause
+          (k.costILS || 0) >= CONFIG.KEYWORD_PAUSE_MIN_SPEND_ILS
+      )
+      .sort((a, b) => b.costILS - a.costILS);
+    for (const k of losers) {
+      actions.push({
+        type: "pause_keyword",
+        criterionId: k.criterionId,
+        keyword: k.text,
+        matchType: k.matchType,
+        reason: `₪${k.costILS} spent, 0 conversions over ${CONFIG.LOOKBACK_DAYS}d`,
+      });
+    }
+
+    // Never negative a term that exactly matches a keyword we're actively bidding on —
+    // regardless of whether that keyword currently qualifies as a 30-day "winner". A
+    // keyword can fall out of the winner window (no recent conversion) while still being
+    // a term we want to keep serving on; this is a hard rule, not left to the AI reviewer.
+    const keywordTexts = new Set(keywords.map((k) => k.text));
+    const waste = searchTerms
+      .filter(
+        (t) =>
+          (t.conversions || 0) === 0 &&
+          (t.clicks || 0) >= CONFIG.NEGATIVE_MIN_CLICKS &&
+          (t.costILS || 0) >= CONFIG.NEGATIVE_MIN_SPEND_ILS &&
+          !t.alreadyNegative &&
+          !keywordTexts.has(t.term)
+      )
+      .sort((a, b) => b.costILS - a.costILS);
+    for (const t of waste) {
+      actions.push({
+        type: "add_negative",
+        text: t.term,
+        matchType: "PHRASE",
+        reason: `₪${t.costILS}, ${t.clicks} clicks, 0 conversions`,
+      });
+    }
   }
 
   // ── Context for the AI reviewer + report ──────────────────────────────────

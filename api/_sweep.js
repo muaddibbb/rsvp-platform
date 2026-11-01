@@ -65,6 +65,12 @@ async function sweepAbandonedCheckouts(opts = {}) {
   const digestRows = [];
   for (const p of rows) {
     await sendRecoveryEmail(p);
+    // Permanent, anonymous record (no name/email/phone) so abandonment counts survive the
+    // 7-day PII purge below — logged here, the moment a checkout is confirmed abandoned.
+    await supabase.from("checkout_abandonments").insert({
+      abandoned_at: new Date().toISOString(),
+      event_type: p.event_type || null,
+    });
     const typeLabel = EVENT_TYPE_LABELS[p.event_type] || p.event_type || "—";
     digestRows.push(`<tr>
       <td style="padding:8px 10px;border-bottom:1px solid #eee">${p.customer_name || "—"}</td>

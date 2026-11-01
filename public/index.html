@@ -23,6 +23,10 @@
       cursor: pointer; transition: background .15s;
     }
     .tool-btn:hover { background: rgba(255,255,255,.22); }
+    @media (max-width: 600px) {
+      .nav-tools { gap: 6px; }
+      .tool-btn { padding: 5px 10px; font-size: .8rem; }
+    }
 
     /* ── Dark mode ── */
     html.dark body { background: #0f172a; color: #e5e7eb; }
@@ -63,6 +67,7 @@
   <div class="promo-banner">
     <span data-i18n="banner">🎊 אישורי הגעה לאירוע שלכם בלי לקרוע את הכיס!!!</span>
     <span class="promo-guarantee" data-i18n="guarantee">💰 לא מרוצים? נחזיר את הכסף</span>
+    <span class="promo-guarantee" data-i18n="unlimitedGuests">🎈 ללא הגבלת כמות אורחים!!!</span>
   </div>
 
   <!-- Hero -->
@@ -74,7 +79,18 @@
       נהלו את הרשימה בקלות — הכל במקום אחד.
     </p>
     <a class="cta-btn" href="/register.html" data-i18n="heroCta">צור אירוע עכשיו — ₪99 בלבד 🎉</a>
+    <div><a class="demo-link" href="/rsvp/demo" data-i18n="demoLink">👀 ראו איך זה נראה לאורחים</a></div>
     <p class="hero-trust" data-i18n="heroTrust">🔒 תשלום מאובטח · ↩️ החזר כספי מלא תוך 14 יום · 🧾 עוסק פטור 036409084</p>
+  </section>
+
+  <!-- Live preview of the guest page (non-interactive; links to the full demo) -->
+  <section class="preview-section">
+    <h2 class="section-title" data-i18n="previewTitle">ככה ייראה הדף שהאורחים שלכם יקבלו</h2>
+    <p class="section-sub" data-i18n="previewSub">דף אישי בעברית, מותאם לנייד — בלי הורדת אפליקציה ובלי הרשמה</p>
+    <div class="phone-frame">
+      <iframe src="/rsvp/demo?embed=1" title="Guest page preview" loading="lazy" tabindex="-1" scrolling="no"></iframe>
+    </div>
+    <a class="preview-cta" href="/rsvp/demo" data-i18n="previewCta">נסו דוגמה חיה</a>
   </section>
 
   <!-- Event Types -->
@@ -166,11 +182,16 @@
         logo: "אישורי הגעה",
         navCta: "צור אירוע עכשיו",
         banner: "🎊 אישורי הגעה לאירוע שלכם בלי לקרוע את הכיס!!!",
+        unlimitedGuests: "🎈 ללא הגבלת כמות אורחים!!!",
         guarantee: "💰 לא מרוצים? נחזיר את הכסף",
         heroTitle: "אישורי הגעה דיגיטליים לאירוע שלכם",
         heroSub: "שלחו קישור לאורחים בוואטסאפ, עקבו אחר האישורים בזמן אמת, נהלו את הרשימה בקלות — הכל במקום אחד.",
         heroCta: "צור אירוע עכשיו — ₪99 בלבד 🎉",
         heroTrust: "🔒 תשלום מאובטח · ↩️ החזר כספי מלא תוך 14 יום · 🧾 עוסק פטור 036409084",
+        demoLink: "👀 ראו איך זה נראה לאורחים",
+        previewTitle: "ככה ייראה הדף שהאורחים שלכם יקבלו",
+        previewSub: "דף אישי בעברית, מותאם לנייד — בלי הורדת אפליקציה ובלי הרשמה",
+        previewCta: "נסו דוגמה חיה",
         typesTitle: "מתאים לכל סוגי האירועים",
         typesSub: "בר מצווה, חתונה, ברית, יום הולדת ועוד — כל אירוע מקבל דף אישי",
         typeBm: "בר / בת מצווה", typeWedding: "חתונה", typeBrit: "ברית מילה",
@@ -197,11 +218,16 @@
         logo: "RSVP",
         navCta: "Create Your Event",
         banner: "🎊 RSVPs for your event — without breaking the bank!!!",
+        unlimitedGuests: "🎈 Unlimited number of guests!!!",
         guarantee: "💰 Not satisfied? Money back — guaranteed",
         heroTitle: "Digital RSVPs for Your Event",
         heroSub: "Send guests a WhatsApp link, track confirmations in real time, and manage your list with ease — all in one place.",
         heroCta: "Create your event now — only ₪99 🎉",
         heroTrust: "🔒 Secure payment · ↩️ Full refund within 14 days · 🧾 Registered business 036409084",
+        demoLink: "👀 See what your guests will see",
+        previewTitle: "This is the page your guests will get",
+        previewSub: "A personal, mobile-friendly page — no app to install, no signup",
+        previewCta: "Try a live demo",
         typesTitle: "Perfect for Every Event",
         typesSub: "Bar Mitzvah, wedding, brit, birthday and more — every event gets its own page",
         typeBm: "Bar / Bat Mitzvah", typeWedding: "Wedding", typeBrit: "Brit Milah",

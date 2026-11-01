@@ -92,7 +92,14 @@ module.exports = async (req, res) => {
       rsvps: undefined,
     }));
 
-    return res.status(200).json({ events: rows });
+    // Confirmed checkout abandonments in the last 30 days (anonymous log, see _sweep.js)
+    const thirtyDaysAgo = new Date(Date.now() - 30 * 24 * 60 * 60 * 1000).toISOString();
+    const { count: abandonedLast30Days } = await supabase
+      .from("checkout_abandonments")
+      .select("*", { count: "exact", head: true })
+      .gte("abandoned_at", thirtyDaysAgo);
+
+    return res.status(200).json({ events: rows, abandonedLast30Days: abandonedLast30Days || 0 });
   }
 
   // DELETE ?slug=xxx — remove event and its RSVPs

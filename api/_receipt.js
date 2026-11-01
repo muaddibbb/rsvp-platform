@@ -98,7 +98,7 @@ module.exports = function generateReceiptPDF({ receiptNumber, customerName, paym
       doc.moveTo(ML, y - 5).lineTo(W - MR, y - 5).lineWidth(0.3).strokeColor("#e5e7eb").stroke();
     };
 
-    // Amount row: draw "99" and "ש״ח" as separate calls with a physical gap so the space never drops.
+    // Amount row: draw the number and "ש״ח" as separate calls with a physical gap so the space never drops.
     const drawAmountRow = (rowY) => {
       doc.fontSize(11);
       const numTxt = "99";
@@ -115,7 +115,7 @@ module.exports = function generateReceiptPDF({ receiptNumber, customerName, paym
       doc.fillColor("#6b7280");
       doc.text(h("סכום ששולם"), LABEL_X, rowY, { width: LABEL_W, align: "right", lineBreak: false });
 
-      // Value: ש״ח on left, 99 to its right, then " — ", then the words.
+      // Value: ש״ח on left, the number to its right, then " — ", then the words.
       doc.fillColor("#1a1a2e");
       let vx = VALUE_X;
       doc.text(shekTxt, vx, rowY, { lineBreak: false });

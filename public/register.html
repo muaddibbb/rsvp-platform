@@ -50,6 +50,7 @@
         step3Title: "תצוגה מקדימה ואישור",
         afterPayNote: "✅ האירוע שלך נשמר! השלמת תשלום חד-פעמי של ₪99 מפרסמת אותו ומפיקה קישור לשליחה לאורחים. שלחנו לך גם אימייל כדי שתוכל לחזור ולפרסם בכל עת. התשלום מאובטח דרך PayPal.",
         retentionNote: "🗓️ רשימת האורחים תימחק אוטומטית חודש אחד לאחר תאריך האירוע (פרטי האירוע והקבלה נשמרים).",
+        totalToPayLabel: "לתשלום כעת",
         tosPrefix: "קראתי ואני מסכים/ה ל",
         tosLink: "תנאי השימוש ומדיניות הפרטיות",
         trustSecure: "🔒 תשלום מאובטח דרך PayPal",
@@ -128,6 +129,7 @@
         step3Title: "Preview & Confirm",
         afterPayNote: "✅ Your event is saved! A one-time ₪99 payment publishes it and generates the link to share with your guests. We've also emailed you so you can come back and publish anytime. Payment is secured via PayPal.",
         retentionNote: "🗓️ The guest list is deleted automatically one month after the event date (event details and receipt are kept).",
+        totalToPayLabel: "Total to pay now",
         tosPrefix: "I have read and agree to the ",
         tosLink: "Terms of Use & Privacy Policy",
         trustSecure: "🔒 Secure payment via PayPal",
@@ -170,6 +172,7 @@
   <style>
     /* Page-specific dark-mode overrides for hardcoded light inline styles */
     html.dark .retention-note { background: #374151 !important; }
+    html.dark .checkout-total-row { background: #3a3320 !important; border-color: #5c512e !important; }
     html.dark .preview-divider { border-top-color: #4b5563 !important; }
     html.dark .page-footer { color: #6b7280 !important; }
 
@@ -374,6 +377,11 @@
 
         <div class="btn-row" style="margin-bottom:12px">
           <button class="back-btn" onclick="goToStep(2)" data-i18n="backBtn">→ חזור</button>
+        </div>
+
+        <div class="checkout-total-row" style="display:flex;justify-content:space-between;align-items:center;background:#fdf5e0;border:2px solid #c9993a;border-radius:10px;padding:14px 18px;margin-bottom:16px">
+          <span style="font-weight:700;color:var(--text)" data-i18n="totalToPayLabel">לתשלום כעת</span>
+          <span style="font-weight:800;font-size:1.5rem;color:#c9993a">₪99</span>
         </div>
 
         <div style="margin-bottom:16px;font-size:.85rem;color:var(--text-muted)">

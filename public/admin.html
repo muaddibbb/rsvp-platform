@@ -176,6 +176,10 @@
       <div class="stat-num" id="statRevenue">—</div>
       <div class="stat-lbl">הכנסות (₪99 לאירוע)</div>
     </div>
+    <div class="stat-card">
+      <div class="stat-num" id="statAbandoned">—</div>
+      <div class="stat-lbl">נטישות תשלום (30 יום)</div>
+    </div>
   </div>
 
   <input class="search-bar" type="search" id="searchInput" placeholder="חיפוש לפי שם אירוע, לקוח, אימייל..." oninput="renderTable()" />
@@ -220,6 +224,7 @@
 
   let token = sessionStorage.getItem("admin_token") || "";
   let allEvents = [];
+  let abandonedLast30Days = 0;
 
   if (token) attemptLoad();
 
@@ -239,6 +244,7 @@
     sessionStorage.setItem("admin_token", token);
     const data = await res.json();
     allEvents = data.events || [];
+    abandonedLast30Days = data.abandonedLast30Days || 0;
     showAdmin();
   }
 
@@ -249,6 +255,7 @@
     if (!res.ok) { token = ""; sessionStorage.removeItem("admin_token"); return; }
     const data = await res.json();
     allEvents = data.events || [];
+    abandonedLast30Days = data.abandonedLast30Days || 0;
     showAdmin();
   }
 
@@ -270,9 +277,10 @@
 
   function updateStats() {
     const totalRsvps = allEvents.reduce((s, e) => s + (e.rsvp_count || 0), 0);
-    document.getElementById("statEvents").textContent  = allEvents.length;
-    document.getElementById("statRsvps").textContent   = totalRsvps;
-    document.getElementById("statRevenue").textContent = `₪${allEvents.length * 99}`;
+    document.getElementById("statEvents").textContent    = allEvents.length;
+    document.getElementById("statRsvps").textContent     = totalRsvps;
+    document.getElementById("statRevenue").textContent   = `₪${allEvents.length * 99}`;
+    document.getElementById("statAbandoned").textContent = abandonedLast30Days;
   }
 
   function renderTable() {

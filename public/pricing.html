@@ -18,6 +18,7 @@
         planName: "אירוע מלא",
         planPeriod: "תשלום חד-פעמי לאירוע",
         planCta: "התחילו עכשיו",
+        unlimitedGuestsHighlight: "🎈 ללא הגבלת כמות אורחים!!!",
         feat1: "דף RSVP בעברית, מותאם לנייד",
         feat2: "אורחים ללא הגבלה",
         feat3: "ממשק ניהול הזמנה בזמן אמת",
@@ -61,6 +62,7 @@
         planName: "Full Event",
         planPeriod: "one-time payment per event",
         planCta: "Get Started",
+        unlimitedGuestsHighlight: "🎈 Unlimited number of guests!!!",
         feat1: "Hebrew RSVP page, mobile-friendly",
         feat2: "Unlimited guests",
         feat3: "Real-time management dashboard",
@@ -136,7 +138,18 @@
     .plan-name { color: var(--navy); font-size: 1.1rem; font-weight: 700; margin-bottom: 4px; }
     .plan-price { font-size: 3rem; font-weight: 800; color: var(--navy); line-height: 1; margin: 16px 0 4px; }
     .plan-price span { font-size: 1.2rem; font-weight: 500; }
-    .plan-period { color: var(--text-muted); font-size: .9rem; margin-bottom: 24px; }
+    .plan-period { color: var(--text-muted); font-size: .9rem; margin-bottom: 16px; }
+    .plan-highlight {
+      display: inline-block;
+      background: #fdf5e0;
+      color: #92700f;
+      font-weight: 800;
+      font-size: .95rem;
+      padding: 8px 18px;
+      border-radius: 20px;
+      margin-bottom: 20px;
+    }
+    html.dark .plan-highlight { background: #3a3320; color: #f0d080; }
     .plan-cta {
       display: block;
       background: var(--gold);
@@ -220,6 +233,7 @@
         <div class="plan-name" data-i18n="planName">אירוע מלא</div>
         <div class="plan-price"><span>₪</span>99</div>
         <div class="plan-period" data-i18n="planPeriod">תשלום חד-פעמי לאירוע</div>
+        <div class="plan-highlight" data-i18n="unlimitedGuestsHighlight">🎈 ללא הגבלת כמות אורחים!!!</div>
         <a class="plan-cta" href="/register.html" data-i18n="planCta">התחילו עכשיו</a>
         <ul class="plan-features">
           <li><span class="check">✓</span> <span data-i18n="feat1">דף RSVP בעברית, מותאם לנייד</span></li>

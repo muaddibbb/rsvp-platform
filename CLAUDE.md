@@ -25,7 +25,13 @@ Keep it updated when behavior changes.
   `final_responses` / `final_guests` (int, snapshot headcounts set when a past event is auto-closed).
 - **rsvps**: `id`, `event_id` (fk), `name`, `attending` (bool), `guests` (int), `notes`, `created_at`.
 - **pending_checkouts**: `id` (text = client checkoutId), `customer_*`, `event_*`, `location`,
-  `updated_at`, `notified` (bool). Tracks "reached checkout, not yet paid".
+  `updated_at`, `notified` (bool). Tracks "reached checkout, not yet paid". Rows are purged 7 days
+  after `updated_at` (privacy — this is PII for people who never became customers).
+- **checkout_abandonments**: `id`, `abandoned_at` (timestamptz), `event_type`. Anonymous, permanent
+  (no name/email/phone) — logged the moment a `pending_checkouts` row is confirmed abandoned (grace
+  period passed, recovery email sent), so a count survives the 7-day PII purge above. Created via
+  `sql/checkout_abandonments.sql` (run manually in the Supabase SQL editor — this sandbox can't reach
+  supabase.co to run migrations itself).
 
 **Visibility rule:** guests only ever see events where `paid_at IS NOT NULL AND active != false`.
 Unpaid drafts and deactivated events return 404 to guests.
@@ -45,10 +51,11 @@ Unpaid drafts and deactivated events return 404 to guests.
    paid or draft. GET → `{event(+paid flag), stats, rsvps}`. PATCH → edit event fields. DELETE → remove an rsvp.
 6. **event/[slug].js** — GET public event data for the guest page (paid+active only).
 7. **rsvp/[slug].js** — POST a guest RSVP (paid+active only).
-8. **admin-events.js** — Bearer `ADMIN_PASSWORD`. GET = list **paid** events + rsvp counts.
-   `?receipt=1&slug=` / `?refund=1&slug=` → PDF. `?sweep=1` (POST) → send abandonment report now
-   (ignores grace). `?thankyou=1` (POST) → send post-event thank-yous for the last 2 days (manual backup
-   for the daily cron). PATCH `?slug=` `{active}` → activate/deactivate. DELETE `?slug=` → delete event + rsvps.
+8. **admin-events.js** — Bearer `ADMIN_PASSWORD`. GET = list **paid** events + rsvp counts +
+   `abandonedLast30Days` (count from `checkout_abandonments`). `?receipt=1&slug=` / `?refund=1&slug=` →
+   PDF. `?sweep=1` (POST) → send abandonment report now (ignores grace). `?thankyou=1` (POST) → send
+   post-event thank-yous for the last 2 days (manual backup for the daily cron). PATCH `?slug=` `{active}`
+   → activate/deactivate. DELETE `?slug=` → delete event + rsvps.
 9. **cleanup.js** — cron, Bearer `CRON_SECRET`. Runs the abandonment sweep + retention: 30 days after
    the event date it **closes** paid events (deletes guest RSVPs, sets `active=false`, keeps the event +
    receipt record for admin) and **deletes** unpaid past drafts outright. Scheduled daily 02:00
@@ -57,7 +64,7 @@ Unpaid drafts and deactivated events return 404 to guests.
 **Helpers:** `_receipt.js` = `generateReceiptPDF({receiptNumber, customerName, paymentDate, isRefund})`
 (Hebrew A5 PDF, business "Kupernet", עוסק פטור 036409084). `_sweep.js` =
 `sweepAbandonedCheckouts({graceMinutes=20, ignoreGrace})` → per-customer recovery email + ONE owner
-digest, marks `notified`, purges pending rows >7 days old.
+digest, logs an anonymous row to `checkout_abandonments`, marks `notified`, purges pending rows >7 days old.
 
 ## Payment flow (create-then-pay)
 1. Wizard fills form → on reaching step 3, `create-event` saves an **unpaid draft** and emails the

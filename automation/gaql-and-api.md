@@ -34,14 +34,18 @@ WHERE segments.date DURING LAST_30_DAYS
   AND campaign.name = 'RSVP Search Campaign'
 ```
 
-### C. Keyword all-time-ish conversions (winner protection) — wider window
+### C. Keyword all-time conversions (winner protection) — no date filter
 ```sql
 SELECT ad_group_criterion.criterion_id, metrics.conversions
 FROM keyword_view
-WHERE segments.date DURING LAST_90_DAYS
-  AND campaign.name = 'RSVP Search Campaign'
+WHERE campaign.name = 'RSVP Search Campaign'
 ```
-Map into each keyword as `conversionsAllTime` (any > 0 ⇒ protected winner).
+GAQL has no `LAST_90_DAYS` literal — an earlier version of this query used `LAST_30_DAYS` here (identical
+to query B's window), which meant "winner protection" wasn't actually a wider window at all: a keyword
+that converted once, 40+ days ago, showed 0 conversions in both queries and got auto-paused as a loser.
+**Omitting `segments.date` entirely** aggregates `metrics.conversions` over the keyword's full lifetime —
+this is the correct "has this ever converted" check. Map into each keyword as `conversionsAllTime`
+(any > 0 ⇒ protected winner, permanently, regardless of how long ago).
 
 ### D. Search terms (for negatives)
 ```sql

@@ -42,7 +42,10 @@
         successYesMsg: ", הרישום שלך התקבל. מחכים לראותך",
         successYesAll: " ואת כולם",
         successNoTitle: "תודה על ההענות 🙏",
-        successNoMsg: ", קיבלנו את תשובתך. מקווים לראותך בפעם הבאה!"
+        successNoMsg: ", קיבלנו את תשובתך. מקווים לראותך בפעם הבאה!",
+        demoBanner: "👀 זוהי דוגמה — כך ייראה הדף שהאורחים שלכם יקבלו",
+        demoCta: "צרו את הדף שלכם — ₪99",
+        demoNote: "זוהי דוגמה — לא נשלח ולא נשמר דבר. אצלכם התשובות יופיעו מיד בממשק הניהול."
       },
       en: {
         pageTitle: "RSVP",
@@ -77,14 +80,34 @@
         successYesMsg: ", your RSVP has been received. Looking forward to seeing you",
         successYesAll: " and everyone",
         successNoTitle: "Thank you for letting us know 🙏",
-        successNoMsg: ", we received your reply. Hope to see you next time!"
+        successNoMsg: ", we received your reply. Hope to see you next time!",
+        demoBanner: "👀 This is a demo — here's the page your guests will get",
+        demoCta: "Create your page — ₪99",
+        demoNote: "This is a demo — nothing was sent or saved. For your event, replies show up instantly in your dashboard."
       }
     };
   </script>
   <script src="/theme.js" defer></script>
+  <style>
+    .demo-banner {
+      display: flex; flex-wrap: wrap; align-items: center; justify-content: center; gap: 8px 14px;
+      background: #c9993a; color: #fff; padding: 10px 16px 10px 120px; font-weight: 700; font-size: .9rem; text-align: center;
+    }
+    html.embed .theme-toolbar { display: none !important; }
+    .demo-banner-cta {
+      background: #1a2744; color: #f0d080; padding: 5px 14px; border-radius: 20px;
+      text-decoration: none; font-weight: 800; white-space: nowrap;
+    }
+  </style>
 </head>
 <body>
   <div class="page">
+
+    <!-- Demo banner (only on /rsvp/demo) -->
+    <div class="demo-banner" id="demoBanner" style="display:none">
+      <span data-i18n="demoBanner">👀 זוהי דוגמה — כך ייראה הדף שהאורחים שלכם יקבלו</span>
+      <a href="/register.html" class="demo-banner-cta" data-i18n="demoCta">צרו את הדף שלכם — ₪99</a>
+    </div>
 
     <!-- Header -->
     <header class="hero">
@@ -181,6 +204,7 @@
       <div class="success-icon">🎊</div>
       <h2 id="successTitle"></h2>
       <p id="successMessage"></p>
+      <p id="demoNote" style="display:none;margin-top:12px;font-size:.85rem;color:var(--text-muted)" data-i18n="demoNote">זוהי דוגמה — לא נשלח ולא נשמר דבר. אצלכם התשובות יופיעו מיד בממשק הניהול.</p>
       <button class="outline-btn" onclick="resetForm()" data-i18n="sendAnother">שלח אישור נוסף</button>
     </section>
 
@@ -202,8 +226,34 @@
     let lastSubmission = null;
     let notFoundShown = false;
 
+    // /rsvp/demo shows a sample event so visitors can see the guest page before buying.
+    // Nothing is sent or stored in demo mode. ?embed=1 hides the banner (homepage preview).
+    const IS_DEMO = slug === "demo";
+    if (new URLSearchParams(window.location.search).has("embed")) document.documentElement.classList.add("embed");
+    const DEMO_EVENT = {
+      event_name: "החתונה של נועה ודניאל (דוגמה)",
+      event_type: "wedding",
+      hebrew_date: "",
+      gregorian_date: "2027-01-15",
+      event_time: "19:30",
+      location: "אולם הגן",
+      address: "רחוב הרצל 10, תל אביב",
+      extra_note: "החניה פנויה ליד האולם",
+    };
+
     async function loadEvent() {
       if (!slug) return showNotFound();
+      if (IS_DEMO) {
+        // theme.js (defines t()) is deferred, so wait for it before rendering
+        await new Promise((r) => (document.readyState === "loading" ? document.addEventListener("DOMContentLoaded", r) : r()));
+        eventData = DEMO_EVENT;
+        populateEvent(eventData);
+        document.getElementById("dashboardLink").style.display = "none";
+        if (!new URLSearchParams(window.location.search).has("embed")) {
+          document.getElementById("demoBanner").style.display = "flex";
+        }
+        return;
+      }
       try {
         const res = await fetch(`/api/event/${slug}`);
         if (!res.ok) return showNotFound();
@@ -312,20 +362,23 @@
       };
 
       try {
-        const res = await fetch(`/api/rsvp/${slug}`, {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify(payload),
-        });
+        if (!IS_DEMO) {
+          const res = await fetch(`/api/rsvp/${slug}`, {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify(payload),
+          });
 
-        if (!res.ok) {
-          const err = await res.json();
-          throw new Error(err.error || t("errSubmit"));
+          if (!res.ok) {
+            const err = await res.json();
+            throw new Error(err.error || t("errSubmit"));
+          }
         }
 
         document.getElementById("formSection").style.display = "none";
         const successSection = document.getElementById("successSection");
         successSection.style.display = "block";
+        if (IS_DEMO) document.getElementById("demoNote").style.display = "block";
 
         lastSubmission = {
           name,

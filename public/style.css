@@ -343,15 +343,15 @@ textarea { resize: vertical; }
   background: #c9993a;
   color: #fff;
   text-align: center;
-  padding: 16px 24px;
-  font-size: 1.3rem;
+  padding: 12px 20px;
+  font-size: 1.15rem;
   font-weight: 800;
   letter-spacing: .01em;
   line-height: 1.4;
   display: flex;
   align-items: center;
   justify-content: center;
-  gap: 14px;
+  gap: 8px 12px;
   flex-wrap: wrap;
 }
 .trust-row {
@@ -371,9 +371,9 @@ html.dark .trust-row { border-top-color: #334155; }
   display: inline-block;
   background: #1a2744;
   color: #f0d080;
-  padding: 6px 18px;
+  padding: 4px 14px;
   border-radius: 24px;
-  font-size: 1.15rem;
+  font-size: 1rem;
   font-weight: 900;
   white-space: nowrap;
   box-shadow: 0 2px 10px rgba(0,0,0,.25);
@@ -440,6 +440,63 @@ html.dark .trust-row { border-top-color: #334155; }
   box-shadow: 0 4px 20px rgba(201,153,58,0.4);
 }
 .cta-btn:hover { opacity: 0.92; transform: translateY(-1px); }
+
+.demo-link {
+  display: inline-block;
+  margin-top: 16px;
+  color: var(--gold-light);
+  font-weight: 700;
+  font-size: 1rem;
+  text-decoration: underline;
+  text-underline-offset: 4px;
+}
+.demo-link:hover { opacity: .85; }
+
+.preview-section { padding: 56px 24px 8px; background: var(--bg); text-align: center; }
+.phone-frame {
+  position: relative;
+  direction: ltr;
+  width: 280px; height: 520px;
+  margin: 0 auto 20px;
+  border: 10px solid var(--navy);
+  border-radius: 36px;
+  overflow: hidden;
+  box-shadow: var(--shadow);
+  background: #fff;
+}
+.phone-frame iframe {
+  position: absolute; top: 0; left: 0;
+  width: 375px; height: 721px;
+  border: 0;
+  transform: scale(.6933);
+  transform-origin: 0 0;
+  pointer-events: none;
+}
+.preview-cta {
+  display: inline-block;
+  background: var(--gold);
+  color: #fff;
+  padding: 12px 28px;
+  border-radius: 12px;
+  font-weight: 800;
+  text-decoration: none;
+}
+.preview-cta:hover { opacity: .9; }
+html.dark .preview-section { background: #0f172a; }
+html.dark .preview-section .section-title { color: #f0d080; }
+
+@media (max-width: 600px) {
+  .landing-nav { padding: 10px 14px; }
+  .landing-nav .logo { font-size: 1.05rem; white-space: nowrap; }
+  .nav-cta { padding: 8px 12px; font-size: .85rem; white-space: nowrap; }
+  .promo-banner { padding: 10px 14px; font-size: 1rem; }
+  .promo-guarantee { font-size: .8rem; padding: 3px 10px; border-width: 1.5px; }
+  .landing-hero { padding: 28px 20px 64px; }
+  .hero-star { font-size: 36px; margin-bottom: 8px; }
+  .hero-tagline { font-size: 1.8rem; margin-bottom: 10px; }
+  .hero-sub { font-size: 1rem; margin-bottom: 20px; }
+  .cta-btn { display: block; padding: 14px 20px; font-size: 1.05rem; }
+}
 
 .features-section { padding: 80px 24px 60px; background: var(--bg); }
 .section-title { text-align: center; font-size: 1.7rem; font-weight: 800; color: var(--navy); margin-bottom: 8px; }

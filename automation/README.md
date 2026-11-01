@@ -128,7 +128,38 @@ These cost real debugging time — check them first if something similar happens
    block in "Rules Engine", then the `resume_campaign` mutation case in "Validate & Gate") turned out to
    be missing from the live node on the next run, with no error or warning. **After editing critical
    logic, close and reopen the node to confirm the change actually saved before trusting it.**
+9. **"Winners" protection only covers `pause_keyword`, not `add_negative`.** A keyword can fall out of the
+   30-day winner window (no recent conversion) while still being a term worth serving on — and if the AI
+   reviewer happens to be down that run (see lesson 7), nothing catches a negative-keyword proposal that
+   exactly matches it. Real incident: `אישורי הגעה` (a genuine historical converter) briefly dropped off
+   `winners` and the engine proposed negating the exact same text, with the LLM unavailable to reject it
+   as it had before. **Fix:** `rules-engine.js`'s `add_negative` candidate logic now excludes any search
+   term matching *any* keyword text (not just current winners) — a hard rule, not dependent on AI review.
+   Also added `retryOnFail`/`maxTries: 3` to the Ollama HTTP node so a transient timeout doesn't silently
+   fall back to "engine plan used verbatim" and skip the review layer for no reason.
+10. **The "winner protection" lookback window was never actually wider — and this one caused real damage.**
+    GAQL has no `LAST_90_DAYS` literal. The "Read: Keywords 90d" query silently used `LAST_30_DAYS`
+    instead — identical to the primary 30-day stats query. Result: `אישורי הגעה`, a keyword with one real
+    ₪203.88 conversion, showed 0 conversions in **both** windows once that conversion aged past 30 days,
+    failed the "never converted" guard, and got genuinely **paused** by the rules engine as a loser —
+    caught only by manually checking the Keywords table in Google Ads (`Status: Paused`, `Conversions: 1`,
+    `Cost/conv: ₪203.88` — a real converter, disabled). **Fix:** "Read: Keywords 90d" now omits
+    `segments.date` entirely, which aggregates `metrics.conversions` over the keyword's full lifetime —
+    a genuine all-time "has this ever converted" check, not tied to any rolling window. If this happened
+    to your account, manually re-enable the affected keyword in Google Ads — the code fix prevents
+    recurrence but doesn't undo a pause already applied.
 
 ## Tuning knobs (`rules-engine.js` CONFIG)
 Budget cap, daily budget, lookback window, pause/negative thresholds, and max-actions-per-run are all
 constants at the top of `rules-engine.js`. Change them there; the AI reviewer reads the same limits.
+
+### `ENABLE_KEYWORD_ACTIONS` (currently `true`)
+Gates automatic `pause_keyword` and `add_negative` — the budget guardrails (throttle, cap-pause,
+auto-resume) are unaffected either way and always run. Disabled 2026-09-16 after two real incidents in
+one night (a wrongly-paused converting keyword; a near-miss negative on the same keyword), both traced
+to the lookback-window bug fixed in lesson 10. Re-enabled 2026-09-23: a week of manual review with
+automation off confirmed the fix holds (all-time winners persist correctly across runs, no false pauses),
+and a search-terms report from that week showed real accumulating waste (e.g. ₪128 spent on non-converting
+clicks in one 23-day window) that manual-only review wasn't catching in practice — the tradeoff favored
+resuming automation. Flip to `false` again (in both `rules-engine.js` and the "Rules Engine" node's inline
+copy in the n8n workflow) if you want to pause it for any reason.
