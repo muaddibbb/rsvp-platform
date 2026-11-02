@@ -53,12 +53,14 @@
   <script src="/theme.js" defer></script>
   <style>
     .spam-note {
-      margin-top: 10px; color: var(--text-muted); font-size: .8rem;
+      margin-top: 10px; color: #4b5563; font-size: .8rem;
       background: #fdf5e0; border: 1px solid #e8d9a0; border-radius: 8px; padding: 10px 14px;
     }
     .err-title { color: var(--navy); margin-bottom: 8px; }
     .event-name-line { font-weight: 700; font-size: 1.15rem; color: var(--navy); margin: -4px 0 12px; word-break: break-word; }
-    html.dark .spam-note { background: #3a3320; border-color: #5c512e; }
+    html.dark .spam-note { background: #3a3320; border-color: #5c512e; color: #cbd5e1; }
+    .help-mail a { color: var(--navy); text-decoration: underline; }
+    html.dark .help-mail a { color: #f0d080; }
     html.dark .err-title { color: #f0d080; }
     html.dark .event-name-line { color: #f0d080; }
   </style>
@@ -122,7 +124,7 @@
       <h2 class="err-title" data-i18n="notFoundTitle">לא מצאנו אירוע ששולם בקישור הזה</h2>
       <p style="color:var(--text-muted)" data-i18n="notFoundText">אם שילמת עכשיו, הקישורים נשלחו אליך באימייל. לא קיבלת? כתבו לנו בוואטסאפ ונבדוק.</p>
       <a class="wa-inline" href="https://wa.me/972546787932?text=%D7%94%D7%99%D7%99%2C%20%D7%99%D7%A9%20%D7%9C%D7%99%20%D7%A9%D7%90%D7%9C%D7%94%20%D7%A2%D7%9C%20%D7%90%D7%99%D7%A9%D7%95%D7%A8%D7%99%20%D7%94%D7%94%D7%92%D7%A2%D7%94%20%D7%91%D7%90%D7%AA%D7%A8%20rsvp.kupernet.com" target="_blank" rel="noopener" data-i18n="helpWa">💬 עזרה בוואטסאפ: 054-6787932</a>
-      <p style="margin-top:10px"><a href="mailto:kupernetservice@gmail.com">kupernetservice@gmail.com</a></p>
+      <p class="help-mail" style="margin-top:10px"><a href="mailto:kupernetservice@gmail.com">kupernetservice@gmail.com</a></p>
     </div>
 
     <!-- Could not verify (network / server error): never counted as a sale -->
@@ -132,7 +134,7 @@
       <p style="color:var(--text-muted)" data-i18n="verifyErrText">זו כנראה תקלת רשת זמנית. נסו שוב בעוד רגע, ואל תשלמו שוב.</p>
       <button id="retryBtn" class="submit-btn" data-i18n="retryBtn">נסו שוב</button>
       <a class="wa-inline" href="https://wa.me/972546787932?text=%D7%94%D7%99%D7%99%2C%20%D7%99%D7%A9%20%D7%9C%D7%99%20%D7%A9%D7%90%D7%9C%D7%94%20%D7%A2%D7%9C%20%D7%90%D7%99%D7%A9%D7%95%D7%A8%D7%99%20%D7%94%D7%94%D7%92%D7%A2%D7%94%20%D7%91%D7%90%D7%AA%D7%A8%20rsvp.kupernet.com" target="_blank" rel="noopener" data-i18n="helpWa">💬 עזרה בוואטסאפ: 054-6787932</a>
-      <p style="margin-top:10px"><a href="mailto:kupernetservice@gmail.com">kupernetservice@gmail.com</a></p>
+      <p class="help-mail" style="margin-top:10px"><a href="mailto:kupernetservice@gmail.com">kupernetservice@gmail.com</a></p>
     </div>
   </div>
 

@@ -6,7 +6,8 @@
 // node:vm against stubs: no DOM, no network, no real fetch.
 // Pin a zone that is not Israel before any Date is used, so a "today" that follows the browser's zone
 // instead of Asia/Jerusalem fails in the default run, whatever TZ the machine or the caller has.
-process.env.TZ = "America/Los_Angeles";
+// B-8: ADMIN_ENDED_TZ lets the child runs at the end of this file repeat the whole file in other zones.
+process.env.TZ = process.env.ADMIN_ENDED_TZ || "America/Los_Angeles";
 const fetchCalls = [];
 global.fetch = async (...args) => { fetchCalls.push(args); throw new Error("network is blocked in tests"); };
 
@@ -66,7 +67,7 @@ function makeCtx(events = fixture(), opts = {}) {
       const method = init.method || "GET";
       requests.push({ url, method });
       if (url === "/api/admin-events" && method === "GET") {
-        return { ok: true, status: 200, json: async () => ({ events, abandonedLast30Days: 0 }) };
+        return { ok: true, status: 200, json: async () => ({ events, abandonedLast30Days: "abandoned" in opts ? opts.abandoned : 0 }) };
       }
       if (url.startsWith("/api/admin-events?slug=") && method === "PATCH") {
         return { ok: true, status: 200, json: async () => ({}) };
@@ -208,6 +209,15 @@ const stat = (h, id) => String(h.getEl(id).textContent);
   });
 }
 
+// ---------- abandoned card when the count could not be read ----------
+test("abandoned card shows — when the API sends null", async () => {
+  const h = makeCtx(fixture(), { abandoned: null });
+  await h.ctx.attemptLoad();
+  assert.equal(stat(h, "statAbandoned"), "—");
+  assert.ok(h.getEl("statAbandoned").title.includes("checkout_abandonments"));
+  assert.equal(rowsOf(h).length, 6, "the events are still listed");
+});
+
 // ---------- a row without a valid date ----------
 {
   const nullDate = {
@@ -285,6 +295,44 @@ test("admin.html defines .badge-ended and its dark-mode rule, and contains no 14
   assert.ok(!HTML.includes("149"));
 });
 
+test("admin nav holds the badge and the dark button inside .nav-tools (B-6)", () => {
+  const nav = HTML.match(/<nav class="landing-nav">[\s\S]*?<\/nav>/)[0];
+  const tools = nav.match(/<div class="nav-tools">([\s\S]*?)<\/div>/);
+  assert.ok(tools, "the nav has a .nav-tools wrapper");
+  assert.ok(tools[1].includes('id="adminBadge"'), "badge inside .nav-tools");
+  assert.ok(tools[1].includes('id="themeDarkBtn"') && tools[1].includes('onclick="toggleTheme()"'), "dark button inside .nav-tools");
+  assert.ok(!nav.includes("themeLangBtn"), "no language button on admin");
+});
+
+test("admin e-mail cell wraps long text, and only the e-mail cell (B-7)", () => {
+  assert.match(HTML, /#eventsBody td\.cell-email \{[^}]*max-width: 2[2-8]ch;[^}]*overflow-wrap: anywhere;[^}]*word-break: break-word;[^}]*\}/);
+  // the wrap rule must not be applied to every cell again: it squeezed event/customer columns to one character
+  const wrapRules = [...HTML.matchAll(/([^{}]+)\{[^}]*overflow-wrap: anywhere[^}]*\}/g)].map((m) => m[1].trim().split("\n").pop().trim());
+  assert.deepEqual(wrapRules.filter((s) => /\btd\b/.test(s)), ["#eventsBody td.cell-email"]);
+  assert.ok(!/(^|[\s,])(#eventsBody\s+)?td\s*\{[^}]*(overflow-wrap|word-break)/m.test(HTML), "no generic td wrap rule");
+  assert.match(HTML, /<td class="cell-email" style="[^"]*">\$\{e\.customer_email/);
+});
+
+test("the process zone is the zone under test", () => {
+  assert.equal(Intl.DateTimeFormat().resolvedOptions().timeZone, process.env.TZ);
+});
+
 test("admin-ended tests made no network call", () => {
   assert.equal(fetchCalls.length, 0);
 });
+
+// B-8: repeat this whole file in three other machine zones (child processes), so a "today" that follows the
+// browser's zone instead of Asia/Jerusalem cannot pass by luck of the default zone.
+if (!process.env.ADMIN_ENDED_TZ) {
+  const { spawnSync } = require("node:child_process");
+  for (const zone of ["Asia/Tokyo", "Pacific/Kiritimati", "Pacific/Pago_Pago"]) {
+    test(`the whole file also passes when the machine zone is ${zone} (child process)`, () => {
+      const env = { ...process.env, ADMIN_ENDED_TZ: zone };
+      delete env.NODE_TEST_CONTEXT; // run as a plain script, not as a sub-test of the parent runner
+      const r = spawnSync(process.execPath, ["--test-reporter=tap", __filename], { env, encoding: "utf8", timeout: 60000 });
+      assert.equal(r.status, 0, `${zone}:\n${r.stdout}\n${r.stderr}`);
+      assert.match(r.stdout, /# pass [1-9]/);
+      assert.match(r.stdout, /# fail 0/);
+    });
+  }
+}

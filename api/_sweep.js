@@ -66,6 +66,7 @@ async function sweepAbandonedCheckouts(opts = {}) {
   // A buyer who already paid (e.g. on the dashboard) gets no email and no digest row.
   const digestRows = [];
   const paidRows = [];
+  let logFailures = 0;
   for (const p of rows) {
     const email = (p.customer_email || "").trim();
     let events = null; // stays null if the lookup fails: the email goes out without a link
@@ -82,10 +83,11 @@ async function sweepAbandonedCheckouts(opts = {}) {
     await sendRecoveryEmail(p, events ? pickDraft(p, events) : null);
     // Permanent, anonymous record (no name/email/phone) so abandonment counts survive the
     // 7-day PII purge below — logged here, the moment a checkout is confirmed abandoned.
-    await supabase.from("checkout_abandonments").insert({
+    const { error: logErr } = await supabase.from("checkout_abandonments").insert({
       abandoned_at: new Date().toISOString(),
       event_type: p.event_type || null,
     });
+    if (logErr) { logFailures++; console.error("checkout_abandonments insert error:", logErr.code || "", logErr.message || logErr); }
     const typeLabel = EVENT_TYPE_LABELS[p.event_type] || p.event_type || "—";
     digestRows.push(`<tr>
       <td style="padding:8px 10px;border-bottom:1px solid #eee">${esc(p.customer_name || "—")}</td>
@@ -100,6 +102,9 @@ async function sweepAbandonedCheckouts(opts = {}) {
   const paidNote = paidRows.length
     ? `<p style="color:#6b7280;font-size:.85rem">${paidRows.length === 1 ? "(עוד לקוח אחד השלים תשלום מאוחר יותר ולא נספר)" : `(${paidRows.length} נוספים השלימו תשלום מאוחר יותר ולא נספרו)`}</p>`
     : "";
+  const logNote = logFailures
+    ? `<p style="color:#991b1b;font-size:.85rem">⚠️ ${logFailures} מתוך ${digestRows.length} לא נשמרו ביומן הנטישות (checkout_abandonments), ולכן לא ייספרו בלוח הבקרה. ייתכן שהטבלה לא נוצרה: ראו sql/checkout_abandonments.sql.</p>`
+    : "";
 
   // One consolidated report to the owner listing every abandoned checkout in this sweep.
   if (digestRows.length > 0) await sendEmail(
@@ -107,7 +112,7 @@ async function sweepAbandonedCheckouts(opts = {}) {
     `🛒 דוח הרשמות שלא הושלמו — ${digestRows.length} ${digestRows.length === 1 ? "לקוח" : "לקוחות"}`,
     `<div dir="rtl" style="font-family:Arial;padding:24px;max-width:720px">
       <h2 style="color:#1a2744">הרשמות שלא הושלמו 🛒</h2>
-      <p>${digestRows.length} לקוחות מילאו את כל הפרטים אך לא השלימו תשלום. כל אחד קיבל אימייל אוטומטי עם הצעת עזרה.</p>${paidNote}
+      <p>${digestRows.length} לקוחות מילאו את כל הפרטים אך לא השלימו תשלום. כל אחד קיבל אימייל אוטומטי עם הצעת עזרה.</p>${paidNote}${logNote}
       <table style="border-collapse:collapse;width:100%;font-size:14px;margin-top:12px">
         <thead>
           <tr style="background:#1a2744;color:#fff">

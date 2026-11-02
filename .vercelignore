@@ -1,0 +1,6 @@
+# Never upload with `vercel --prod` (the Vercel CLI does not read .gitignore)
+.atreides
+.claude
+.env
+.env.*
+node_modules

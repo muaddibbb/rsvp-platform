@@ -62,6 +62,7 @@ const MTDS = [0, 1, 99.99, 100, 299.99, 300, 387, 399, 399.99, 400, 400.01, 800,
 const DAYS = [[1, 28], [1, 30], [1, 31], [15, 30], [20, 30], [27, 31], [28, 28], [30, 30], [31, 31], [undefined, undefined], [35, 30]];
 const BUDGETS = [undefined, 0, 1, 5, 9, 12, 12.4, 12.5, 13, 13.4, 13.5, 14, 20, 1000];
 const STATUSES = ["ENABLED", "PAUSED", "REMOVED", undefined];
+const PAUSED_BY = [true, false, undefined];
 
 const KW_SETS = [
   [],
@@ -98,6 +99,7 @@ function* grid() {
             monthToDateSpendILS: mtd,
             dayOfMonth: d,
             daysInMonth: dim,
+            pausedByAgent: PAUSED_BY[i % 3],
           };
         }
 }
@@ -137,6 +139,7 @@ function randomInput(rnd) {
     monthToDateSpendILS: maybe(rnd() < 0.2 ? pick([0, 399.99, 400, 400.01]) : num(0, 520)),
     dayOfMonth: maybe(1 + Math.floor(rnd() * dim)),
     daysInMonth: maybe(dim),
+    pausedByAgent: pick([true, false, undefined, "true", 1]),
   };
 }
 
@@ -172,6 +175,8 @@ const MUTATIONS = [
   ["action cap 8 -> 7", (s) => s.replace("MAX_ACTIONS_PER_RUN: 8", "MAX_ACTIONS_PER_RUN: 7")],
   ["negatives ignore keyword protection", (s) => s.replace("&& !keywordTexts.has(t.term)", "")],
   ["keyword actions off", (s) => s.replace("ENABLE_KEYWORD_ACTIONS: true", "ENABLE_KEYWORD_ACTIONS: false")],
+  ["resume ignores who paused", (s) => s.replace("pausedByAgent === true", "true")],
+  ["re-pauses an already paused campaign", (s) => s.replace("campaign.status !== 'PAUSED'", "true")],
 ];
 
 for (const [name, mutate] of MUTATIONS) {

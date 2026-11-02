@@ -1,6 +1,9 @@
-node_modules/
+node_modules
 .env
 .env.local
 .vercel/
 .vercel
 .env*
+
+# Atreides run folders: briefs, reports and customer e-mail extracts. Never commit (the repo is public).
+.atreides/

@@ -277,16 +277,28 @@
       henna: "🪬", family: "🎊", other: "🎉",
     };
 
+    // Same format as the register preview (register.html renderPreview): "15 בינואר 2027" / "January 15, 2027",
+    // the Hebrew date first when there is one. Noon local time keeps the day right in every time zone.
+    function formatEventDate(ev) {
+      const g = ev && ev.gregorian_date;
+      let greg = "";
+      if (typeof g === "string" && /^\d{4}-\d{2}-\d{2}$/.test(g)) {
+        const locale = (typeof getLang === "function" && getLang() === "en") ? "en-US" : "he-IL";
+        greg = new Date(g + "T12:00:00").toLocaleDateString(locale, { day: "numeric", month: "long", year: "numeric" });
+      } else if (g) {
+        greg = String(g); // unexpected shape: show it as stored rather than "Invalid Date"
+      }
+      const heb = (ev && ev.hebrew_date) ? String(ev.hebrew_date) : "";
+      return heb && greg ? heb + " · " + greg : (heb || greg);
+    }
+
     function populateEvent(ev) {
       document.title = ev.event_name + t("titleSuffix");
       document.getElementById("eventTitle").textContent = ev.event_name;
       document.getElementById("eventEmoji").textContent = EVENT_EMOJI[ev.event_type] || "🎉";
 
       // Date
-      const dateStr = ev.hebrew_date
-        ? ev.hebrew_date + " | " + ev.gregorian_date
-        : ev.gregorian_date;
-      document.getElementById("detailDate").textContent = dateStr;
+      document.getElementById("detailDate").textContent = formatEventDate(ev);
       document.getElementById("detailTime").textContent = ev.event_time;
       document.getElementById("detailLocation").textContent = ev.location;
       document.getElementById("detailAddress").textContent = ev.address;
@@ -411,6 +423,7 @@
     window.addEventListener("langchange", () => {
       if (eventData) {
         document.title = eventData.event_name + t("titleSuffix");
+        document.getElementById("detailDate").textContent = formatEventDate(eventData);
       } else if (notFoundShown) {
         document.getElementById("eventTitle").textContent = t("eventNotFound");
       } else {

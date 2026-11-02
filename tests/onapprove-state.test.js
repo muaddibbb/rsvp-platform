@@ -238,6 +238,85 @@ for (const page of ["register", "dashboard"]) {
     if (page === "register") assert.equal(h.el("step3BackBtn").disabled, false);
   });
 
+  const reasonSpans = (h) => status(h).children.filter((c) => c.className === "pay-reason");
+
+  test(`${page}: 400 shows the server reason`, async () => {
+    const h = await start(page);
+    const { done } = await approve(h);
+    h.capture.resolve(reply(400, { error: "לא ניתן לבחור תאריך שעבר" }));
+    await done;
+    assert.equal(status(h).textContent, "payNotCompleted");
+    const spans = reasonSpans(h);
+    assert.equal(spans.length, 1);
+    assert.equal(spans[0].tag, "span");
+    assert.equal(spans[0].textContent, "לא ניתן לבחור תאריך שעבר");
+    assert.equal(status(h).innerHTML, "");
+    assert.equal(h.get("captureInFlight"), false);
+  });
+
+  test(`${page}: 400 with the generic or unusable error shows no reason`, async () => {
+    for (const body of [{ error: "התשלום לא הושלם" }, {}, { error: { x: 1 } }, { error: "   " }]) {
+      const h = await start(page);
+      const { done } = await approve(h);
+      h.capture.resolve(reply(400, body));
+      await done;
+      assert.equal(status(h).textContent, "payNotCompleted", JSON.stringify(body));
+      assert.equal(reasonSpans(h).length, 0, JSON.stringify(body));
+    }
+  });
+
+  test(`${page}: 400 reason is text only`, async () => {
+    const h = await start(page);
+    const { done } = await approve(h);
+    const evil = "<img src=x onerror=alert(1)>";
+    h.capture.resolve(reply(400, { error: evil }));
+    await done;
+    const spans = reasonSpans(h);
+    assert.equal(spans.length, 1);
+    assert.equal(spans[0].textContent, evil);
+    assert.equal(spans[0].innerHTML, "");
+    assert.equal(status(h).innerHTML, "");
+  });
+
+  test(`${page}: J2-07 unknown state follows the language switch`, async () => {
+    const h = await start(page);
+    const { done } = await approve(h);
+    h.capture.resolve(reply(500, {}));
+    await done;
+    assert.match(status(h).textContent, /^payUnknown TESTORDER1$/);
+    h.ctx.t = (k) => "EN:" + k;
+    assert.ok((h.listeners.langchange || []).length >= 1, "the page listens for langchange");
+    for (const fn of h.listeners.langchange) fn();
+    assert.equal(status(h).textContent, "EN:payUnknown TESTORDER1");
+    const a = waLink(h);
+    assert.ok(a, "WhatsApp link present");
+    assert.equal(a.textContent, "EN:waSend");
+    assert.ok(a.href.endsWith(encodeURIComponent("EN:waPaidNoConfirm TESTORDER1")));
+    assert.equal(h.get("captureInFlight"), true);
+    assert.equal(h.captureCalls().length, 1);
+    assert.equal(h.createOrderCalls().length, 0);
+  });
+
+  test(`${page}: J2-07 confirming state follows the language switch`, async () => {
+    const h = await start(page);
+    const { done } = await approve(h);
+    h.ctx.t = (k) => "EN:" + k;
+    for (const fn of h.listeners.langchange || []) fn();
+    assert.equal(status(h).textContent, "EN:payConfirming");
+    assert.equal(box(h).classList.contains("pay-busy"), true);
+    assert.equal(h.captureCalls().length, 1, "the capture is not repeated");
+    h.capture.resolve(reply(500, {}));
+    await done;
+  });
+
+  test(`${page}: langchange before any payment leaves the status empty`, async () => {
+    const h = await start(page);
+    for (const fn of h.listeners.langchange || []) fn();
+    assert.equal(status(h).textContent, "");
+    assert.equal(status(h).children.length, 0);
+    assert.equal(h.calls.filter((c) => c.url === "/api/paypal-capture").length, 0);
+  });
+
   // The same outcome for every answer that does not prove "nothing was captured".
   const unknownCases = [
     ["500 keeps the buttons disabled and shows payUnknown with the order id and a wa.me link, no redirect", (h) => h.capture.resolve(reply(500, { error: "boom" }))],
@@ -348,6 +427,15 @@ for (const page of ["register", "dashboard"]) {
   });
 }
 
+test("register: preview shows the Hebrew date quotes once", async () => {
+  const h = await start("register");
+  h.get(`formData.hebrew_date = ${JSON.stringify('כ"ח בסיוון תשפ"ו')}; formData.gregorian_date = "2027-01-15";`);
+  h.get("renderPreview()");
+  const html = h.el("previewCard").innerHTML;
+  assert.ok(html.includes("כ&quot;ח בסיוון תשפ&quot;ו · 15 בינואר 2027"), "the date line is escaped exactly once");
+  assert.ok(!html.includes("&amp;quot;"), "no double escaping");
+});
+
 test("static: neither pay script uses AbortController", () => {
   for (const page of ["register", "dashboard"]) {
     assert.ok(!/AbortController/.test(payScript(page)), `${page}: pay code must not abort the capture`);
@@ -365,4 +453,20 @@ test("static: register.html, dashboard.html and success.html all use the marker 
   for (const page of ["register", "dashboard", "success"]) {
     assert.ok(read(`public/${page}.html`).includes("rsvp_paid"), `${page}: rsvp_paid`);
   }
+});
+
+test("the capture fetch block is byte-identical to release 59e4ea4", () => {
+  const block = (pad, body) => [
+    `${pad}res = await fetch("/api/paypal-capture", {`,
+    `${pad}  method: "POST",`,
+    `${pad}  headers: { "Content-Type": "application/json" },`,
+    `${pad}  body: JSON.stringify(${body}),`,
+    `${pad}});`,
+  ].join("\n");
+  const register = block(" ".repeat(12), "{ orderID: data.orderID, checkoutId, slug: draftSlug, ...formData }");
+  const dashboard = block(" ".repeat(14), "{ orderID: data.orderID, slug }");
+  assert.ok(payScript("register").includes(register), "register.html: the capture fetch block changed");
+  assert.ok(payScript("dashboard").includes(dashboard), "dashboard.html: the capture fetch block changed");
+  assert.equal(payScript("register").split('fetch("/api/paypal-capture"').length - 1, 1, "register.html: one capture fetch");
+  assert.equal(payScript("dashboard").split('fetch("/api/paypal-capture"').length - 1, 1, "dashboard.html: one capture fetch");
 });

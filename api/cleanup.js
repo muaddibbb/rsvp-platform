@@ -29,8 +29,10 @@ async function closeOrPurgeOldEvents() {
 
   // 2. Close paid past events that are still open: snapshot final counts, then delete guest RSVPs,
   //    keep the record. The snapshot preserves headcounts for tracking without keeping personal data.
+  //    The snapshot is written once: an event that already has one (closed before, then reactivated by
+  //    the owner) is closed again with its saved headcount kept.
   const { data: paidOld, error: pErr } = await supabase
-    .from("events").select("id").lt("gregorian_date", cutoff).not("paid_at", "is", null).eq("active", true);
+    .from("events").select("id, final_responses, final_guests").lt("gregorian_date", cutoff).not("paid_at", "is", null).eq("active", true);
   if (pErr) throw pErr;
   let closed = 0;
   if (paidOld && paidOld.length) {
@@ -38,13 +40,22 @@ async function closeOrPurgeOldEvents() {
       const { data: rs } = await supabase
         .from("rsvps").select("attending, guests").eq("event_id", ev.id);
       const rows = rs || [];
-      const finalResponses = rows.length;
-      const finalGuests = rows.filter(r => r.attending).reduce((s, r) => s + (r.guests || 0), 0);
-      await supabase.from("events").update({
-        active: false,
-        final_responses: finalResponses,
-        final_guests: finalGuests,
-      }).eq("id", ev.id);
+      const hasSnapshot = ev.final_responses != null || ev.final_guests != null;
+      if (hasSnapshot) {
+        // Closed before and reactivated by the owner ("▶️ הפעל" in /admin): close it again but never
+        // overwrite the saved headcount (its replies were deleted at the first close, so a recount gives 0/0).
+        // Replies received while it was reactivated are deleted below and not added to the count.
+        await supabase.from("events").update({ active: false }).eq("id", ev.id);
+        if (rows.length) console.warn(`cleanup: event ${ev.id} kept its saved headcount; deleted ${rows.length} reply(ies) received after reactivation`);
+      } else {
+        const finalResponses = rows.length;
+        const finalGuests = rows.filter(r => r.attending).reduce((s, r) => s + (r.guests || 0), 0);
+        await supabase.from("events").update({
+          active: false,
+          final_responses: finalResponses,
+          final_guests: finalGuests,
+        }).eq("id", ev.id);
+      }
       await supabase.from("rsvps").delete().eq("event_id", ev.id);
     }
     closed = paidOld.length;

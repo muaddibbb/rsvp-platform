@@ -21,6 +21,7 @@ function input(over = {}) {
     monthToDateSpendILS: over.monthToDateSpendILS ?? 0,
     dayOfMonth: over.dayOfMonth ?? 1,
     daysInMonth: over.daysInMonth ?? 30,
+    pausedByAgent: over.pausedByAgent,
   };
 }
 const kw = (o) => ({ criterionId: "c/" + o.text, matchType: "PHRASE", status: "ENABLED", costILS: 0, conversions: 0, clicks: 0, conversionsAllTime: 0, ...o });
@@ -107,33 +108,61 @@ test("budget above 13 with no throttle -> set_daily_budget 13; budget exactly 13
 });
 
 // ── pause / resume ───────────────────────────────────────────────────────────
-test("paused campaign under the cap -> resume_campaign", () => {
-  const r = decide(input({ campaign: { status: "PAUSED" }, monthToDateSpendILS: 0 }));
+test("paused BY THE AGENT under the cap -> resume_campaign", () => {
+  const r = decide(input({ campaign: { status: "PAUSED" }, monthToDateSpendILS: 0, pausedByAgent: true }));
   assert.deepEqual(types(r), ["resume_campaign"]);
 });
 
-test("paused campaign at/over the cap -> pause_campaign only, NO resume", () => {
+// Deliberate change of an earlier expectation (was: "pause_campaign only, NO resume"): a campaign that is
+// already paused is not paused a second time (a repeated API pause would make a hand pause look like the
+// agent's own in the change history).
+test("paused campaign at/over the cap -> no second pause, no resume", () => {
   const r = decide(input({ campaign: { status: "PAUSED" }, monthToDateSpendILS: 450 }));
+  assert.deepEqual(r.candidateActions, []);
+  assert.equal(r.budgetStatus, "cap_reached");
+  assert.ok(r.notes.some((n) => /cap reached/i.test(n)));
+});
+
+test("an ENABLED campaign at the cap is still paused", () => {
+  const r = decide(input({ campaign: { status: "ENABLED" }, monthToDateSpendILS: 450 }));
   assert.deepEqual(types(r), ["pause_campaign"]);
 });
 
 test("paused + throttling -> throttle then resume (budget actions come first)", () => {
-  const r = decide(input({ campaign: { status: "PAUSED" }, monthToDateSpendILS: 300, dayOfMonth: 20 }));
+  const r = decide(input({ campaign: { status: "PAUSED" }, monthToDateSpendILS: 300, dayOfMonth: 20, pausedByAgent: true }));
   assert.deepEqual(types(r), ["set_daily_budget", "resume_campaign"]);
 });
 
-test("KNOWN WEAKNESS (J-17/G-A2): a campaign the owner paused by hand mid-month is resumed (engine cannot tell who paused it)", () => {
-  const r = decide(input({ campaign: { status: "PAUSED" }, monthToDateSpendILS: 120, dayOfMonth: 10 }));
-  assert.ok(types(r).includes("resume_campaign"));
+test("a campaign paused by hand is NOT resumed and a note says so", () => {
+  for (const pausedByAgent of [false, undefined]) {
+    const r = decide(input({ campaign: { status: "PAUSED" }, monthToDateSpendILS: 120, dayOfMonth: 10, pausedByAgent }));
+    assert.ok(!types(r).includes("resume_campaign"), String(pausedByAgent));
+    assert.ok(r.notes.some((n) => /not resuming/i.test(n)), "note: " + String(pausedByAgent));
+  }
+});
+
+test("only a strict true resumes (the strings 'true' and the number 1 do not)", () => {
+  for (const pausedByAgent of ["true", 1, "yes", {}, null]) {
+    const r = decide(input({ campaign: { status: "PAUSED" }, monthToDateSpendILS: 0, pausedByAgent }));
+    assert.ok(!types(r).includes("resume_campaign"), String(pausedByAgent));
+  }
+  assert.ok(types(decide(input({ campaign: { status: "PAUSED" }, monthToDateSpendILS: 0, pausedByAgent: true }))).includes("resume_campaign"));
 });
 
 test("KNOWN WEAKNESS (J-17): an empty MTD read (0) on a cap-paused campaign looks like a new month and resumes", () => {
-  const r = decide(input({ campaign: { status: "PAUSED" }, monthToDateSpendILS: 0, dayOfMonth: 20 }));
+  const r = decide(input({ campaign: { status: "PAUSED" }, monthToDateSpendILS: 0, dayOfMonth: 20, pausedByAgent: true }));
   assert.ok(types(r).includes("resume_campaign"));
 });
 
 test("PAUSED is the only status that resumes (ENABLED / REMOVED / undefined do not)", () => {
-  for (const status of ["ENABLED", "REMOVED", undefined]) assert.ok(!types(decide(input({ campaign: { status } }))).includes("resume_campaign"), String(status));
+  for (const status of ["ENABLED", "REMOVED", undefined]) assert.ok(!types(decide(input({ campaign: { status }, pausedByAgent: true }))).includes("resume_campaign"), String(status));
+});
+
+test("CONFIG.DAILY_BUDGET_ILS is 13 in the engine and in the inline copy", () => {
+  assert.equal(CONFIG.DAILY_BUDGET_ILS, 13);
+  const wf = JSON.parse(fs.readFileSync(path.resolve(__dirname, "..", "automation", "campaign-manager.workflow.json"), "utf8"));
+  const inline = wf.nodes.find((n) => n.name === "Rules Engine").parameters.jsCode;
+  assert.match(inline, /DAILY_BUDGET_ILS:\s*13\b/);
 });
 
 // ── month length (J-15) ──────────────────────────────────────────────────────

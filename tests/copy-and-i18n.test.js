@@ -86,19 +86,36 @@ test("every trustRefund and refundLine element is an <a href=\"/refund.html\"", 
       assert.ok(m[0].includes('href="/refund.html"'), `${page}: ${m[0]}`);
     }
   }
-  assert.ok(seen >= 4, "register, dashboard, index and pricing carry the sentence");
+  assert.ok(seen >= 3, "register, dashboard and index carry the sentence");
+  assert.ok(!/data-i18n="refundLine"/.test(html.pricing), "pricing.html no longer has the refundLine box");
 });
 
 test("the he and en values of trustRefund and refundLine equal the two full refund sentences", () => {
-  const where = { register: "trustRefund", dashboard: "trustRefund", index: "refundLine", pricing: "refundLine" };
+  const where = { register: "trustRefund", dashboard: "trustRefund", index: "refundLine" };
   for (const [page, key] of Object.entries(where)) {
     const d = dictOf(page);
     assert.equal(d.he[key], REFUND_HE, `${page}.he.${key}`);
     assert.equal(d.en[key], REFUND_EN, `${page}.en.${key}`);
   }
   // The visible Hebrew fallback in the markup says the same.
-  for (const page of ["register", "dashboard", "index", "pricing"]) {
+  for (const page of ["register", "dashboard", "index"]) {
     assert.ok(html[page].includes(`>${REFUND_HE}</a>`), `${page}: markup text`);
+  }
+});
+
+test("pricing.html has no guarantee box and keeps one linked refund sentence in FAQ 6", () => {
+  const src = html.pricing;
+  assert.ok(!src.includes('class="guarantee"'), "no guarantee box markup");
+  assert.ok(!/\.guarantee\b/.test(src), "no .guarantee CSS");
+  const markup = src.replace(/<script\b[\s\S]*?<\/script>/g, "").replace(/<style\b[\s\S]*?<\/style>/g, "");
+  assert.equal(markup.split(REFUND_HE_CORE).length - 1, 1, "the core refund sentence appears once in the markup");
+  const faqA = [...markup.matchAll(/<div class="faq-a">([\s\S]*?)<\/div>/g)].map((m) => m[1]).filter((b) => b.includes(REFUND_HE_CORE));
+  assert.equal(faqA.length, 1);
+  assert.ok(faqA[0].includes('data-i18n="faq6a"'), "the sentence is the faq6a span");
+  assert.ok(faqA[0].includes('<a href="/refund.html"'), "the FAQ 6 block links to /refund.html");
+  const d = themeDict("pricing");
+  for (const lang of ["he", "en"]) {
+    assert.ok(!("refundLine" in d[lang]) && !("refundDetails" in d[lang]), `${lang}: refundLine and refundDetails are gone`);
   }
 });
 
@@ -182,6 +199,13 @@ test("pricing.html nav has themeLangBtn and themeDarkBtn, index.html no longer d
   assert.ok(!/\.nav-tools|\.tool-btn/.test(inlineStyle));
   const css = read("public/style.css");
   assert.ok(/\.nav-tools\s*\{/.test(css) && /\.tool-btn\s*\{/.test(css));
+});
+
+test("register nav has themeLangBtn and themeDarkBtn (D-5)", () => {
+  const nav = html.register.match(/<nav class="landing-nav">[\s\S]*?<\/nav>/)[0];
+  assert.ok(nav.includes('id="themeLangBtn"') && nav.includes('id="themeDarkBtn"'));
+  assert.ok(nav.includes('class="nav-tools"'));
+  assert.ok(nav.includes('onclick="toggleLang()"') && nav.includes('onclick="toggleTheme()"'));
 });
 
 // ── i18n completeness (AC-9.4) ──

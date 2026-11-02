@@ -1,7 +1,7 @@
 "use strict";
 // Proves GET /api/admin-events lists every paid event (past, today, future; active, paused, closed),
 // no unpaid draft, newest payment first, with the count and snapshot fields the admin page needs.
-// api/admin-events.js is unchanged: this test documents what it already does. Runs the real handler
+// (the list itself is unchanged; the abandoned-count read failure now returns null). Runs the real handler
 // against an in-memory fake Supabase (tests/_fake-supabase.js). No network, no real database.
 const fetchCalls = [];
 global.fetch = async (...args) => { fetchCalls.push(args); throw new Error("network is blocked in tests"); };
@@ -117,6 +117,34 @@ test("the fake really applies filters: adding eq(active,true) drops rows", async
 test("abandonedLast30Days counts only abandonments of the last 30 days", async () => {
   const res = await getList();
   assert.equal(res.body.abandonedLast30Days, 1);
+});
+
+test("abandoned count read failure returns null and still lists events", async () => {
+  const realFrom = fake.from;
+  const realError = console.error;
+  const errors = [];
+  console.error = (...args) => { errors.push(args); };
+  fake.from = (table) => {
+    if (table !== "checkout_abandonments") return realFrom.call(fake, table);
+    const failed = { data: null, count: null, error: { code: "PGRST205", message: "Could not find the table" } };
+    const api = {
+      select() { return api; },
+      gte() { return api; },
+      then: (resolve, reject) => Promise.resolve(failed).then(resolve, reject),
+    };
+    return api;
+  };
+  let res;
+  try {
+    res = await getList();
+  } finally {
+    fake.from = realFrom;
+    console.error = realError;
+  }
+  assert.equal(res.statusCode, 200);
+  assert.equal(res.body.abandonedLast30Days, null);
+  assert.deepEqual(res.body.events.map((e) => e.slug), PAID_ORDER);
+  assert.ok(errors.some((a) => a[0] === "checkout_abandonments count error:"), "the failure is logged");
 });
 
 test("GET /api/admin-events without a valid Bearer returns 401", async () => {

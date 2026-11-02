@@ -184,6 +184,107 @@ test("KNOWN WEAKNESS (J-25): search terms are not aggregated - one row per ad gr
   assert.equal(j.searchTerms.length, 2);
 });
 
+// ── Normalize: who paused the campaign (change history) ──────────────────────
+const CAMP = "customers/1/campaigns/7";
+const chg = (over = {}) => ({ changeEvent: { changeDateTime: "2026-11-01 05:00:00.000000", changeResourceName: CAMP, clientType: "GOOGLE_ADS_API", changedFields: "status", newResource: { campaign: { status: "PAUSED" } }, ...over } });
+const changes = (...r) => ({ "Read: Campaign Changes": rows(r) });
+
+test("pausedByAgent: the latest status change is an API pause -> true", async () => {
+  const j = await normalize(changes(chg()));
+  assert.equal(j.pausedByAgent, true);
+  assert.deepEqual(j.lastStatusChange, { status: "PAUSED", clientType: "GOOGLE_ADS_API", at: "2026-11-01 05:00:00.000000" });
+  assert.equal(j.campaign.resourceName, CAMP, "the campaign object is unchanged");
+});
+
+test("pausedByAgent: the latest status change is a web-UI pause -> false", async () => {
+  const j = await normalize(changes(chg({ clientType: "GOOGLE_ADS_WEB_CLIENT" })));
+  assert.equal(j.pausedByAgent, false);
+  assert.equal(j.lastStatusChange.clientType, "GOOGLE_ADS_WEB_CLIENT");
+});
+
+test("pausedByAgent: an older API pause followed by a newer web-UI ENABLED -> false", async () => {
+  const j = await normalize(changes(
+    chg({ changeDateTime: "2026-10-01 05:00:00.000000" }),
+    chg({ changeDateTime: "2026-10-20 09:00:00.000000", clientType: "GOOGLE_ADS_WEB_CLIENT", newResource: { campaign: { status: "ENABLED" } } }),
+  ));
+  assert.equal(j.pausedByAgent, false);
+  assert.equal(j.lastStatusChange.status, "ENABLED");
+});
+
+test("pausedByAgent: an event for another campaign is ignored", async () => {
+  const j = await normalize(changes(chg({ changeResourceName: "customers/1/campaigns/99" })));
+  assert.equal(j.pausedByAgent, false);
+  assert.equal(j.lastStatusChange, null);
+});
+
+test("pausedByAgent: a change that did not touch status (name only) is ignored", async () => {
+  const j = await normalize(changes(chg({ changedFields: "name" })));
+  assert.equal(j.pausedByAgent, false);
+  assert.equal(j.lastStatusChange, null);
+});
+
+test("pausedByAgent: changedFields as a FieldMask object { paths: [...] } is handled", async () => {
+  const j = await normalize(changes(chg({ changedFields: { paths: ["name", "status"] } })));
+  assert.equal(j.pausedByAgent, true);
+  const k = await normalize(changes(chg({ changedFields: "name,status" })));
+  assert.equal(k.pausedByAgent, true);
+});
+
+test("pausedByAgent: unordered rows are sorted by time, the newest wins", async () => {
+  const newestWeb = chg({ changeDateTime: "2026-11-01 09:00:00.000000", clientType: "GOOGLE_ADS_WEB_CLIENT" });
+  const olderApi = chg({ changeDateTime: "2026-10-05 05:00:00.000000" });
+  assert.equal((await normalize(changes(olderApi, newestWeb))).pausedByAgent, false);
+  assert.equal((await normalize(changes(newestWeb, olderApi))).pausedByAgent, false);
+  const newestApi = chg({ changeDateTime: "2026-11-02 05:00:00.000000" });
+  const olderWeb = chg({ changeDateTime: "2026-10-05 05:00:00.000000", clientType: "GOOGLE_ADS_WEB_CLIENT" });
+  assert.equal((await normalize(changes(newestApi, olderWeb))).pausedByAgent, true);
+  assert.equal((await normalize(changes(olderWeb, newestApi))).pausedByAgent, true);
+});
+
+test("pausedByAgent: the change node missing from the run gives false and a null lastStatusChange", async () => {
+  const j = await normalize(); // default leaves "Read: Campaign Changes" out
+  assert.equal(j.pausedByAgent, false);
+  assert.equal(j.lastStatusChange, null);
+});
+
+test("pausedByAgent: an error item from the change node gives false", async () => {
+  const j = await normalize({ "Read: Campaign Changes": { error: { message: "fake failure", status: 403 } } });
+  assert.equal(j.pausedByAgent, false);
+  assert.equal(j.lastStatusChange, null);
+});
+
+test("pausedByAgent: no resourceName on the campaign (status read failed) gives false", async () => {
+  const empty = rows([]);
+  const j = await normalize({ "Read: Campaign Status": empty, ...changes(chg()) });
+  assert.equal(j.pausedByAgent, false);
+});
+
+// ── Read: Campaign Changes node (structure) ──────────────────────────────────
+test("Read: Campaign Changes node: a copy of Read: Campaign Status that queries change_event and continues on error", () => {
+  const status = wf.nodes.find((n) => n.name === "Read: Campaign Status");
+  const node = wf.nodes.find((n) => n.name === "Read: Campaign Changes");
+  assert.ok(node, "node exists");
+  assert.equal(node.type, "n8n-nodes-base.httpRequest");
+  assert.equal(node.parameters.method, "POST");
+  assert.equal(node.parameters.url, status.parameters.url);
+  assert.equal(node.parameters.nodeCredentialType, status.parameters.nodeCredentialType);
+  assert.deepEqual(node.parameters.headerParameters.parameters.map((p) => p.name), status.parameters.headerParameters.parameters.map((p) => p.name));
+  const q = node.parameters.jsonBody;
+  assert.match(q, /FROM change_event/);
+  assert.match(q, /change_resource_type = 'CAMPAIGN'/);
+  assert.match(q, /LIMIT 100/);
+  assert.ok(q.includes("$now.minus({ days: 28 })"));
+  assert.equal(node.onError, "continueRegularOutput");
+  assert.equal(new Set(wf.nodes.map((n) => n.id)).size, wf.nodes.length, "node ids are unique");
+});
+
+test("workflow connections run Read: Campaign Status -> Read: Campaign Changes -> Read: Keywords 30d, nothing reaches Apply from the new node", () => {
+  const to = (name) => (wf.connections[name].main[0] || []).map((c) => c.node);
+  assert.deepEqual(to("Read: Campaign Status"), ["Read: Campaign Changes"]);
+  assert.deepEqual(to("Read: Campaign Changes"), ["Read: Keywords 30d"]);
+  assert.ok(!JSON.stringify(wf.connections["Read: Campaign Changes"]).includes("Apply to Google Ads"));
+});
+
 // ── Build LLM request ────────────────────────────────────────────────────────
 test("Build LLM request: Ollama chat body with the engine output as the user message, strict-JSON format, low temperature", async () => {
   const data = { budgetStatus: "ok", candidateActions: [], winners: [] };

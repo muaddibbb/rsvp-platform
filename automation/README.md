@@ -15,8 +15,11 @@ prioritizes; every ad change is applied automatically, every **website** change 
 3. **Never pauses a keyword that has ever converted** (winners are protected).
 4. **Website = propose only** — the agent opens a PR against `muaddibbb/rsvp-platform`; your merge is the gate. It never deploys.
 5. **Max 8 changes per run** — no wild swings.
-6. **Auto-resumes** a paused campaign once a new month's budget is available (spend resets near ₪0), so
-   the cap-pause isn't permanent — you don't have to manually re-enable it every month.
+6. **Auto-resumes only its own cap pause.** Each run reads the campaign's change history (`change_event`,
+   last 28 days). It resumes only if the latest status change was the agent's own API pause and a new
+   month's budget is available. A campaign you pause by hand in the web UI or the app stays paused.
+   Google Ads Editor changes are invisible to the API, so pause in the web UI or app. To keep an
+   agent-paused campaign off next month, set it enabled and paused again in the web UI.
 
 ## Status: live and proven working (Sep 2026)
 Deployed to the real account (`RSVP Search Campaign`, customer 3674361839, manager 4057140705). Has
@@ -36,7 +39,7 @@ schedule is active.
 ## Architecture
 ```
 Daily schedule (n8n) →
-  READ    Google Ads API: campaign+budget, keyword stats (30d), search terms (30d), month-to-date spend
+  READ    Google Ads API: campaign+budget, campaign change history (who paused it), keyword stats (30d), search terms (30d), month-to-date spend
   DECIDE  rules-engine.js (Code node) → candidate actions + budget status + winners  [deterministic]
   REVIEW  Ollama (local LLM) with ai-reviewer-prompt.md → approves/reorders, drafts any website PR
   VALIDATE Code node re-checks the LLM output against the hard limits (final gate)
@@ -90,11 +93,11 @@ credentials → set `CUSTOMER_ID` in the Code node config. Run once manually in 
 
 ## Hard-won lessons from the first real deployment
 These cost real debugging time — check them first if something similar happens again.
-1. **`developer-token` is a required header on every single Google Ads HTTP node**, separate from OAuth.
+1. **`developer-token` is a required header on every single Google Ads HTTP node** (7 of them), separate from OAuth.
    Missing it (or a typo in the header name) produces a generic "Bad request — please check your
    parameters", not an auth-specific error.
 2. **The API version drifts.** Google retires versions yearly; a stale version 404s. It's hardcoded in
-   two places that are easy to miss during an update: the 4 Read nodes' URLs, AND a separate `API` const
+   two places that are easy to miss during an update: the 6 Read nodes' URLs, AND a separate `API` const
    inside the "Validate & Gate" code node (not a visible URL field).
 3. **OAuth consent screen must be "In production", not "Testing".** Testing-mode refresh tokens silently
    expire after 7 days, surfacing as `invalid_grant` errors days later. Publishing requires an app
@@ -148,6 +151,13 @@ These cost real debugging time — check them first if something similar happens
     a genuine all-time "has this ever converted" check, not tied to any rolling window. If this happened
     to your account, manually re-enable the affected keyword in Google Ads — the code fix prevents
     recurrence but doesn't undo a pause already applied.
+11. **`change_event` (the "who paused it" read) has its own limits.** The date range must be within the last
+    30 days (the node asks for 28), `LIMIT` is required and at most 10,000 (the node uses 100), changes
+    made in Google Ads Editor are not visible, and a change can take up to 3 minutes to appear. The
+    "Read: Campaign Changes" node is set to **On Error: Continue** on purpose: if the read fails, the run
+    must still enforce the cap and the throttle. An error item gives `pausedByAgent` false, so the agent
+    simply does not resume that day (it never resumes by mistake). To update the live n8n copy see
+    `n8n-update-instructions.md`.
 
 ## Tuning knobs (`rules-engine.js` CONFIG)
 Budget cap, daily budget, lookback window, pause/negative thresholds, and max-actions-per-run are all
@@ -155,7 +165,7 @@ constants at the top of `rules-engine.js`. Change them there; the AI reviewer re
 
 ### `ENABLE_KEYWORD_ACTIONS` (currently `true`)
 Gates automatic `pause_keyword` and `add_negative` — the budget guardrails (throttle, cap-pause,
-auto-resume) are unaffected either way and always run. Disabled 2026-09-16 after two real incidents in
+auto-resume of its own cap pause) are unaffected either way and always run. Disabled 2026-09-16 after two real incidents in
 one night (a wrongly-paused converting keyword; a near-miss negative on the same keyword), both traced
 to the lookback-window bug fixed in lesson 10. Re-enabled 2026-09-23: a week of manual review with
 automation off confirmed the fix holds (all-time winners persist correctly across runs, no false pauses),

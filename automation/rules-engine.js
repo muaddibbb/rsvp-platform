@@ -44,9 +44,11 @@ const CONFIG = {
  * @param {number} input.monthToDateSpendILS
  * @param {number} input.dayOfMonth   (1-31)
  * @param {number} input.daysInMonth  (28-31)
+ * @param {boolean} input.pausedByAgent  true only when the latest status change of the campaign was a pause
+ *   made through the API (this agent), from the Google Ads change history; resume needs a strict true
  */
 function decide(input) {
-  const { campaign, keywords = [], searchTerms = [], monthToDateSpendILS = 0, dayOfMonth = 1, daysInMonth = 30 } = input;
+  const { campaign, keywords = [], searchTerms = [], monthToDateSpendILS = 0, dayOfMonth = 1, daysInMonth = 30, pausedByAgent = false } = input;
   const actions = [];
   const notes = [];
 
@@ -56,10 +58,14 @@ function decide(input) {
   let budgetStatus = "ok";
 
   if (monthToDateSpendILS >= CONFIG.MONTHLY_BUDGET_CAP_ILS) {
-    actions.push({
-      type: "pause_campaign",
-      reason: `Month-to-date spend ₪${monthToDateSpendILS} reached the ₪${CONFIG.MONTHLY_BUDGET_CAP_ILS} cap`,
-    });
+    // Already paused (by this agent earlier, or by hand): no second pause. A repeated API pause would also
+    // make a hand pause look like the agent's own pause in the change history (see the resume rule below).
+    if (campaign.status !== "PAUSED") {
+      actions.push({
+        type: "pause_campaign",
+        reason: `Month-to-date spend ₪${monthToDateSpendILS} reached the ₪${CONFIG.MONTHLY_BUDGET_CAP_ILS} cap`,
+      });
+    }
     budgetStatus = "cap_reached";
   } else if (projectedMonth > CONFIG.MONTHLY_BUDGET_CAP_ILS) {
     const safeDaily = Math.max(1, Math.floor((CONFIG.MONTHLY_BUDGET_CAP_ILS - monthToDateSpendILS) / remainingDays));
@@ -79,14 +85,18 @@ function decide(input) {
     });
   }
 
-  // Auto-resume: if we're not freshly at/over the cap this run, and the campaign is
-  // currently paused (e.g. by this agent last month), turn it back on. Relies on
-  // monthToDateSpendILS naturally resetting near 0 at the start of each calendar month.
+  // Auto-resume ONLY the agent's own cap pause (customer decision 2026-11-02: never resume a campaign the
+  // owner paused by hand). pausedByAgent comes from Normalize: true only when the Google Ads change history
+  // shows the campaign's latest status change was a pause made through the API (this agent).
   if (budgetStatus !== "cap_reached" && campaign.status === "PAUSED") {
-    actions.push({
-      type: "resume_campaign",
-      reason: `Budget available (₪${monthToDateSpendILS} of ₪${CONFIG.MONTHLY_BUDGET_CAP_ILS} spent this month) — resuming`,
-    });
+    if (pausedByAgent === true) {
+      actions.push({
+        type: "resume_campaign",
+        reason: `Budget available (₪${monthToDateSpendILS} of ₪${CONFIG.MONTHLY_BUDGET_CAP_ILS} spent this month) — resuming the agent's own cap pause`,
+      });
+    } else {
+      notes.push("Campaign is paused, and not by this agent's budget cap (paused by hand, or no API pause in the last 28 days of change history): not resuming. Resume it by hand in Google Ads if wanted.");
+    }
   }
 
   // ── 2. Pause proven money-losing keywords (never touch winners) ───────────

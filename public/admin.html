@@ -74,6 +74,7 @@
       text-align: right; font-weight: 600; white-space: nowrap;
     }
     td { padding: 12px 14px; border-bottom: 1px solid #f3f4f6; vertical-align: middle; }
+    #eventsBody td.cell-email { min-width: 23ch; max-width: 23ch; overflow-wrap: anywhere; word-break: break-word; } /* B-7: a long e-mail wraps inside its own cell; scoped to the e-mail column so event/customer columns keep their normal width */
     tr:last-child td { border-bottom: none; }
     tr:hover td { background: #fafafa; }
 
@@ -142,7 +143,10 @@
 
 <nav class="landing-nav">
   <a class="logo" href="/">🎉 אישורי הגעה</a>
-  <span id="adminBadge" style="display:none;background:var(--gold);color:#fff;padding:4px 12px;border-radius:20px;font-size:.8rem;font-weight:700">Super Admin</span>
+  <div class="nav-tools">
+    <span id="adminBadge" style="display:none;background:var(--gold);color:#fff;padding:4px 12px;border-radius:20px;font-size:.8rem;font-weight:700">Super Admin</span>
+    <button class="tool-btn" id="themeDarkBtn" onclick="toggleTheme()">🌙</button>
+  </div>
 </nav>
 
 <!-- Login -->
@@ -252,7 +256,7 @@
 
   let token = sessionStorage.getItem("admin_token") || "";
   let allEvents = [];
-  let abandonedLast30Days = 0;
+  let abandonedLast30Days = null;
 
   if (token) attemptLoad();
 
@@ -272,7 +276,7 @@
     sessionStorage.setItem("admin_token", token);
     const data = await res.json();
     allEvents = data.events || [];
-    abandonedLast30Days = data.abandonedLast30Days || 0;
+    abandonedLast30Days = data.abandonedLast30Days ?? null;
     showAdmin();
   }
 
@@ -283,7 +287,7 @@
     if (!res.ok) { token = ""; sessionStorage.removeItem("admin_token"); return; }
     const data = await res.json();
     allEvents = data.events || [];
-    abandonedLast30Days = data.abandonedLast30Days || 0;
+    abandonedLast30Days = data.abandonedLast30Days ?? null;
     showAdmin();
   }
 
@@ -310,7 +314,9 @@
     document.getElementById("statEvents").textContent    = activeCount;
     document.getElementById("statRsvps").textContent     = totalRsvps;
     document.getElementById("statRevenue").textContent   = `₪${allEvents.length * 99}`;
-    document.getElementById("statAbandoned").textContent = abandonedLast30Days;
+    const ab = document.getElementById("statAbandoned");
+    ab.textContent = abandonedLast30Days == null ? "—" : abandonedLast30Days;
+    ab.title = abandonedLast30Days == null ? "לא ניתן לקרוא את טבלת checkout_abandonments (ייתכן שלא נוצרה)" : "";
   }
 
   function renderTable() {
@@ -351,7 +357,7 @@
         <td><span class="badge">${emoji} ${label}</span></td>
         <td style="white-space:nowrap">${date}${ended ? '<br/><span class="badge-ended">הסתיים · Ended</span>' : ""}</td>
         <td>${e.customer_name || "—"}</td>
-        <td style="font-size:.82rem;direction:ltr;text-align:right">${e.customer_email || "—"}</td>
+        <td class="cell-email" style="font-size:.82rem;direction:ltr;text-align:right">${e.customer_email || "—"}</td>
         <td class="rsvp-count" style="text-align:center">${countCell}</td>
         <td><span class="pass-cell" data-pass="${e.dashboard_password || '—'}">••••••</span></td>
         <td style="white-space:nowrap;font-size:.82rem">${registered}</td>

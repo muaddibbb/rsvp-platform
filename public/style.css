@@ -722,13 +722,14 @@ html.dark .preview-section .section-title { color: #f0d080; }
 .pay-status.warn { background: #fdf5e0; border-color: #e8d9a0; }
 .pay-status.ok { background: #dcfce7; border-color: #86efac; color: #166534; }
 .pay-status a { color: inherit; font-weight: 700; text-decoration: underline; }
+.pay-status .pay-reason { font-weight: 700; }
 .pay-busy { pointer-events: none; opacity: .35; filter: grayscale(1); }
 html.dark .pay-status { background: #1e2f55; border-color: #334155; color: #e5e7eb; }
 html.dark .pay-status.warn { background: #3a3320; border-color: #5c512e; }
 html.dark .pay-status.ok { background: #14331f; border-color: #166534; color: #86efac; }
 
 /* ===== WhatsApp inline link ===== */
-.wa-inline { display: block; text-align: center; margin-top: 12px; font-size: .9rem; font-weight: 700; color: #128c7e; text-decoration: none; }
+.wa-inline { display: block; text-align: center; margin-top: 12px; font-size: .9rem; font-weight: 700; color: #075e54; text-decoration: none; }
 .wa-inline:hover { text-decoration: underline; }
 html.dark .wa-inline { color: #4ade80; }
 

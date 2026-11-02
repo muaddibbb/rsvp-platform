@@ -423,8 +423,10 @@
     }
 
     // Status box under the PayPal button after approval. Never throws: a UI error must not stop the capture.
-    function setPayState(kind, orderID) {
+    let lastPay = null; // last state shown, re-rendered on a language switch (J2-07)
+    function setPayState(kind, orderID, detail) {
       try {
+        lastPay = { kind, orderID, detail };
         const el = document.getElementById("dashPayStatus");
         const box = document.getElementById("dash-paypal");
         const wasShown = el.className.indexOf("show") !== -1;
@@ -442,6 +444,16 @@
           box.classList.add("pay-busy");
         } else if (kind === "notCompleted") {
           el.textContent = t("payNotCompleted");
+          // J2-06: show the server's specific reason (e.g. "לא ניתן לבחור תאריך שעבר"), as text only.
+          // The generic "התשלום לא הושלם" (paypal-capture.js:134) repeats payNotCompleted and is not shown.
+          const why = typeof detail === "string" ? detail.trim().slice(0, 200) : "";
+          if (why && why !== "התשלום לא הושלם") {
+            el.appendChild(document.createElement("br"));
+            const r = document.createElement("span");
+            r.className = "pay-reason";
+            r.textContent = why;
+            el.appendChild(r);
+          }
           el.className = "pay-status show warn";
           box.classList.remove("pay-busy");
         } else if (kind === "unknown") {
@@ -460,6 +472,8 @@
         if (!wasShown && el.scrollIntoView) el.scrollIntoView({ block: "center" });
       } catch (e) { console.error("setPayState:", e); }
     }
+    // J2-07: the status box follows a language switch (same state, new language; no side effect on the payment).
+    window.addEventListener("langchange", () => { if (lastPay) setPayState(lastPay.kind, lastPay.orderID, lastPay.detail); });
 
     // PayPal "publish" button on the dashboard — lets owners return via their emailed link and pay.
     let dashPaypalInit = false;
@@ -521,7 +535,7 @@
               window.location.href = "/success?slug=" + encodeURIComponent(json.slug);
             } else if (res.status === 400) {
               captureInFlight = false;
-              setPayState("notCompleted");
+              setPayState("notCompleted", null, json && json.error);
             } else { // 404 after capture, 500, anything else, 200 without slug
               setPayState("unknown", data.orderID);
             }

@@ -8,9 +8,22 @@ Keep it updated when behavior changes.
 - **Frontend:** static HTML/CSS/JS in `public/` (no framework/build).
 - **Backend:** Vercel serverless functions in `api/` (Node.js, CommonJS `module.exports`).
 - **DB:** Supabase (Postgres). **Email:** Brevo API. **Payments:** PayPal REST v2 (LIVE). **PDF:** PDFKit.
-- **Deploy:** `cd /Users/rkuperman/rsvp-platform && npx vercel --prod` (personal Vercel team `kupernet`, project `rsvp-platform`). Domain `rsvp.kupernet.com`. Deployment protection is OFF.
+- **Deploy:** `cd /Users/rkuperman/rsvp-platform && npx vercel --prod` (personal Vercel team `kupernet`, project `rsvp-platform`). Domain `rsvp.kupernet.com`. Deployment protection is OFF. Release procedure: see `### Deploy` below.
 - **Function limit:** Vercel Hobby = 12. Currently **9** functions. Files in `api/` starting with `_` are shared helpers, NOT functions.
 - **Repo:** github.com/muaddibbb/rsvp-platform (`main`).
+
+### Deploy
+Read by Edric (release manager: merge, production deploy, smoke check, rollback) and Irulan (repo manager: staging). Production commands run in the main checkout `/Users/rkuperman/rsvp-platform`, never in a run worktree.
+- Deploy config status: PROPOSED 2026-11-02 (run 20261102-1235-release-one), not confirmed by the owner. Until the owner replaces this line with `CONFIRMED <date> by the owner`, treat every value below as UNKNOWN and report BLOCKED.
+- Merge method: `merge` (PROPOSED: a merge commit keeps the approved commit SHA in main's history)
+- Production URL: https://rsvp.kupernet.com
+- Production checkout: `cd /Users/rkuperman/rsvp-platform && git diff --quiet HEAD && test -z "$(git ls-files --others --exclude-standard)" && git switch main && git pull --ff-only origin main && git diff --quiet HEAD && test -z "$(git ls-files --others --exclude-standard)"` (PROPOSED. Run before Production deploy. The first two checks run before switching, so uncommitted work is never carried onto `main`. If it fails nothing was deployed: report BLOCKED and do NOT roll back.)
+- Production deploy: `cd /Users/rkuperman/rsvp-platform && npx vercel --prod --yes` (PROPOSED. Vercel CLI uploads the checkout's local files; the Vercel project is not connected to GitHub, so merging does not deploy. Owner to confirm both.)
+- Production smoke check: `cd /Users/rkuperman/rsvp-platform && bash scripts/smoke-check.sh` (PROPOSED. GET requests only. Prints HEALTH PASS/FAIL and VERSION MATCH/DIFFERENT; exit 0 only when both pass.)
+- Production rollback: `cd /Users/rkuperman/rsvp-platform && npx vercel rollback --timeout 5m` (PROPOSED. Hobby plan: back to the previous production deployment only. Roll back only when the new version is live (VERSION MATCH) and HEALTH FAILs. If the deploy failed and the smoke check shows VERSION DIFFERENT with HEALTH PASS, production is unchanged: do not roll back. If the new version is not live (VERSION DIFFERENT) and HEALTH FAILs, do not roll back either: production still serves the previous version, so report BLOCKED with the smoke-check output. After a rollback Vercel stops auto-assigning the production domain; the owner later runs `npx vercel promote <deployment-url>` or presses "Undo Rollback".)
+- Staging deploy: none (PROPOSED: a Vercel Preview deployment uses the Preview environment variables, which are unverified and may be live PayPal and the production database; deployment protection is off)
+- Staging smoke check: none
+- Staging URL: none
 
 ## Environment variables (names only — never store values here)
 `SUPABASE_URL`, `SUPABASE_SERVICE_ROLE_KEY`, `BREVO_API_KEY`, `PAYPAL_CLIENT_ID`,
@@ -21,20 +34,23 @@ Keep it updated when behavior changes.
 - **events**: `id` (uuid), `slug` (unique text), `customer_name/email/phone`, `event_type`,
   `event_name`, `hebrew_date`, `gregorian_date` (date), `event_time`, `location`, `address`,
   `extra_note`, `dashboard_password`, `paid_at` (timestamptz — **NULL = unpaid draft**),
-  `active` (bool, default true — false = deactivated/closed/hidden),
-  `final_responses` / `final_guests` (int, snapshot headcounts set when a past event is auto-closed).
+  `active` (bool, default true according to the owner, not yet verified: see `sql/export-schema.sql`; false = deactivated/closed/hidden),
+  `final_responses` / `final_guests` (int, snapshot headcounts written **once**, the first time a past paid event is auto-closed; never overwritten (a reactivated closed event is re-closed with its saved headcount kept)).
 - **rsvps**: `id`, `event_id` (fk), `name`, `attending` (bool), `guests` (int), `notes`, `created_at`.
 - **pending_checkouts**: `id` (text = client checkoutId), `customer_*`, `event_*`, `location`,
   `updated_at`, `notified` (bool). Tracks "reached checkout, not yet paid". Rows are purged 7 days
   after `updated_at` (privacy — this is PII for people who never became customers).
 - **checkout_abandonments**: `id`, `abandoned_at` (timestamptz), `event_type`. Anonymous, permanent
-  (no name/email/phone) — logged the moment a `pending_checkouts` row is confirmed abandoned (grace
-  period passed, recovery email sent), so a count survives the 7-day PII purge above. Created via
-  `sql/checkout_abandonments.sql` (run manually in the Supabase SQL editor — this sandbox can't reach
-  supabase.co to run migrations itself).
+  (no name/email/phone) — one row per checkout reported in the owner digest (grace passed, buyer has not
+  paid since: buyers who paid later are skipped and not logged), so a count survives the 7-day PII purge
+  above. If the insert fails, the sweep logs the error and the digest shows a warning; if the table can't
+  be read, /admin shows "—". Created via `sql/checkout_abandonments.sql` (run by hand in the Supabase SQL
+  editor; idempotent).
+- Table definitions: run `sql/export-schema.sql` (read-only) in the Supabase SQL editor.
 
-**Visibility rule:** guests only ever see events where `paid_at IS NOT NULL AND active != false`.
-Unpaid drafts and deactivated events return 404 to guests.
+**Visibility rule:** guests only ever see events where `paid_at IS NOT NULL AND active <> false`
+(PostgREST `neq.false`: a NULL `active` is **not** visible). Unpaid drafts and deactivated events return
+404 to guests.
 
 ## API functions (`api/`)
 1. **create-event.js** — POST. Creates an **unpaid draft** (`paid_at=null`), generates slug +
@@ -52,19 +68,24 @@ Unpaid drafts and deactivated events return 404 to guests.
 6. **event/[slug].js** — GET public event data for the guest page (paid+active only).
 7. **rsvp/[slug].js** — POST a guest RSVP (paid+active only).
 8. **admin-events.js** — Bearer `ADMIN_PASSWORD`. GET = list **paid** events + rsvp counts +
-   `abandonedLast30Days` (count from `checkout_abandonments`). `?receipt=1&slug=` / `?refund=1&slug=` →
-   PDF. `?sweep=1` (POST) → send abandonment report now (ignores grace). `?thankyou=1` (POST) → send
+   `abandonedLast30Days` (count from `checkout_abandonments`; `null` when the table can't be read).
+   `?receipt=1&slug=` / `?refund=1&slug=` →
+   PDF. `?sweep=1` (POST) → send the abandonment report now (shorter grace: 10 minutes minimum). `?thankyou=1` (POST) → send
    post-event thank-yous for the last 2 days (manual backup for the daily cron). PATCH `?slug=` `{active}`
    → activate/deactivate. DELETE `?slug=` → delete event + rsvps.
 9. **cleanup.js** — cron, Bearer `CRON_SECRET`. Runs the abandonment sweep + retention: 30 days after
-   the event date it **closes** paid events (deletes guest RSVPs, sets `active=false`, keeps the event +
-   receipt record for admin) and **deletes** unpaid past drafts outright. Scheduled daily 02:00
+   the event date it **closes** paid events (writes the `final_*` snapshot if none exists yet, deletes guest
+   RSVPs, sets `active=false`, keeps the event + receipt record; a reactivated closed event is closed
+   again with its snapshot kept) and **deletes** unpaid past drafts outright. Scheduled daily 02:00
    (`vercel.json` cron `0 2 * * *`).
 
 **Helpers:** `_receipt.js` = `generateReceiptPDF({receiptNumber, customerName, paymentDate, isRefund})`
 (Hebrew A5 PDF, business "Kupernet", עוסק פטור 036409084). `_sweep.js` =
-`sweepAbandonedCheckouts({graceMinutes=20, ignoreGrace})` → per-customer recovery email + ONE owner
-digest, logs an anonymous row to `checkout_abandonments`, marks `notified`, purges pending rows >7 days old.
+`sweepAbandonedCheckouts({graceMinutes, ignoreGrace})` (cron 20 min grace; manual 10 min minimum) → skips
+buyers who paid since the checkout (`paidSincePending`), sends each remaining buyer a recovery email (link
+to their saved draft when found, never a password) + ONE owner digest, logs one anonymous
+`checkout_abandonments` row per reported checkout, marks all swept rows `notified`, purges pending rows
+>7 days old. `_recovery.js` = pure helpers `esc`, `paidSincePending`, `pickDraft`, `buildRecoveryHtml`.
 
 ## Payment flow (create-then-pay)
 1. Wizard fills form → on reaching step 3, `create-event` saves an **unpaid draft** and emails the
@@ -78,7 +99,7 @@ digest, logs an anonymous row to `checkout_abandonments`, marks `notified`, purg
 - **Confirmation + receipt PDF** → organizer, on publish.
 - **Owner order notification** → `kuperoy@gmail.com`, on publish.
 - **Failed-payment alert** → `kuperoy@gmail.com`, on capture failure (includes PayPal reason).
-- **Abandonment**: owner **digest** (one email listing all) + per-customer **recovery** email (from "רועי").
+- **Abandonment**: owner **digest** (one email listing the reported checkouts; buyers who paid later are left out and mentioned in a note) + per-customer **recovery** email (from "רועי", link to the saved draft + WhatsApp, no password).
 - **Post-event thank-you** → organizer, 1 day after the event date (cron, paid events only, from "רועי"), asking for feedback/testimonial.
 
 Owner/admin alerts → **kuperoy@gmail.com**. Public support/contact address → **kupernetservice@gmail.com**.
@@ -93,19 +114,19 @@ Owner/admin alerts → **kuperoy@gmail.com**. Public support/contact address →
 - `style.css`: dark mode via `html.dark`; LTR fixes via `html[dir="ltr"]`.
 
 ## Pages (`public/`)
-`index.html` (landing: promo banner + money-back badge + trust line + gtag), `register.html`
+`index.html` (landing: promo banner + trust line with the linked refund sentence + testimonials + WhatsApp + gtag), `register.html`
 (3-step wizard, draft creation, rich preview, PayPal publish, trust signals), `dashboard.html`
 (owner; publish screen if unpaid, RSVP table/stats/CSV/edit if paid; sessionStorage auto-login per slug),
-`rsvp.html` (guest), `success.html` (gtag purchase conversion value 99 ILS), `admin.html`
-(super-admin, Hebrew, dark-only), `pricing/tos/privacy/refund.html`, `style.css`, `theme.js`, `favicon.svg`.
+`rsvp.html` (guest), `success.html` (checks the event is paid with `GET /api/event/<slug>`; fires the gtag purchase conversion, 99 ILS, `transaction_id` = slug, only when this tab holds the fresh `rsvp_paid` marker set by the pay page), `admin.html`
+(super-admin, Hebrew, light/dark toggle, Ended badge, abandoned-checkout stat), `pricing/tos/privacy/refund.html`, `style.css`, `theme.js`, `favicon.svg`.
 
 ## Business rules
 - Price **₪99** one-time per event (ILS). PayPal live, `locale=he_IL`.
 - **Retention:** 30 days after the event date, guest RSVP lists are deleted (privacy); the paid event's
   record + receipt are kept in admin (`active=false` = "closed") with `final_responses`/`final_guests`
-  headcounts snapshotted first. Unpaid drafts are deleted. Policy pages reflect this ("guest list deleted, event/receipt kept").
+  headcounts snapshotted first (snapshot written once; a reactivated closed event is re-closed by the next cron with the saved headcount kept and any new replies deleted). Unpaid drafts are deleted. Policy pages reflect this ("guest list deleted, event/receipt kept").
 - Refund policy: full refund within **14 days if no RSVPs collected** (`refund.html`).
-- Abandonment grace: **20 min** (daily cron). Admin "send report" button ignores grace.
+- Abandonment grace: **20 min** (daily cron). Admin "send report" button uses a shorter grace with a **10-minute minimum**.
 - **Event types** (value → Hebrew): bar_mitzvah בר מצווה, bat_mitzvah בת מצווה, wedding חתונה,
   brit ברית מילה, brit_bat בריתה, birthday יום הולדת, bachelor מסיבת רווקים, bachelorette מסיבת רווקות,
   henna חינה, family אירוע משפחתי, other אחר.
@@ -114,6 +135,7 @@ Owner/admin alerts → **kuperoy@gmail.com**. Public support/contact address →
 ## Marketing
 - Google Ads "RSVP Search Campaign" (Search). gtag id `AW-18293655759`; purchase conversion label
   `t6piCIOmuMkcEM-RjJNE` fires on success.html. Negative keywords added: חינם/בחינם/חינמי/אקסל/תבנית/תבניות/וורד/free/template/excel.
+- Ads agent (`automation/`, n8n, daily 05:00): ₪13/day pin, ₪400/month cap, max 8 changes per run; auto-resumes only its own cap pause (Google Ads change history), never a campaign paused by hand.
 
 ## Gotchas (for the assistant)
 - **This sandbox cannot reach `supabase.co` or `paypal.com` directly** (network block). Test via
@@ -121,3 +143,4 @@ Owner/admin alerts → **kuperoy@gmail.com**. Public support/contact address →
 - Deploy only from `/Users/rkuperman/rsvp-platform` (cwd resets between bash calls — always `cd` first).
 - Vercel Hobby crons run at most **once per day**.
 - Never put secrets in code, git, or chat. Credentials pasted in chat must be rotated.
+- `.atreides/` (run folders, customer data) is gitignored and in `.vercelignore`; never commit or upload it.
