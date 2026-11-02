@@ -366,6 +366,7 @@ textarea { resize: vertical; }
   color: var(--text-muted);
 }
 html.dark .trust-row { border-top-color: #334155; }
+.trust-row a { color: inherit; text-decoration: underline; }
 
 .promo-guarantee {
   display: inline-block;
@@ -408,6 +409,13 @@ html.dark .trust-row { border-top-color: #334155; }
   transition: opacity 0.2s;
 }
 .nav-cta:hover { opacity: 0.88; }
+.nav-tools { display: flex; align-items: center; gap: 10px; }
+.tool-btn {
+  background: rgba(255,255,255,.12); color: #fff; border: 1px solid rgba(255,255,255,.25);
+  border-radius: 20px; padding: 6px 14px; font-size: .85rem; font-weight: 700;
+  cursor: pointer; transition: background .15s;
+}
+.tool-btn:hover { background: rgba(255,255,255,.22); }
 
 .landing-hero {
   background: linear-gradient(150deg, var(--navy) 0%, var(--navy-mid) 60%, #2d4a8a 100%);
@@ -489,6 +497,8 @@ html.dark .preview-section .section-title { color: #f0d080; }
   .landing-nav { padding: 10px 14px; }
   .landing-nav .logo { font-size: 1.05rem; white-space: nowrap; }
   .nav-cta { padding: 8px 12px; font-size: .85rem; white-space: nowrap; }
+  .nav-tools { gap: 6px; }
+  .tool-btn { padding: 5px 10px; font-size: .8rem; }
   .promo-banner { padding: 10px 14px; font-size: 1rem; }
   .promo-guarantee { font-size: .8rem; padding: 3px 10px; border-width: 1.5px; }
   .landing-hero { padding: 28px 20px 64px; }
@@ -705,6 +715,30 @@ html.dark .preview-section .section-title { color: #f0d080; }
 .pending-state { color: var(--text-muted); font-size: 1.1rem; }
 .spinner { display: inline-block; width: 24px; height: 24px; border: 3px solid #e5e7eb; border-top-color: var(--navy); border-radius: 50%; animation: spin 0.8s linear infinite; margin-left: 8px; vertical-align: middle; }
 @keyframes spin { to { transform: rotate(360deg); } }
+
+/* ===== Payment status (register + dashboard, after PayPal approval) ===== */
+.pay-status { display: none; margin: 0 0 14px; padding: 12px 14px; border-radius: 10px; font-size: .92rem; line-height: 1.6; text-align: center; background: #eef2ff; border: 1px solid #c7d2fe; color: #1a2744; }
+.pay-status.show { display: block; }
+.pay-status.warn { background: #fdf5e0; border-color: #e8d9a0; }
+.pay-status.ok { background: #dcfce7; border-color: #86efac; color: #166534; }
+.pay-status a { color: inherit; font-weight: 700; text-decoration: underline; }
+.pay-busy { pointer-events: none; opacity: .35; filter: grayscale(1); }
+html.dark .pay-status { background: #1e2f55; border-color: #334155; color: #e5e7eb; }
+html.dark .pay-status.warn { background: #3a3320; border-color: #5c512e; }
+html.dark .pay-status.ok { background: #14331f; border-color: #166534; color: #86efac; }
+
+/* ===== WhatsApp inline link ===== */
+.wa-inline { display: block; text-align: center; margin-top: 12px; font-size: .9rem; font-weight: 700; color: #128c7e; text-decoration: none; }
+.wa-inline:hover { text-decoration: underline; }
+html.dark .wa-inline { color: #4ade80; }
+
+/* ===== Testimonials ===== */
+.testimonials-section { max-width: 760px; margin: 0 auto; padding: 40px 20px; text-align: center; }
+.reg-card .testimonials-section { padding: 20px 0 0; }
+.testimonials-title { font-size: 1rem; font-weight: 800; color: var(--navy); margin: 0 0 8px; }
+.testimonial { margin: 12px auto; padding: 16px 18px; max-width: 560px; background: #fff; border: 1px solid #e5e7eb; border-inline-start: 4px solid var(--gold); border-radius: 12px; box-shadow: 0 2px 10px rgba(0,0,0,.06); font-size: 1rem; line-height: 1.7; color: var(--text); text-align: start; }
+html.dark .testimonials-title, html.dark .testimonials-section .section-title { color: #f0d080; }
+html.dark .testimonial { background: #1e293b; border-color: #334155; border-inline-start-color: var(--gold); }
 
 /* ===== Theme toolbar (injected by theme.js) ===== */
 .theme-toolbar { position: fixed; top: 14px; left: 14px; z-index: 999; display: flex; gap: 8px; }
