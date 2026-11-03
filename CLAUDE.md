@@ -14,7 +14,7 @@ Keep it updated when behavior changes.
 
 ### Deploy
 Read by Edric (release manager: merge, production deploy, smoke check, rollback) and Irulan (repo manager: staging). Production commands run in the main checkout `/Users/rkuperman/rsvp-platform`, never in a run worktree.
-- Deploy config status: PROPOSED 2026-11-02 (run 20261102-1235-release-one), not confirmed by the owner. Until the owner replaces this line with `CONFIRMED <date> by the owner`, treat every value below as UNKNOWN and report BLOCKED.
+- Deploy config status: CONFIRMED 2026-11-03 by the owner (customer reply in chat: "I confirm the Deploy section in CLAUDE.md as written"). The values below were reviewed and tested by the team (runs 20261102-1235-release-one and 20261102-1450-rollback-fix); the per-line PROPOSED notes remain as history. Deploy config changes after this date need the owner's new confirmation.
 - Merge method: `merge` (PROPOSED: a merge commit keeps the approved commit SHA in main's history)
 - Production URL: https://rsvp.kupernet.com
 - Vercel project: `rsvp-platform` under team `kupernet` (Hobby plan, Node 24.x). PROPOSED: seen in `npx vercel project ls` on 2026-11-02; the run log does not show who ran it, so it is not verified.

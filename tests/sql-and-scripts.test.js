@@ -76,6 +76,14 @@ const deployLines = () => {
 test("CLAUDE.md Deploy section declares model B: no deploy command, a wait line, previous deployment before the merge", () => {
   const lines = deployLines();
   const find = (prefix) => lines.find((l) => l.startsWith(prefix));
+  const status = find("- Deploy config status:");
+  assert.ok(status, "the Deploy config status line exists");
+  assert.match(status, /^- Deploy config status: CONFIRMED 2026-11-03 by the owner /);
+  assert.match(status, /"I confirm the Deploy section in CLAUDE\.md as written"/);
+  assert.ok(!/PROPOSED 2026-11-02/.test(status) && !/treat every value below as UNKNOWN/.test(status), "the old PROPOSED status text is gone");
+  for (const p of ["- Merge method:", "- Production previous deployment:", "- Production deploy:", "- Production checkout:", "- Production wait:", "- Production smoke check:", "- Production rollback:", "- Staging deploy:"]) {
+    assert.ok(find(p), `the Deploy line ${p} exists`);
+  }
   const deploy = find("- Production deploy:");
   assert.ok(deploy, "the Production deploy line exists");
   assert.ok(deploy.startsWith("- Production deploy: none"), "Production deploy is none");
