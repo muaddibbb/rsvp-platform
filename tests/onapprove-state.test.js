@@ -12,6 +12,7 @@ const vm = require("node:vm");
 const ROOT = path.resolve(__dirname, "..");
 const read = (rel) => fs.readFileSync(path.join(ROOT, rel), "utf8");
 
+const DRAFT_PW = "draft-fake-1";
 const SLUG = "bm-test-2027";
 
 // Every inline <script> without src, in page order.
@@ -119,7 +120,7 @@ function load(page) {
     fetch: async (url, opts) => {
       calls.push({ url: String(url), opts });
       if (url === "/api/paypal-capture?pending=1") return reply(200, {});
-      if (url === "/api/create-event") return reply(200, { slug: SLUG });
+      if (url === "/api/create-event") return reply(200, { slug: SLUG, dashboard_password: DRAFT_PW });
       if (url === "/api/paypal-create-order") return reply(200, { id: "ORDER123" });
       if (url === "/api/paypal-capture") return capture.promise;
       throw new Error("unexpected fetch in test: " + url);
@@ -469,4 +470,35 @@ test("the capture fetch block is byte-identical to release 59e4ea4", () => {
   assert.ok(payScript("dashboard").includes(dashboard), "dashboard.html: the capture fetch block changed");
   assert.equal(payScript("register").split('fetch("/api/paypal-capture"').length - 1, 1, "register.html: one capture fetch");
   assert.equal(payScript("dashboard").split('fetch("/api/paypal-capture"').length - 1, 1, "dashboard.html: one capture fetch");
+});
+
+// J-02/J-03: create-order now proves ownership of the draft (its dashboard password) and gets the order signed.
+for (const page of ["register", "dashboard"]) {
+  test(`${page}: createOrder sends {slug, password} as JSON (the draft's own password)`, async () => {
+    const h = await start(page);
+    if (page === "dashboard") h.get(`storedPassword = ${JSON.stringify(DRAFT_PW)}`);
+    const id = await h.ctx.cfg.createOrder();
+    assert.equal(id, "ORDER123");
+    const [c] = h.createOrderCalls();
+    assert.equal(c.opts.method, "POST");
+    assert.deepEqual({ ...c.opts.headers }, { "Content-Type": "application/json" });
+    assert.deepEqual(JSON.parse(c.opts.body), { slug: SLUG, password: DRAFT_PW });
+  });
+}
+
+test("register: without a saved draft createOrder sends empty values (legacy order)", async () => {
+  const h = load("register");
+  h.el("tosCheck").checked = true;
+  // build the buttons directly, without going through saveDraft (so there is no draft)
+  h.get("initPayPalButtons()");
+  assert.ok(h.ctx.cfg);
+  await h.ctx.cfg.createOrder();
+  const [c] = h.createOrderCalls();
+  assert.deepEqual(JSON.parse(c.opts.body), { slug: "", password: "" });
+});
+
+test("static: no page reads a password out of the capture answer", () => {
+  for (const page of ["register", "dashboard", "success"]) {
+    assert.ok(!/json\.dashboard_password/.test(read(`public/${page}.html`)), page);
+  }
 });

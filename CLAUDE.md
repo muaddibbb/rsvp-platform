@@ -39,14 +39,15 @@ Read by Edric (release manager: merge, production deploy, smoke check, rollback)
 ## Environment variables (names only — never store values here)
 `SUPABASE_URL`, `SUPABASE_SERVICE_ROLE_KEY`, `BREVO_API_KEY`, `PAYPAL_CLIENT_ID`,
 `PAYPAL_SECRET`, `PAYPAL_SANDBOX` (="false" → live), `ADMIN_PASSWORD`, `CRON_SECRET`,
-`BASE_URL` (optional, defaults to https://rsvp.kupernet.com).
+`BASE_URL` (optional, defaults to https://rsvp.kupernet.com), `ORDER_SIGNING_KEY` (optional: key that signs PayPal orders and hashes rate-limit keys; when unset a key is derived from `PAYPAL_SECRET`, so nothing needs to be added), `PAYPAL_MERCHANT_ID` (optional: the merchant id PayPal reports as payee; when set, capture refuses an order whose payee differs; unset = no payee check).
 
 ## Data model (Supabase)
 - **events**: `id` (uuid), `slug` (unique text), `customer_name/email/phone`, `event_type`,
   `event_name`, `hebrew_date`, `gregorian_date` (date), `event_time`, `location`, `address`,
   `extra_note`, `dashboard_password`, `paid_at` (timestamptz — **NULL = unpaid draft**),
   `active` (bool, default true according to the owner, not yet verified: see `sql/export-schema.sql`; false = deactivated/closed/hidden),
-  `final_responses` / `final_guests` (int, snapshot headcounts written **once**, the first time a past paid event is auto-closed; never overwritten (a reactivated closed event is re-closed with its saved headcount kept)).
+  `final_responses` / `final_guests` (int, snapshot headcounts written **once**, the first time a past paid event is auto-closed; never overwritten (a reactivated closed event is re-closed with its saved headcount kept)),
+  `receipt_number` (int, unique when set; the receipt number, assigned once when the event is paid by SQL function `assign_receipt_number` from the gapless counter, never recomputed), `refunded_at` (timestamptz, NULL = not refunded; set from /admin, drives the revenue figure; the PayPal refund itself is manual). Both need `sql/release-two-migration.sql`; the code falls back to the old behaviour until it has been run.
 - **rsvps**: `id`, `event_id` (fk), `name`, `attending` (bool), `guests` (int), `notes`, `created_at`.
 - **pending_checkouts**: `id` (text = client checkoutId), `customer_*`, `event_*`, `location`,
   `updated_at`, `notified` (bool). Tracks "reached checkout, not yet paid". Rows are purged 7 days
@@ -57,7 +58,9 @@ Read by Edric (release manager: merge, production deploy, smoke check, rollback)
   above. If the insert fails, the sweep logs the error and the digest shows a warning; if the table can't
   be read, /admin shows "—". Created via `sql/checkout_abandonments.sql` (run by hand in the Supabase SQL
   editor; idempotent).
-- Table definitions: run `sql/export-schema.sql` (read-only) in the Supabase SQL editor.
+- **receipt_counter**: one row (`id=1`, `last_number`): the last receipt number handed out (a counter, so deleting an event never frees its number).
+- **rate_limits**: `key` (hash, no raw IP/e-mail), `window_start`, `hits`; used by SQL function `rate_limit_hit` for the public endpoints; rows older than a day are purged by `cleanup.js`.
+- Table definitions: `sql/schema.sql` (RECONSTRUCTED FROM CODE, types inferred; to be diffed against the real export) and `sql/release-two-migration.sql` (the owner runs it once in the Supabase SQL editor; idempotent). For the live definitions run `sql/export-schema.sql` (read-only).
 
 **Visibility rule:** guests only ever see events where `paid_at IS NOT NULL AND active <> false`
 (PostgREST `neq.false`: a NULL `active` is **not** visible). Unpaid drafts and deactivated events return
@@ -65,15 +68,12 @@ Read by Edric (release manager: merge, production deploy, smoke check, rollback)
 
 ## API functions (`api/`)
 1. **create-event.js** — POST. Creates an **unpaid draft** (`paid_at=null`), generates slug +
-   `dashboard_password`, emails the organizer their dashboard link. Returns `{slug, dashboard_password}`. Unauthenticated (drafts are invisible/harmless).
-2. **paypal-config.js** — GET → `{clientId}` for the SDK. `?test=1` (admin Bearer) = credential diagnostic.
-3. **paypal-create-order.js** — POST → creates a ₪99 ILS order, returns `{id}`.
+   `dashboard_password`, emails the organizer their dashboard link. Returns `{slug, dashboard_password}` (the buyer's own new draft). Unauthenticated (drafts are invisible/harmless), but rate limited (20/IP/h, 3/e-mail/h → 429; callers without an `Origin` header get a quarter; a foreign `Origin` → 403; fails open if the counter is missing). All caller text is HTML-escaped in the e-mail.
+2. **paypal-config.js** — GET → `{clientId}` for the SDK only (the former `?test=1` credential diagnostic was removed, J-18).
+3. **paypal-create-order.js** — POST `{slug, password}` → creates a ₪99 ILS order, returns `{id}`. The order is **signed by the server**: `custom_id = "<slug>.<sig>"` (HMAC, `api/_pay.js`). With a slug the buyer must prove ownership of the unpaid draft (its dashboard password, timing-safe; unknown slug and wrong password both answer 403; a paid event 400). Empty slug = legacy "new event" order (`new.<sig>`). 20 orders/IP/h and 10 attempts/IP+slug/h (429). No signing key → 500.
 4. **paypal-capture.js** — POST. Modes:
-   - `?pending=1` + `{checkoutId,...}` → upsert a `pending_checkouts` row (reached-checkout beacon).
-   - default → capture payment. If body has `slug` → **PUBLISH mode** (update that draft, apply final
-     edits, set `paid_at=now`). Else **legacy create** (insert a fresh paid event). On capture failure
-     → emails owner a failed-payment alert with PayPal reason. On success → deletes the pending row,
-     sends confirmation + receipt + owner order-notification. Returns `{slug, event_name, dashboard_password}`.
+   - `?pending=1` + `{checkoutId,...}` → upsert a `pending_checkouts` row (reached-checkout beacon). `checkoutId` must match `^[A-Za-z0-9-]{8,64}$`, fields are capped at 200 chars, 30/IP/h and 3/e-mail/day (429).
+   - default → capture payment. Order of work: `orderID` must match `^[A-Za-z0-9_-]{8,64}$` (J-05); rate limit 20/IP/h; **GET the order from PayPal and check before any money moves**: `status APPROVED`, one unit, `ILS`, `99`, and the `custom_id` signature (only orders our server created). Every refusal answers **400** (nothing captured; the pay pages re-enable the button). The mode comes from the signed id: a signed slug = **PUBLISH mode** (the draft must exist and be unpaid; a different slug in the body → 400), signed `new` = **legacy create** (insert a fresh paid event; a body slug is ignored). Then capture and verify `captures[0]` COMPLETED/99/ILS: a mismatch → no publish, owner alert, **502** (money may have moved). Publish uses `update ... where paid_at is null`: zero rows (double payment) → owner alert "refund order X" and **409**. On capture failure → owner alert with the (escaped) PayPal reason, 400. A retry of an already **COMPLETED** order we signed → **409** "already paid" (no second capture); any failure after the money moved (publish update / legacy insert error, an exception after the capture, or a capture request that threw or returned non-JSON, "capture status unknown") → owner alert and **502**, while a failure before the capture attempt stays a plain 500 with no alert. Pre-capture checks also refuse an `intent` that is present and not `CAPTURE`, and a `payee.merchant_id` that differs from `PAYPAL_MERCHANT_ID` (payee checked only when that variable is set). The capture request body is unchanged. On success → assigns the receipt number, deletes the pending row, sends confirmation + receipt + owner order-notification (all caller text escaped). Returns `{slug, event_name}` in publish mode (**no `dashboard_password`**), and `{slug, event_name, dashboard_password}` only in legacy mode (the buyer's own new event).
 5. **dashboard/[slug].js** — password-gated (`dashboard_password`, timing-safe). Loads event whether
    paid or draft. GET → `{event(+paid flag), stats, rsvps}`. PATCH → edit event fields. DELETE → remove an rsvp.
 6. **event/[slug].js** — GET public event data for the guest page (paid+active only).
@@ -81,17 +81,17 @@ Read by Edric (release manager: merge, production deploy, smoke check, rollback)
 8. **admin-events.js** — Bearer `ADMIN_PASSWORD`. GET = list **paid** events + rsvp counts +
    `abandonedLast30Days` (count from `checkout_abandonments`; `null` when the table can't be read).
    `?receipt=1&slug=` / `?refund=1&slug=` →
-   PDF. `?sweep=1` (POST) → send the abandonment report now (shorter grace: 10 minutes minimum). `?thankyou=1` (POST) → send
+   PDF (number = stored `receipt_number`, lazily assigned if missing; date = the original `paid_at` in Israel time; the refund PDF reuses the number and is dated `refunded_at`, else today; built by the same `buildReceipt` helper as the e-mailed receipt). `?sweep=1` (POST) → send the abandonment report now (shorter grace: 10 minutes minimum). `?thankyou=1` (POST) → send
    post-event thank-yous for the last 2 days (manual backup for the daily cron). PATCH `?slug=` `{active}`
-   → activate/deactivate. DELETE `?slug=` → delete event + rsvps.
+   → activate/deactivate; PATCH `?slug=` `{refunded}` → set/clear `refunded_at` (marker only; `active` untouched; 409 "migration needed" before the migration); a PATCH with neither field is 400. DELETE `?slug=` → delete event + rsvps. The page's revenue figure = ₪99 × paid events with `refunded_at` NULL.
 9. **cleanup.js** — cron, Bearer `CRON_SECRET`. Runs the abandonment sweep + retention: 30 days after
    the event date it **closes** paid events (writes the `final_*` snapshot if none exists yet, deletes guest
    RSVPs, sets `active=false`, keeps the event + receipt record; a reactivated closed event is closed
-   again with its snapshot kept) and **deletes** unpaid past drafts outright. Scheduled daily 02:00
+   again with its snapshot kept) and **deletes** unpaid past drafts outright, and purges `rate_limits` rows older than a day. Scheduled daily 02:00
    (`vercel.json` cron `0 2 * * *`).
 
 **Helpers:** `_receipt.js` = `generateReceiptPDF({receiptNumber, customerName, paymentDate, isRefund})`
-(Hebrew A5 PDF, business "Kupernet", עוסק פטור 036409084). `_sweep.js` =
+(Hebrew A5 PDF, business "Kupernet", עוסק פטור 036409084) plus `buildReceipt(supabase, event, {isRefund})`, `receiptNumberFor`, `formatPaymentDate` (the single source of the receipt data). `_pay.js` = price constant (`PRICE_ILS` 99, `CURRENCY`), order signing (`makeCustomId`, `parseCustomId`), `ORDER_ID_RE`. `_mail.js` = `esc`, `oneLine` (every caller text in an e-mail goes through `esc`). `_ratelimit.js` = Supabase-backed limiter (`overLimit`, `clientIp`, `originVerdict`; hashed keys; fails open). `_sweep.js` =
 `sweepAbandonedCheckouts({graceMinutes, ignoreGrace})` (cron 20 min grace; manual 10 min minimum) → skips
 buyers who paid since the checkout (`paidSincePending`), sends each remaining buyer a recovery email (link
 to their saved draft when found, never a password) + ONE owner digest, logs one anonymous
@@ -100,9 +100,9 @@ to their saved draft when found, never a password) + ONE owner digest, logs one 
 
 ## Payment flow (create-then-pay)
 1. Wizard fills form → on reaching step 3, `create-event` saves an **unpaid draft** and emails the
-   organizer their dashboard link/password.
+   organizer their dashboard link/password (the page also keeps the password in memory to prove ownership at create-order).
 2. Step 3 shows a live guest-page preview + PayPal "publish" button.
-3. Paying → `paypal-capture` publish mode sets `paid_at` → event goes live → redirect to `/success?slug=`.
+3. Paying → create-order (signed, ownership proved with the draft password) → `paypal-capture` verifies the order, then publish mode sets `paid_at` → event goes live → redirect to `/success?slug=`.
 4. Can also return later via the emailed **dashboard link**, which shows a publish screen (its own PayPal button) for unpaid drafts.
 
 ## Emails (Brevo; sender "אישורי הגעה" <kupernetservice@gmail.com>)

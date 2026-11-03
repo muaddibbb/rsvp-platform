@@ -4,6 +4,8 @@
 // "pay an unknown brand upfront" barrier.
 const { createClient } = require("@supabase/supabase-js");
 const crypto = require("crypto");
+const { esc, oneLine } = require("./_mail");
+const { clientIp, originVerdict, overLimit, HOUR } = require("./_ratelimit");
 
 const supabase = createClient(process.env.SUPABASE_URL, process.env.SUPABASE_SERVICE_ROLE_KEY);
 const BASE_URL = process.env.BASE_URL || "https://rsvp.kupernet.com";
@@ -45,9 +47,21 @@ module.exports = async (req, res) => {
   if (req.method === "OPTIONS") return res.status(200).end();
   if (req.method !== "POST") return res.status(405).json({ error: "Method not allowed" });
 
+  // J-04: a foreign Origin is refused; same-site browsers and plain scripts are rate limited per IP and per
+  // e-mail address (no Origin = a quarter of the limits). Fails open if the counter table is missing.
+  if (originVerdict(req) === "mismatch") return res.status(403).json({ error: "Forbidden" });
+
   const b = req.body || {};
   const err = validate(b);
   if (err) return res.status(400).json({ error: err });
+
+  if (await overLimit(supabase, req, [
+    ["ce-ip", clientIp(req), HOUR, 20],
+    ["ce-mail", String(b.customer_email).trim().toLowerCase(), HOUR, 3],
+  ])) {
+    res.setHeader("Retry-After", String(HOUR));
+    return res.status(429).json({ error: "יותר מדי בקשות, נסו שוב מאוחר יותר" });
+  }
 
   try {
     const year = new Date(b.gregorian_date + "T12:00:00").getFullYear();
@@ -82,14 +96,14 @@ module.exports = async (req, res) => {
     const dashUrl = `${BASE_URL}/dashboard/${slug}`;
     sendEmail(
       b.customer_email?.trim(),
-      `הטיוטה שלך נשמרה — ${b.event_name}`,
+      `הטיוטה שלך נשמרה — ${oneLine(b.event_name)}`,
       `<div dir="rtl" style="font-family:Arial;padding:24px;max-width:520px">
         <h2 style="color:#1a2744">האירוע שלך נשמר 📝</h2>
-        <p>שלום ${b.customer_name || ""},</p>
+        <p>שלום ${esc(b.customer_name || "")},</p>
         <p>שמרנו את פרטי האירוע שלך. הוא עדיין לא פורסם — כדי לקבל קישור לשליחה לאורחים, יש להשלים תשלום חד-פעמי של ₪99.</p>
-        <p><a href="${dashUrl}" style="background:#1a2744;color:#fff;padding:12px 20px;border-radius:8px;text-decoration:none;display:inline-block">📊 כניסה וניהול / פרסום</a></p>
+        <p><a href="${esc(dashUrl)}" style="background:#1a2744;color:#fff;padding:12px 20px;border-radius:8px;text-decoration:none;display:inline-block">📊 כניסה וניהול / פרסום</a></p>
         <p style="background:#fdf5e0;border:2px dashed #c9993a;border-radius:8px;padding:16px;text-align:center">
-          סיסמת ניהול: <strong style="font-size:1.3rem;letter-spacing:.1em">${dashboard_password}</strong>
+          סיסמת ניהול: <strong style="font-size:1.3rem;letter-spacing:.1em">${esc(dashboard_password)}</strong>
         </p>
         <p style="font-size:.85rem;color:#6b7280">אפשר לחזור ולפרסם בכל עת דרך הקישור הזה.</p>
       </div>`

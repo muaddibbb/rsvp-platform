@@ -524,6 +524,7 @@
     // the publish step. They get an email with their dashboard link so they can return and
     // publish later. Created once per session; final edits are applied at publish time.
     let draftSlug = null;
+    let draftPassword = "";   // the draft's dashboard password, sent only to create-order as proof of ownership
     async function saveDraft() {
       if (draftSlug) return;
       try {
@@ -533,7 +534,7 @@
           body: JSON.stringify(formData),
         });
         const data = await res.json();
-        if (res.ok && data.slug) draftSlug = data.slug;
+        if (res.ok && data.slug) { draftSlug = data.slug; draftPassword = data.dashboard_password || ""; }
       } catch (e) { /* non-blocking — payment can still create the event via legacy path */ }
     }
 
@@ -733,7 +734,11 @@
           }
           document.getElementById("checkoutError").style.display = "none";
           try {
-            const res  = await fetch("/api/paypal-create-order", { method: "POST" });
+            const res  = await fetch("/api/paypal-create-order", {
+              method: "POST",
+              headers: { "Content-Type": "application/json" },
+              body: JSON.stringify({ slug: draftSlug || "", password: draftPassword || "" }),
+            });
             const data = await res.json();
             if (!data.id) {
               lastPaypalError = data.error + (data.raw ? " → " + JSON.stringify(data.raw) : "");

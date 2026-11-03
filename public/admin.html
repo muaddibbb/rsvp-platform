@@ -104,6 +104,12 @@
       font-size: .7rem; font-weight: 700; background: #fee2e2; color: #991b1b;
       margin-inline-start: 6px;
     }
+    .badge-refunded {
+      display: inline-block; padding: 2px 8px; border-radius: 12px;
+      font-size: .7rem; font-weight: 700; background: #fff1f2; color: #9f1239;
+      margin-inline-start: 6px;
+    }
+    .link-btn { background: none; border: 0; padding: 0; margin-inline-start: 4px; font-size: .7rem; color: #1d4ed8; text-decoration: underline; cursor: pointer; }
     .badge-ended {
       display: inline-block; padding: 2px 8px; border-radius: 12px; margin-top: 3px;
       font-size: .7rem; font-weight: 700; background: #e5e7eb; color: #374151;
@@ -137,6 +143,8 @@
     html.dark .empty-state,
     html.dark .loading-row td { color: #94a3b8; }
     html.dark .badge-ended { background: #334155; color: #cbd5e1; }
+    html.dark .badge-refunded { background: #4c1d2b; color: #fecdd3; }
+    html.dark .link-btn { color: #93c5fd; }
   </style>
 </head>
 <body>
@@ -219,6 +227,15 @@
 
 <script>
   const BASE = window.location.origin;
+  // The price of one event, in shekels. Equal to PRICE_ILS in api/_pay.js (pinned by tests/sync-points.test.js).
+  const PRICE_PER_EVENT = 99;
+
+  // HTML-escape any value before it goes into innerHTML or an attribute (& < > " ' `).
+  function esc(v) {
+    return String(v == null ? "" : v)
+      .replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;")
+      .replace(/"/g, "&quot;").replace(/'/g, "&#39;").replace(/`/g, "&#96;");
+  }
 
   const EVENT_EMOJI = {
     bar_mitzvah:"🎉", bat_mitzvah:"🌸", wedding:"💍", brit:"👶",
@@ -313,7 +330,9 @@
     const activeCount = allEvents.filter(e => e.active !== false && !isEnded(e, today)).length;
     document.getElementById("statEvents").textContent    = activeCount;
     document.getElementById("statRsvps").textContent     = totalRsvps;
-    document.getElementById("statRevenue").textContent   = `₪${allEvents.length * 99}`;
+    // Revenue counts only events that were not refunded (events.refunded_at is NULL; before the migration the
+    // field is absent and every paid event counts, as it always did).
+    document.getElementById("statRevenue").textContent   = `₪${allEvents.filter(e => !e.refunded_at).length * PRICE_PER_EVENT}`;
     const ab = document.getElementById("statAbandoned");
     ab.textContent = abandonedLast30Days == null ? "—" : abandonedLast30Days;
     ab.title = abandonedLast30Days == null ? "לא ניתן לקרוא את טבלת checkout_abandonments (ייתכן שלא נוצרה)" : "";
@@ -346,31 +365,58 @@
       const label = EVENT_LABELS[e.event_type] || e.event_type;
 
       const inactive = e.active === false;
+      const refunded = !!e.refunded_at;
       const ended = isEnded(e, today);
       // Live count while active; snapshot (final_responses/guests) for closed past events.
+      // Every value that came from a customer or the database goes through esc().
       const countCell = (e.rsvp_count > 0 || e.final_responses == null)
-        ? `${e.rsvp_count}`
-        : `${e.final_responses}<br/><span style="font-size:.7rem;color:var(--text-muted)">${e.final_guests} אורחים</span>`;
+        ? `${esc(e.rsvp_count)}`
+        : `${esc(e.final_responses)}<br/><span style="font-size:.7rem;color:var(--text-muted)">${esc(e.final_guests)} אורחים</span>`;
+      const slug = esc(e.slug);
+      const slugUrl = esc(encodeURIComponent(e.slug || ""));
       return `<tr class="${inactive ? "inactive" : ""}">
         <td style="color:var(--text-muted)">${i + 1}</td>
-        <td><strong>${e.event_name || "—"}</strong>${inactive ? '<span class="badge-inactive">מושבת</span>' : ""}<br/><span style="font-size:.78rem;color:var(--text-muted)">${e.slug}</span></td>
-        <td><span class="badge">${emoji} ${label}</span></td>
-        <td style="white-space:nowrap">${date}${ended ? '<br/><span class="badge-ended">הסתיים · Ended</span>' : ""}</td>
-        <td>${e.customer_name || "—"}</td>
-        <td class="cell-email" style="font-size:.82rem;direction:ltr;text-align:right">${e.customer_email || "—"}</td>
+        <td><strong>${esc(e.event_name || "—")}</strong>${inactive ? '<span class="badge-inactive">מושבת</span>' : ""}${refunded ? `<span class="badge-refunded">זוכה</span><button class="link-btn" data-act="unrefund" data-slug="${slug}">בטל סימון</button>` : ""}<br/><span style="font-size:.78rem;color:var(--text-muted)">${slug}</span></td>
+        <td><span class="badge">${emoji} ${esc(label)}</span></td>
+        <td style="white-space:nowrap">${esc(date)}${ended ? '<br/><span class="badge-ended">הסתיים · Ended</span>' : ""}</td>
+        <td>${esc(e.customer_name || "—")}</td>
+        <td class="cell-email" style="font-size:.82rem;direction:ltr;text-align:right">${esc(e.customer_email || "—")}</td>
         <td class="rsvp-count" style="text-align:center">${countCell}</td>
-        <td><span class="pass-cell" data-pass="${e.dashboard_password || '—'}">••••••</span></td>
-        <td style="white-space:nowrap;font-size:.82rem">${registered}</td>
+        <td><span class="pass-cell" data-pass="${esc(e.dashboard_password || "—")}">••••••</span></td>
+        <td style="white-space:nowrap;font-size:.82rem">${esc(registered)}</td>
         <td style="white-space:nowrap">
-          <a class="action-btn btn-rsvp" href="${BASE}/rsvp/${e.slug}" target="_blank">RSVP</a>
-          <a class="action-btn btn-dash" href="${BASE}/dashboard/${e.slug}" target="_blank">ממשק</a>
-          <button class="action-btn btn-receipt" onclick="downloadReceipt('${e.slug}', false)">📄 קבלה</button>
-          <button class="action-btn btn-refund"  onclick="downloadReceipt('${e.slug}', true)">↩️ זיכוי</button>
-          <button class="action-btn btn-toggle" onclick="toggleActive('${e.slug}', ${inactive})">${inactive ? "▶️ הפעל" : "⏸️ השבת"}</button>
-          <button class="action-btn btn-del" onclick="deleteEvent('${e.slug}', '${(e.event_name||"").replace(/'/g,"\\'")}')">מחק</button>
+          <a class="action-btn btn-rsvp" href="${esc(BASE)}/rsvp/${slugUrl}" target="_blank" rel="noopener">RSVP</a>
+          <a class="action-btn btn-dash" href="${esc(BASE)}/dashboard/${slugUrl}" target="_blank" rel="noopener">ממשק</a>
+          <button class="action-btn btn-receipt" data-act="receipt" data-slug="${slug}"${e.receipt_number != null ? ` title="${esc("קבלה מס׳ " + String(e.receipt_number).padStart(6, "0"))}"` : ""}>📄 קבלה</button>
+          <button class="action-btn btn-refund" data-act="refund" data-slug="${slug}">↩️ זיכוי</button>
+          <button class="action-btn btn-toggle" data-act="toggle" data-slug="${slug}" data-inactive="${inactive ? "1" : "0"}">${inactive ? "▶️ הפעל" : "⏸️ השבת"}</button>
+          <button class="action-btn btn-del" data-act="delete" data-slug="${slug}">מחק</button>
         </td>
       </tr>`;
     }).join("");
+  }
+
+  // One delegated click handler for the row buttons. The buttons carry only data-act / data-slug
+  // (escaped attribute values), so no customer text ever sits inside a script context.
+  function rowAction(btn) {
+    const act = btn && btn.dataset && btn.dataset.act;
+    const slug = btn && btn.dataset && btn.dataset.slug;
+    if (!act || !slug) return;
+    const ev = allEvents.find(x => x.slug === slug);
+    if (act === "receipt") return downloadReceipt(slug, false);
+    if (act === "refund")  return refundEvent(slug);
+    if (act === "unrefund") return setRefunded(slug, false);
+    if (act === "toggle")  return toggleActive(slug, btn.dataset.inactive === "1");
+    if (act === "delete")  return deleteEvent(slug, (ev && ev.event_name) || "");
+  }
+  {
+    const tbody = document.getElementById("eventsBody");
+    if (tbody && tbody.addEventListener) {
+      tbody.addEventListener("click", (ev) => {
+        const btn = ev.target && ev.target.closest ? ev.target.closest("[data-act]") : null;
+        if (btn) rowAction(btn);
+      });
+    }
   }
 
   async function toggleActive(slug, activate) {
@@ -384,6 +430,33 @@
     if (ev) ev.active = activate;
     updateStats();
     renderTable();
+  }
+
+  // Mark the event refunded (asks first), then download the credit note. The PayPal refund itself is manual.
+  // An event that is already marked just downloads the credit note again.
+  async function setRefunded(slug, refunded) {
+    const res = await fetch(`/api/admin-events?slug=${encodeURIComponent(slug)}`, {
+      method: "PATCH",
+      headers: { Authorization: `Bearer ${token}`, "Content-Type": "application/json" },
+      body: JSON.stringify({ refunded }),
+    });
+    if (res.status === 409) { alert("יש להריץ קודם את קובץ ה-SQL של הגרסה (sql/release-two-migration.sql)"); return false; }
+    if (!res.ok) { alert("שגיאה בעדכון סימון הזיכוי"); return false; }
+    const json = await res.json().catch(() => ({}));
+    const ev = allEvents.find(e => e.slug === slug);
+    if (ev) ev.refunded_at = refunded ? (json.refunded_at || new Date().toISOString()) : null;
+    updateStats();
+    renderTable();
+    return true;
+  }
+
+  async function refundEvent(slug) {
+    const ev = allEvents.find(e => e.slug === slug);
+    if (!(ev && ev.refunded_at)) {
+      if (!confirm("לסמן את האירוע כמזוכה (ההכנסה תופחת) ולהוריד קבלת זיכוי?\n\nהזיכוי עצמו ב-PayPal מבוצע ידנית.")) return;
+      if (!(await setRefunded(slug, true))) return;
+    }
+    return downloadReceipt(slug, true);
   }
 
   async function sendThankYous(btn) {

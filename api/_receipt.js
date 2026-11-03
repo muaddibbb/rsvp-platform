@@ -11,7 +11,7 @@ function pad(n) {
   return String(n).padStart(6, "0");
 }
 
-module.exports = function generateReceiptPDF({ receiptNumber, customerName, paymentDate, isRefund = false }) {
+function generateReceiptPDF({ receiptNumber, customerName, paymentDate, isRefund = false }) {
   const PDFDocument = require("pdfkit");
 
   return new Promise((resolve, reject) => {
@@ -175,4 +175,53 @@ module.exports = function generateReceiptPDF({ receiptNumber, customerName, paym
 
     doc.end();
   });
-};
+}
+
+// ── Shared receipt data (one source for the admin download and the e-mailed copy) ───────────────────
+
+const RECEIPT_TZ = "Asia/Jerusalem";
+
+// The receipt date: a stored timestamp shown as a he-IL date in Israel time (a server running in UTC
+// would print the previous day for payments made after 21:00 UTC). No/invalid timestamp: today.
+function formatPaymentDate(ts) {
+  let d = ts ? new Date(ts) : new Date();
+  if (Number.isNaN(d.getTime())) d = new Date();
+  return d.toLocaleDateString("he-IL", { timeZone: RECEIPT_TZ });
+}
+
+// The stored receipt number of a paid event. Order of preference:
+//  1. the number already on the row (events.receipt_number),
+//  2. the SQL function assign_receipt_number(p_slug): idempotent, gapless counter (needs the migration),
+//  3. the old rule, "how many paid events were paid up to this one" (same numbers the backfill produces).
+// `supabase` is the caller's client. Never throws for a missing migration.
+async function receiptNumberFor(supabase, event) {
+  if (event && event.receipt_number != null) return event.receipt_number;
+  try {
+    const { data, error } = await supabase.rpc("assign_receipt_number", { p_slug: event.slug });
+    if (!error && data != null) return Number(data);
+    if (error) console.error("assign_receipt_number unavailable, using the count fallback:", error.code || "", error.message || "");
+  } catch (e) {
+    console.error("assign_receipt_number error, using the count fallback:", e && e.message);
+  }
+  if (!event.paid_at) return 1;
+  const { count } = await supabase.from("events").select("*", { count: "exact", head: true }).lte("paid_at", event.paid_at);
+  return count || 1;
+}
+
+// Inputs for generateReceiptPDF. `event` needs: slug, customer_name, paid_at and, when known,
+// receipt_number and refunded_at. A refund copy reuses the receipt number and is dated refunded_at.
+async function buildReceipt(supabase, event, { isRefund = false } = {}) {
+  const receiptNumber = await receiptNumberFor(supabase, event);
+  return {
+    receiptNumber,
+    customerName: event.customer_name,
+    paymentDate: formatPaymentDate(isRefund ? event.refunded_at : event.paid_at),
+    isRefund,
+  };
+}
+
+module.exports = generateReceiptPDF;
+module.exports.generateReceiptPDF = generateReceiptPDF;
+module.exports.buildReceipt = buildReceipt;
+module.exports.receiptNumberFor = receiptNumberFor;
+module.exports.formatPaymentDate = formatPaymentDate;
