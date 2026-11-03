@@ -16,14 +16,6 @@
     gtag('config', 'AW-18293655759');
   </script>
   <style>
-    .nav-tools { display: flex; align-items: center; gap: 10px; }
-    .tool-btn {
-      background: rgba(255,255,255,.12); color: #fff; border: 1px solid rgba(255,255,255,.25);
-      border-radius: 20px; padding: 6px 14px; font-size: .85rem; font-weight: 700;
-      cursor: pointer; transition: background .15s;
-    }
-    .tool-btn:hover { background: rgba(255,255,255,.22); }
-
     /* ── Dark mode ── */
     html.dark body { background: #0f172a; color: #e5e7eb; }
     html.dark .features-section { background: #0f172a; }
@@ -41,6 +33,7 @@
     html.dark .landing-hero::after { background: #0f172a; }
 
     .hero-trust { margin-top: 16px; font-size: .82rem; opacity: .8; }
+    .hero-trust a { color: inherit; text-decoration: underline; }
 
     /* ── LTR (English) ── */
     html[dir="ltr"] body { direction: ltr; }
@@ -61,8 +54,8 @@
 
   <!-- Banner -->
   <div class="promo-banner">
-    <span data-i18n="banner">🎊 אישורי הגעה לאירוע שלכם בלי לקרוע את הכיס!!!</span>
-    <span class="promo-guarantee" data-i18n="guarantee">💰 לא מרוצים? נחזיר את הכסף</span>
+    <span data-i18n="banner">🎊 אישורי הגעה לאירוע שלכם, בלי לקרוע את הכיס</span>
+    <span class="promo-guarantee" data-i18n="unlimitedGuests">🎈 ללא הגבלת כמות אורחים</span>
   </div>
 
   <!-- Hero -->
@@ -74,7 +67,24 @@
       נהלו את הרשימה בקלות — הכל במקום אחד.
     </p>
     <a class="cta-btn" href="/register.html" data-i18n="heroCta">צור אירוע עכשיו — ₪99 בלבד 🎉</a>
-    <p class="hero-trust" data-i18n="heroTrust">🔒 תשלום מאובטח · ↩️ החזר כספי מלא תוך 14 יום · 🧾 עוסק פטור 036409084</p>
+    <div><a class="demo-link" href="/rsvp/demo" data-i18n="demoLink">👀 ראו איך זה נראה לאורחים</a></div>
+    <p class="hero-trust"><span data-i18n="heroSecure">🔒 תשלום מאובטח</span> · <a href="/refund.html" data-i18n="refundLine">↩️ החזר כספי מלא תוך 14 יום מהרכישה, כל עוד לא התקבל אף אישור הגעה והאירוע טרם התקיים.</a> · <span data-i18n="heroBusiness">🧾 עוסק פטור 036409084</span></p>
+  </section>
+
+  <!-- Live preview of the guest page (non-interactive; links to the full demo) -->
+  <section class="preview-section">
+    <h2 class="section-title" data-i18n="previewTitle">ככה ייראה הדף שהאורחים שלכם יקבלו</h2>
+    <p class="section-sub" data-i18n="previewSub">דף אישי בעברית, מותאם לנייד — בלי הורדת אפליקציה ובלי הרשמה</p>
+    <div class="phone-frame">
+      <iframe src="/rsvp/demo?embed=1" title="Guest page preview" loading="lazy" tabindex="-1" scrolling="no"></iframe>
+    </div>
+    <a class="preview-cta" href="/rsvp/demo" data-i18n="previewCta">נסו דוגמה חיה</a>
+  </section>
+
+  <section class="testimonials-section">
+    <h2 class="section-title" data-i18n="testimonialsTitle">מה אומרים הלקוחות</h2>
+    <blockquote class="testimonial" lang="he" dir="rtl">פשוט, קל לתפעול ובלי לקרוע את הכיס. ממליצה בחום! (נועה נ)</blockquote>
+    <blockquote class="testimonial" lang="he" dir="rtl">חיפשתי הרבה זמן שירות אישורי הגעה, כשמצאתי את זה המחיר נראה לי קצת מוזר, אבל אני חייב להודות שזה מעולה! ממליץ לכל מי שצריך אישורי הגעה - סופר נוח וזול! (אייל ג)</blockquote>
   </section>
 
   <!-- Event Types -->
@@ -151,12 +161,13 @@
         <li data-i18n="feat7">אימייל אישור עם כל הפרטים</li>
       </ul>
       <a class="pricing-cta" href="/register.html" data-i18n="priceCta">צור אירוע עכשיו 🎉</a>
+      <a class="wa-inline" href="https://wa.me/972546787932?text=%D7%94%D7%99%D7%99%2C%20%D7%99%D7%A9%20%D7%9C%D7%99%20%D7%A9%D7%90%D7%9C%D7%94%20%D7%A2%D7%9C%20%D7%90%D7%99%D7%A9%D7%95%D7%A8%D7%99%20%D7%94%D7%94%D7%92%D7%A2%D7%94%20%D7%91%D7%90%D7%AA%D7%A8%20rsvp.kupernet.com" target="_blank" rel="noopener" data-i18n="waQuestion">💬 שאלה לפני שמזמינים? כתבו לנו בוואטסאפ</a>
     </div>
   </section>
 
   <footer class="landing-footer">
     <div data-i18n="credit" style="margin-bottom:6px">נוצר ע״י Kupernet Systems</div>
-    © 2026 rsvp.kupernet.com · <a href="mailto:kupernetservice@gmail.com" style="color:#9ca3af" data-i18n="contact">צור קשר: kupernetservice@gmail.com</a>
+    © 2026 rsvp.kupernet.com · <a href="mailto:kupernetservice@gmail.com" style="color:#9ca3af" data-i18n="contact">צור קשר: kupernetservice@gmail.com</a> · <a href="https://wa.me/972546787932?text=%D7%94%D7%99%D7%99%2C%20%D7%99%D7%A9%20%D7%9C%D7%99%20%D7%A9%D7%90%D7%9C%D7%94%20%D7%A2%D7%9C%20%D7%90%D7%99%D7%A9%D7%95%D7%A8%D7%99%20%D7%94%D7%94%D7%92%D7%A2%D7%94%20%D7%91%D7%90%D7%AA%D7%A8%20rsvp.kupernet.com" target="_blank" rel="noopener" style="color:#9ca3af" data-i18n="waContact">💬 וואטסאפ: 054-6787932</a>
     · <a href="/tos.html" style="color:#9ca3af" data-i18n="tos">תנאי שימוש ופרטיות</a>
   </footer>
 
@@ -165,12 +176,21 @@
       he: {
         logo: "אישורי הגעה",
         navCta: "צור אירוע עכשיו",
-        banner: "🎊 אישורי הגעה לאירוע שלכם בלי לקרוע את הכיס!!!",
-        guarantee: "💰 לא מרוצים? נחזיר את הכסף",
+        banner: "🎊 אישורי הגעה לאירוע שלכם, בלי לקרוע את הכיס",
+        unlimitedGuests: "🎈 ללא הגבלת כמות אורחים",
         heroTitle: "אישורי הגעה דיגיטליים לאירוע שלכם",
         heroSub: "שלחו קישור לאורחים בוואטסאפ, עקבו אחר האישורים בזמן אמת, נהלו את הרשימה בקלות — הכל במקום אחד.",
         heroCta: "צור אירוע עכשיו — ₪99 בלבד 🎉",
-        heroTrust: "🔒 תשלום מאובטח · ↩️ החזר כספי מלא תוך 14 יום · 🧾 עוסק פטור 036409084",
+        heroSecure: "🔒 תשלום מאובטח",
+        refundLine: "↩️ החזר כספי מלא תוך 14 יום מהרכישה, כל עוד לא התקבל אף אישור הגעה והאירוע טרם התקיים.",
+        heroBusiness: "🧾 עוסק פטור 036409084",
+        testimonialsTitle: "מה אומרים הלקוחות",
+        waQuestion: "💬 שאלה לפני שמזמינים? כתבו לנו בוואטסאפ",
+        waContact: "💬 וואטסאפ: 054-6787932",
+        demoLink: "👀 ראו איך זה נראה לאורחים",
+        previewTitle: "ככה ייראה הדף שהאורחים שלכם יקבלו",
+        previewSub: "דף אישי בעברית, מותאם לנייד — בלי הורדת אפליקציה ובלי הרשמה",
+        previewCta: "נסו דוגמה חיה",
         typesTitle: "מתאים לכל סוגי האירועים",
         typesSub: "בר מצווה, חתונה, ברית, יום הולדת ועוד — כל אירוע מקבל דף אישי",
         typeBm: "בר / בת מצווה", typeWedding: "חתונה", typeBrit: "ברית מילה",
@@ -196,12 +216,21 @@
       en: {
         logo: "RSVP",
         navCta: "Create Your Event",
-        banner: "🎊 RSVPs for your event — without breaking the bank!!!",
-        guarantee: "💰 Not satisfied? Money back — guaranteed",
+        banner: "🎊 RSVPs for your event, without breaking the bank",
+        unlimitedGuests: "🎈 Unlimited guests",
         heroTitle: "Digital RSVPs for Your Event",
         heroSub: "Send guests a WhatsApp link, track confirmations in real time, and manage your list with ease — all in one place.",
         heroCta: "Create your event now — only ₪99 🎉",
-        heroTrust: "🔒 Secure payment · ↩️ Full refund within 14 days · 🧾 Registered business 036409084",
+        heroSecure: "🔒 Secure payment",
+        refundLine: "↩️ Full refund within 14 days of purchase, as long as no RSVP has been received and the event hasn't taken place yet.",
+        heroBusiness: "🧾 Registered business 036409084",
+        testimonialsTitle: "What customers say",
+        waQuestion: "💬 A question before you order? Message us on WhatsApp",
+        waContact: "💬 WhatsApp: 054-6787932",
+        demoLink: "👀 See what your guests will see",
+        previewTitle: "This is the page your guests will get",
+        previewSub: "A personal, mobile-friendly page — no app to install, no signup",
+        previewCta: "Try a live demo",
         typesTitle: "Perfect for Every Event",
         typesSub: "Bar Mitzvah, wedding, brit, birthday and more — every event gets its own page",
         typeBm: "Bar / Bat Mitzvah", typeWedding: "Wedding", typeBrit: "Brit Milah",

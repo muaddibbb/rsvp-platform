@@ -343,15 +343,15 @@ textarea { resize: vertical; }
   background: #c9993a;
   color: #fff;
   text-align: center;
-  padding: 16px 24px;
-  font-size: 1.3rem;
+  padding: 12px 20px;
+  font-size: 1.15rem;
   font-weight: 800;
   letter-spacing: .01em;
   line-height: 1.4;
   display: flex;
   align-items: center;
   justify-content: center;
-  gap: 14px;
+  gap: 8px 12px;
   flex-wrap: wrap;
 }
 .trust-row {
@@ -366,14 +366,15 @@ textarea { resize: vertical; }
   color: var(--text-muted);
 }
 html.dark .trust-row { border-top-color: #334155; }
+.trust-row a { color: inherit; text-decoration: underline; }
 
 .promo-guarantee {
   display: inline-block;
   background: #1a2744;
   color: #f0d080;
-  padding: 6px 18px;
+  padding: 4px 14px;
   border-radius: 24px;
-  font-size: 1.15rem;
+  font-size: 1rem;
   font-weight: 900;
   white-space: nowrap;
   box-shadow: 0 2px 10px rgba(0,0,0,.25);
@@ -408,6 +409,13 @@ html.dark .trust-row { border-top-color: #334155; }
   transition: opacity 0.2s;
 }
 .nav-cta:hover { opacity: 0.88; }
+.nav-tools { display: flex; align-items: center; gap: 10px; }
+.tool-btn {
+  background: rgba(255,255,255,.12); color: #fff; border: 1px solid rgba(255,255,255,.25);
+  border-radius: 20px; padding: 6px 14px; font-size: .85rem; font-weight: 700;
+  cursor: pointer; transition: background .15s;
+}
+.tool-btn:hover { background: rgba(255,255,255,.22); }
 
 .landing-hero {
   background: linear-gradient(150deg, var(--navy) 0%, var(--navy-mid) 60%, #2d4a8a 100%);
@@ -440,6 +448,65 @@ html.dark .trust-row { border-top-color: #334155; }
   box-shadow: 0 4px 20px rgba(201,153,58,0.4);
 }
 .cta-btn:hover { opacity: 0.92; transform: translateY(-1px); }
+
+.demo-link {
+  display: inline-block;
+  margin-top: 16px;
+  color: var(--gold-light);
+  font-weight: 700;
+  font-size: 1rem;
+  text-decoration: underline;
+  text-underline-offset: 4px;
+}
+.demo-link:hover { opacity: .85; }
+
+.preview-section { padding: 56px 24px 8px; background: var(--bg); text-align: center; }
+.phone-frame {
+  position: relative;
+  direction: ltr;
+  width: 280px; height: 520px;
+  margin: 0 auto 20px;
+  border: 10px solid var(--navy);
+  border-radius: 36px;
+  overflow: hidden;
+  box-shadow: var(--shadow);
+  background: #fff;
+}
+.phone-frame iframe {
+  position: absolute; top: 0; left: 0;
+  width: 375px; height: 721px;
+  border: 0;
+  transform: scale(.6933);
+  transform-origin: 0 0;
+  pointer-events: none;
+}
+.preview-cta {
+  display: inline-block;
+  background: var(--gold);
+  color: #fff;
+  padding: 12px 28px;
+  border-radius: 12px;
+  font-weight: 800;
+  text-decoration: none;
+}
+.preview-cta:hover { opacity: .9; }
+html.dark .preview-section { background: #0f172a; }
+html.dark .preview-section .section-title { color: #f0d080; }
+
+@media (max-width: 600px) {
+  .landing-nav { padding: 10px 14px; }
+  .landing-nav .logo { font-size: 1.05rem; white-space: nowrap; }
+  .nav-cta { padding: 8px 12px; font-size: .85rem; white-space: nowrap; }
+  .nav-tools { gap: 6px; }
+  .tool-btn { padding: 5px 10px; font-size: .8rem; }
+  .promo-banner { padding: 10px 14px; font-size: 1rem; }
+  .promo-guarantee { font-size: .8rem; padding: 3px 10px; border-width: 1.5px; }
+  .landing-hero { padding: 28px 20px 64px; }
+  .hero-star { font-size: 36px; margin-bottom: 8px; }
+  .hero-tagline { font-size: 1.8rem; margin-bottom: 10px; }
+  .hero-sub { font-size: 1rem; margin-bottom: 20px; }
+  .cta-btn { display: block; padding: 14px 20px; font-size: 1.05rem; }
+}
 
 .features-section { padding: 80px 24px 60px; background: var(--bg); }
 .section-title { text-align: center; font-size: 1.7rem; font-weight: 800; color: var(--navy); margin-bottom: 8px; }
@@ -648,6 +715,31 @@ html.dark .trust-row { border-top-color: #334155; }
 .pending-state { color: var(--text-muted); font-size: 1.1rem; }
 .spinner { display: inline-block; width: 24px; height: 24px; border: 3px solid #e5e7eb; border-top-color: var(--navy); border-radius: 50%; animation: spin 0.8s linear infinite; margin-left: 8px; vertical-align: middle; }
 @keyframes spin { to { transform: rotate(360deg); } }
+
+/* ===== Payment status (register + dashboard, after PayPal approval) ===== */
+.pay-status { display: none; margin: 0 0 14px; padding: 12px 14px; border-radius: 10px; font-size: .92rem; line-height: 1.6; text-align: center; background: #eef2ff; border: 1px solid #c7d2fe; color: #1a2744; }
+.pay-status.show { display: block; }
+.pay-status.warn { background: #fdf5e0; border-color: #e8d9a0; }
+.pay-status.ok { background: #dcfce7; border-color: #86efac; color: #166534; }
+.pay-status a { color: inherit; font-weight: 700; text-decoration: underline; }
+.pay-status .pay-reason { font-weight: 700; }
+.pay-busy { pointer-events: none; opacity: .35; filter: grayscale(1); }
+html.dark .pay-status { background: #1e2f55; border-color: #334155; color: #e5e7eb; }
+html.dark .pay-status.warn { background: #3a3320; border-color: #5c512e; }
+html.dark .pay-status.ok { background: #14331f; border-color: #166534; color: #86efac; }
+
+/* ===== WhatsApp inline link ===== */
+.wa-inline { display: block; text-align: center; margin-top: 12px; font-size: .9rem; font-weight: 700; color: #075e54; text-decoration: none; }
+.wa-inline:hover { text-decoration: underline; }
+html.dark .wa-inline { color: #4ade80; }
+
+/* ===== Testimonials ===== */
+.testimonials-section { max-width: 760px; margin: 0 auto; padding: 40px 20px; text-align: center; }
+.reg-card .testimonials-section { padding: 20px 0 0; }
+.testimonials-title { font-size: 1rem; font-weight: 800; color: var(--navy); margin: 0 0 8px; }
+.testimonial { margin: 12px auto; padding: 16px 18px; max-width: 560px; background: #fff; border: 1px solid #e5e7eb; border-inline-start: 4px solid var(--gold); border-radius: 12px; box-shadow: 0 2px 10px rgba(0,0,0,.06); font-size: 1rem; line-height: 1.7; color: var(--text); text-align: start; }
+html.dark .testimonials-title, html.dark .testimonials-section .section-title { color: #f0d080; }
+html.dark .testimonial { background: #1e293b; border-color: #334155; border-inline-start-color: var(--gold); }
 
 /* ===== Theme toolbar (injected by theme.js) ===== */
 .theme-toolbar { position: fixed; top: 14px; left: 14px; z-index: 999; display: flex; gap: 8px; }

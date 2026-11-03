@@ -14,10 +14,10 @@
         navCta: "הקמת אירוע",
         heroTitle: "מחיר פשוט, ללא הפתעות",
         heroSub: "תשלום חד-פעמי. ללא מנוי חודשי. ללא עמלה לכל RSVP.",
-        planBadge: "הכי פופולרי",
         planName: "אירוע מלא",
         planPeriod: "תשלום חד-פעמי לאירוע",
         planCta: "התחילו עכשיו",
+        unlimitedGuestsHighlight: "🎈 ללא הגבלת כמות אורחים",
         feat1: "דף RSVP בעברית, מותאם לנייד",
         feat2: "אורחים ללא הגבלה",
         feat3: "ממשק ניהול הזמנה בזמן אמת",
@@ -38,14 +38,12 @@
         faq5q: "האם ניתן לערוך את פרטי האירוע לאחר התשלום?",
         faq5a: "כן. ניתן לעדכן כל פרט — שם, תאריך, מיקום, שעה — דרך ממשק ניהול הזמנה בכל עת.",
         faq6q: "מה מדיניות ההחזרות?",
-        faq6a: "ניתן לקבל החזר מלא תוך 14 ימים מהרכישה, בתנאי שטרם נאספו אישורי הגעה. לפרטים ראו את",
+        faq6a: "החזר כספי מלא תוך 14 יום מהרכישה, כל עוד לא התקבל אף אישור הגעה והאירוע טרם התקיים. לפרטים:",
         faq6link: "מדיניות ההחזרות",
         faq7q: "יש שאלה אחרת?",
         faq7a: "פנו אלינו:",
         faq7a2: "— נחזיר תוך יום עסקים.",
-        guaranteeTitle: "🛡️ 14 ימי ניסיון ללא סיכון",
-        guaranteeText: "אם לא אספתם עדיין אישורי הגעה תוך 14 יום מהרכישה — נחזיר את מלוא התשלום ללא שאלות.",
-        guaranteeContact: "פנו ל-",
+        waContact: "💬 וואטסאפ: 054-6787932",
         footTos: "תנאי שימוש",
         footPrivacy: "פרטיות",
         footRefund: "החזרות",
@@ -57,10 +55,10 @@
         navCta: "Create Your Event",
         heroTitle: "Simple Pricing, No Surprises",
         heroSub: "One-time payment. No monthly subscription. No per-RSVP fees.",
-        planBadge: "Most Popular",
         planName: "Full Event",
         planPeriod: "one-time payment per event",
         planCta: "Get Started",
+        unlimitedGuestsHighlight: "🎈 Unlimited guests",
         feat1: "Hebrew RSVP page, mobile-friendly",
         feat2: "Unlimited guests",
         feat3: "Real-time management dashboard",
@@ -81,14 +79,12 @@
         faq5q: "Can I edit the event details after payment?",
         faq5a: "Yes. You can update any detail — name, date, location, time — via the management dashboard at any time.",
         faq6q: "What is the refund policy?",
-        faq6a: "You can get a full refund within 14 days of purchase, provided no RSVPs have been collected yet. For details, see the",
+        faq6a: "Full refund within 14 days of purchase, as long as no RSVP has been received and the event hasn't taken place yet. Details:",
         faq6link: "refund policy",
         faq7q: "Have another question?",
         faq7a: "Contact us:",
         faq7a2: "— we'll reply within one business day.",
-        guaranteeTitle: "🛡️ 14-Day Risk-Free Trial",
-        guaranteeText: "If you haven't collected any RSVPs within 14 days of purchase — we'll refund your full payment, no questions asked.",
-        guaranteeContact: "Contact ",
+        waContact: "💬 WhatsApp: 054-6787932",
         footTos: "Terms of Service",
         footPrivacy: "Privacy",
         footRefund: "Refunds",
@@ -120,23 +116,21 @@
       border-color: var(--gold);
       box-shadow: 0 8px 32px rgba(201,153,58,.18);
     }
-    .plan-badge {
-      position: absolute;
-      top: -14px;
-      right: 50%;
-      transform: translateX(50%);
-      background: var(--gold);
-      color: #fff;
-      font-size: .8rem;
-      font-weight: 700;
-      padding: 4px 16px;
-      border-radius: 20px;
-      white-space: nowrap;
-    }
     .plan-name { color: var(--navy); font-size: 1.1rem; font-weight: 700; margin-bottom: 4px; }
     .plan-price { font-size: 3rem; font-weight: 800; color: var(--navy); line-height: 1; margin: 16px 0 4px; }
     .plan-price span { font-size: 1.2rem; font-weight: 500; }
-    .plan-period { color: var(--text-muted); font-size: .9rem; margin-bottom: 24px; }
+    .plan-period { color: var(--text-muted); font-size: .9rem; margin-bottom: 16px; }
+    .plan-highlight {
+      display: inline-block;
+      background: #fdf5e0;
+      color: #92700f;
+      font-weight: 800;
+      font-size: .95rem;
+      padding: 8px 18px;
+      border-radius: 20px;
+      margin-bottom: 20px;
+    }
+    html.dark .plan-highlight { background: #3a3320; color: #f0d080; }
     .plan-cta {
       display: block;
       background: var(--gold);
@@ -168,19 +162,7 @@
     .faq-item { border-bottom: 1px solid #e5e7eb; padding: 18px 0; }
     .faq-q { font-weight: 700; color: var(--navy); margin-bottom: 8px; }
     .faq-a { color: #4b5563; font-size: .93rem; line-height: 1.7; }
-    .faq-a a { color: var(--gold); }
-
-    .guarantee {
-      text-align: center;
-      background: #fdf5e0;
-      border: 2px dashed var(--gold);
-      border-radius: 16px;
-      padding: 32px;
-      max-width: 520px;
-      margin: 48px auto 0;
-    }
-    .guarantee h3 { color: var(--navy); margin-bottom: 8px; }
-    .guarantee p { color: #4b5563; font-size: .9rem; line-height: 1.7; }
+    .faq-a a { color: #7a5a12; }
 
     /* ── LTR (English) ── */
     html[dir="ltr"] .plan-features { text-align: left; }
@@ -192,19 +174,21 @@
     html.dark .plan-name,
     html.dark .plan-price,
     html.dark .faq h2,
-    html.dark .faq-q,
-    html.dark .guarantee h3 { color: #f0d080; }
+    html.dark .faq-q { color: #f0d080; }
     html.dark .plan-features li { color: #cbd5e1; border-bottom-color: #334155; }
     html.dark .faq-item { border-bottom-color: #334155; }
     html.dark .faq-a { color: #94a3b8; }
-    html.dark .guarantee { background: #3a3320; }
-    html.dark .guarantee p { color: #cbd5e1; }
+    html.dark .faq-a a { color: #f0d080; }
   </style>
 </head>
 <body>
   <nav class="landing-nav">
     <a class="logo" href="/">🎉 <span data-i18n="logo">אישורי הגעה</span></a>
-    <a class="nav-cta" href="/register.html" data-i18n="navCta">הקמת אירוע</a>
+    <div class="nav-tools">
+      <button class="tool-btn" id="themeLangBtn" onclick="toggleLang()">EN</button>
+      <button class="tool-btn" id="themeDarkBtn" onclick="toggleTheme()">🌙</button>
+      <a class="nav-cta" href="/register.html" data-i18n="navCta">הקמת אירוע</a>
+    </div>
   </nav>
 
   <div class="pricing-page">
@@ -216,10 +200,10 @@
 
     <div class="plans-grid">
       <div class="plan-card featured">
-        <div class="plan-badge" data-i18n="planBadge">הכי פופולרי</div>
         <div class="plan-name" data-i18n="planName">אירוע מלא</div>
         <div class="plan-price"><span>₪</span>99</div>
         <div class="plan-period" data-i18n="planPeriod">תשלום חד-פעמי לאירוע</div>
+        <div class="plan-highlight" data-i18n="unlimitedGuestsHighlight">🎈 ללא הגבלת כמות אורחים</div>
         <a class="plan-cta" href="/register.html" data-i18n="planCta">התחילו עכשיו</a>
         <ul class="plan-features">
           <li><span class="check">✓</span> <span data-i18n="feat1">דף RSVP בעברית, מותאם לנייד</span></li>
@@ -269,26 +253,16 @@
       <div class="faq-item">
         <div class="faq-q" data-i18n="faq6q">מה מדיניות ההחזרות?</div>
         <div class="faq-a">
-          <span data-i18n="faq6a">ניתן לקבל החזר מלא תוך 14 ימים מהרכישה, בתנאי שטרם נאספו אישורי הגעה.
-          לפרטים ראו את</span> <a href="/refund.html" data-i18n="faq6link">מדיניות ההחזרות</a>.
+          <span data-i18n="faq6a">החזר כספי מלא תוך 14 יום מהרכישה, כל עוד לא התקבל אף אישור הגעה והאירוע טרם התקיים. לפרטים:</span> <a href="/refund.html" data-i18n="faq6link">מדיניות ההחזרות</a>.
         </div>
       </div>
 
       <div class="faq-item">
         <div class="faq-q" data-i18n="faq7q">יש שאלה אחרת?</div>
         <div class="faq-a">
-          <span data-i18n="faq7a">פנו אלינו:</span> <a href="mailto:kupernetservice@gmail.com">kupernetservice@gmail.com</a> <span data-i18n="faq7a2">— נחזיר תוך יום עסקים.</span>
+          <span data-i18n="faq7a">פנו אלינו:</span> <a href="mailto:kupernetservice@gmail.com">kupernetservice@gmail.com</a> · <a href="https://wa.me/972546787932?text=%D7%94%D7%99%D7%99%2C%20%D7%99%D7%A9%20%D7%9C%D7%99%20%D7%A9%D7%90%D7%9C%D7%94%20%D7%A2%D7%9C%20%D7%90%D7%99%D7%A9%D7%95%D7%A8%D7%99%20%D7%94%D7%94%D7%92%D7%A2%D7%94%20%D7%91%D7%90%D7%AA%D7%A8%20rsvp.kupernet.com" target="_blank" rel="noopener" data-i18n="waContact">💬 וואטסאפ: 054-6787932</a> <span data-i18n="faq7a2">— נחזיר תוך יום עסקים.</span>
         </div>
       </div>
-    </div>
-
-    <div class="guarantee">
-      <h3 data-i18n="guaranteeTitle">🛡️ 14 ימי ניסיון ללא סיכון</h3>
-      <p>
-        <span data-i18n="guaranteeText">אם לא אספתם עדיין אישורי הגעה תוך 14 יום מהרכישה —
-        נחזיר את מלוא התשלום ללא שאלות.</span>
-        <br/><span data-i18n="guaranteeContact">פנו ל-</span><a href="mailto:kupernetservice@gmail.com">kupernetservice@gmail.com</a>.
-      </p>
     </div>
 
   </div>
@@ -298,7 +272,8 @@
     <a href="/tos.html" style="color:#9ca3af" data-i18n="footTos">תנאי שימוש</a> ·
     <a href="/privacy.html" style="color:#9ca3af" data-i18n="footPrivacy">פרטיות</a> ·
     <a href="/refund.html" style="color:#9ca3af" data-i18n="footRefund">החזרות</a> ·
-    <a href="mailto:kupernetservice@gmail.com" style="color:#9ca3af" data-i18n="footContact">צור קשר: kupernetservice@gmail.com</a>
+    <a href="mailto:kupernetservice@gmail.com" style="color:#9ca3af" data-i18n="footContact">צור קשר: kupernetservice@gmail.com</a> ·
+    <a href="https://wa.me/972546787932?text=%D7%94%D7%99%D7%99%2C%20%D7%99%D7%A9%20%D7%9C%D7%99%20%D7%A9%D7%90%D7%9C%D7%94%20%D7%A2%D7%9C%20%D7%90%D7%99%D7%A9%D7%95%D7%A8%D7%99%20%D7%94%D7%94%D7%92%D7%A2%D7%94%20%D7%91%D7%90%D7%AA%D7%A8%20rsvp.kupernet.com" target="_blank" rel="noopener" style="color:#9ca3af" data-i18n="waContact">💬 וואטסאפ: 054-6787932</a>
   </footer>
 </body>
 </html>

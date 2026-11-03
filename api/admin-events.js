@@ -53,7 +53,7 @@ module.exports = async (req, res) => {
     return res.status(200).end(pdfBuffer);
   }
 
-  // POST ?sweep=1 — manually send the abandoned-checkout report now (ignores grace period)
+  // POST ?sweep=1 — manually send the abandoned-checkout report now (shorter grace, 10-minute minimum)
   if (req.method === "POST" && req.query.sweep) {
     const count = await sweepAbandonedCheckouts({ ignoreGrace: true });
     return res.status(200).json({ sent: count });
@@ -92,7 +92,15 @@ module.exports = async (req, res) => {
       rsvps: undefined,
     }));
 
-    return res.status(200).json({ events: rows });
+    // Confirmed checkout abandonments in the last 30 days (anonymous log, see _sweep.js)
+    const thirtyDaysAgo = new Date(Date.now() - 30 * 24 * 60 * 60 * 1000).toISOString();
+    const { count: abandonedLast30Days, error: abErr } = await supabase
+      .from("checkout_abandonments")
+      .select("*", { count: "exact", head: true })
+      .gte("abandoned_at", thirtyDaysAgo);
+    if (abErr) console.error("checkout_abandonments count error:", abErr.code || "", abErr.message || abErr);
+
+    return res.status(200).json({ events: rows, abandonedLast30Days: abErr ? null : (abandonedLast30Days || 0) });
   }
 
   // DELETE ?slug=xxx — remove event and its RSVPs

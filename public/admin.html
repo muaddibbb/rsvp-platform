@@ -74,6 +74,7 @@
       text-align: right; font-weight: 600; white-space: nowrap;
     }
     td { padding: 12px 14px; border-bottom: 1px solid #f3f4f6; vertical-align: middle; }
+    #eventsBody td.cell-email { min-width: 23ch; max-width: 23ch; overflow-wrap: anywhere; word-break: break-word; } /* B-7: a long e-mail wraps inside its own cell; scoped to the e-mail column so event/customer columns keep their normal width */
     tr:last-child td { border-bottom: none; }
     tr:hover td { background: #fafafa; }
 
@@ -103,6 +104,10 @@
       font-size: .7rem; font-weight: 700; background: #fee2e2; color: #991b1b;
       margin-inline-start: 6px;
     }
+    .badge-ended {
+      display: inline-block; padding: 2px 8px; border-radius: 12px; margin-top: 3px;
+      font-size: .7rem; font-weight: 700; background: #e5e7eb; color: #374151;
+    }
 
     .pass-cell { font-family: monospace; font-size: .85rem; letter-spacing: .05em; color: var(--navy); }
     .empty-state { text-align: center; padding: 48px; color: var(--text-muted); }
@@ -131,13 +136,17 @@
     html.dark .stat-lbl,
     html.dark .empty-state,
     html.dark .loading-row td { color: #94a3b8; }
+    html.dark .badge-ended { background: #334155; color: #cbd5e1; }
   </style>
 </head>
 <body>
 
 <nav class="landing-nav">
   <a class="logo" href="/">🎉 אישורי הגעה</a>
-  <span id="adminBadge" style="display:none;background:var(--gold);color:#fff;padding:4px 12px;border-radius:20px;font-size:.8rem;font-weight:700">Super Admin</span>
+  <div class="nav-tools">
+    <span id="adminBadge" style="display:none;background:var(--gold);color:#fff;padding:4px 12px;border-radius:20px;font-size:.8rem;font-weight:700">Super Admin</span>
+    <button class="tool-btn" id="themeDarkBtn" onclick="toggleTheme()">🌙</button>
+  </div>
 </nav>
 
 <!-- Login -->
@@ -175,6 +184,10 @@
     <div class="stat-card">
       <div class="stat-num" id="statRevenue">—</div>
       <div class="stat-lbl">הכנסות (₪99 לאירוע)</div>
+    </div>
+    <div class="stat-card">
+      <div class="stat-num" id="statAbandoned">—</div>
+      <div class="stat-lbl">נטישות תשלום (30 יום)</div>
     </div>
   </div>
 
@@ -218,8 +231,32 @@
     bachelorette:"מסיבת רווקות", henna:"חינה", family:"אירוע משפחתי", other:"אחר",
   };
 
+  // Today's date in Israel as "YYYY-MM-DD". gregorian_date is a date column ("YYYY-MM-DD"),
+  // so a plain string comparison is exact. Independent of the browser's own time zone.
+  function israelToday(now = Date.now()) {
+    const parts = new Intl.DateTimeFormat("en-CA", {
+      timeZone: "Asia/Jerusalem", year: "numeric", month: "2-digit", day: "2-digit",
+    }).formatToParts(new Date(now));
+    const get = t => parts.find(p => p.type === t).value;
+    return `${get("year")}-${get("month")}-${get("day")}`;
+  }
+
+  // Ended = the event date is before today in Israel. An event dated today is NOT ended.
+  // Anything that is not a "YYYY-MM-DD" string (null, "", a malformed value) is not ended.
+  function isEnded(e, today = israelToday()) {
+    const d = e && e.gregorian_date;
+    return typeof d === "string" && /^\d{4}-\d{2}-\d{2}$/.test(d) && d < today;
+  }
+
+  // The reply count the table shows: the live count while replies exist, the snapshot after closing.
+  // Must stay identical to the condition inside renderTable's countCell (see 4.4).
+  function responsesOf(e) {
+    return (e.rsvp_count > 0 || e.final_responses == null) ? (e.rsvp_count || 0) : e.final_responses;
+  }
+
   let token = sessionStorage.getItem("admin_token") || "";
   let allEvents = [];
+  let abandonedLast30Days = null;
 
   if (token) attemptLoad();
 
@@ -239,6 +276,7 @@
     sessionStorage.setItem("admin_token", token);
     const data = await res.json();
     allEvents = data.events || [];
+    abandonedLast30Days = data.abandonedLast30Days ?? null;
     showAdmin();
   }
 
@@ -249,6 +287,7 @@
     if (!res.ok) { token = ""; sessionStorage.removeItem("admin_token"); return; }
     const data = await res.json();
     allEvents = data.events || [];
+    abandonedLast30Days = data.abandonedLast30Days ?? null;
     showAdmin();
   }
 
@@ -269,13 +308,19 @@
   }
 
   function updateStats() {
-    const totalRsvps = allEvents.reduce((s, e) => s + (e.rsvp_count || 0), 0);
-    document.getElementById("statEvents").textContent  = allEvents.length;
-    document.getElementById("statRsvps").textContent   = totalRsvps;
-    document.getElementById("statRevenue").textContent = `₪${allEvents.length * 99}`;
+    const today       = israelToday();
+    const totalRsvps  = allEvents.reduce((s, e) => s + responsesOf(e), 0);
+    const activeCount = allEvents.filter(e => e.active !== false && !isEnded(e, today)).length;
+    document.getElementById("statEvents").textContent    = activeCount;
+    document.getElementById("statRsvps").textContent     = totalRsvps;
+    document.getElementById("statRevenue").textContent   = `₪${allEvents.length * 99}`;
+    const ab = document.getElementById("statAbandoned");
+    ab.textContent = abandonedLast30Days == null ? "—" : abandonedLast30Days;
+    ab.title = abandonedLast30Days == null ? "לא ניתן לקרוא את טבלת checkout_abandonments (ייתכן שלא נוצרה)" : "";
   }
 
   function renderTable() {
+    const today = israelToday();
     const q = (document.getElementById("searchInput").value || "").toLowerCase();
     const filtered = allEvents.filter(e =>
       !q ||
@@ -301,6 +346,7 @@
       const label = EVENT_LABELS[e.event_type] || e.event_type;
 
       const inactive = e.active === false;
+      const ended = isEnded(e, today);
       // Live count while active; snapshot (final_responses/guests) for closed past events.
       const countCell = (e.rsvp_count > 0 || e.final_responses == null)
         ? `${e.rsvp_count}`
@@ -309,9 +355,9 @@
         <td style="color:var(--text-muted)">${i + 1}</td>
         <td><strong>${e.event_name || "—"}</strong>${inactive ? '<span class="badge-inactive">מושבת</span>' : ""}<br/><span style="font-size:.78rem;color:var(--text-muted)">${e.slug}</span></td>
         <td><span class="badge">${emoji} ${label}</span></td>
-        <td style="white-space:nowrap">${date}</td>
+        <td style="white-space:nowrap">${date}${ended ? '<br/><span class="badge-ended">הסתיים · Ended</span>' : ""}</td>
         <td>${e.customer_name || "—"}</td>
-        <td style="font-size:.82rem;direction:ltr;text-align:right">${e.customer_email || "—"}</td>
+        <td class="cell-email" style="font-size:.82rem;direction:ltr;text-align:right">${e.customer_email || "—"}</td>
         <td class="rsvp-count" style="text-align:center">${countCell}</td>
         <td><span class="pass-cell" data-pass="${e.dashboard_password || '—'}">••••••</span></td>
         <td style="white-space:nowrap;font-size:.82rem">${registered}</td>
@@ -336,6 +382,7 @@
     if (!res.ok) { alert("שגיאה בעדכון הסטטוס"); return; }
     const ev = allEvents.find(e => e.slug === slug);
     if (ev) ev.active = activate;
+    updateStats();
     renderTable();
   }
 

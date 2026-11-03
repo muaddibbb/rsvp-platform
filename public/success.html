@@ -4,39 +4,47 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <link rel="icon" href="/favicon.svg" type="image/svg+xml" />
-  <title>תשלום התקבל | אישורי הגעה</title>
+  <title>תודה | אישורי הגעה</title>
   <link rel="stylesheet" href="style.css" />
   <script>
     window.PAGE_I18N = {
       he: {
-        pageTitle: "תשלום התקבל | אישורי הגעה",
+        pageTitle: "תודה | אישורי הגעה",
         logo: "אישורי הגעה",
-        readyTitle: "האירוע מוכן!",
+        readyTitle: "תודה! האירוע שלך מוכן 🎉",
         readySub: "שלחנו אימייל עם כל הפרטים — קישור האורחים, קישור ממשק ניהול הזמנה וסיסמת הניהול. בדוק את תיבת הדואר (ואולי תיקיית ספאם).",
         rsvpLink: "🔗 קישור לאורחים (לשתף בוואטסאפ)",
         dashLink: "📊 כניסה לממשק ניהול הזמנה",
         waLink: "💬 שתף ישירות בוואטסאפ",
         saveNote: "שמור את הקישורים — הם נשלחו גם לאימייל שלך",
         spamNote: "📬 אם אינך רואה את המייל, יתכן והוא הגיע לתיבת דואר הזבל שלך.",
-        errTitle: "התשלום התקבל",
-        errText: "האירוע שלך נוצר. בדוק את האימייל לקישורים.",
-        errContact: "אם לא קיבלת אימייל תוך כמה דקות, צור קשר עם",
+        checkingText: "מאמתים את התשלום…",
+        notFoundTitle: "לא מצאנו אירוע ששולם בקישור הזה",
+        notFoundText: "אם שילמת עכשיו, הקישורים נשלחו אליך באימייל. לא קיבלת? כתבו לנו בוואטסאפ ונבדוק.",
+        verifyErrTitle: "לא הצלחנו לאמת את התשלום כרגע",
+        verifyErrText: "זו כנראה תקלת רשת זמנית. נסו שוב בעוד רגע, ואל תשלמו שוב.",
+        retryBtn: "נסו שוב",
+        helpWa: "💬 עזרה בוואטסאפ: 054-6787932",
         credit: "נוצר ע״י Kupernet Systems",
         tosLink: "תנאי שימוש ופרטיות",
       },
       en: {
-        pageTitle: "Payment Received | RSVP",
+        pageTitle: "Thank you | RSVP",
         logo: "RSVP",
-        readyTitle: "Your event is ready!",
+        readyTitle: "Thank you! Your event is ready 🎉",
         readySub: "We've sent an email with all the details — the guest link, the management dashboard link and your dashboard password. Check your inbox (and maybe the spam folder).",
         rsvpLink: "🔗 Guest link (share on WhatsApp)",
         dashLink: "📊 Open management dashboard",
         waLink: "💬 Share directly on WhatsApp",
         saveNote: "Save these links — they were also sent to your email",
         spamNote: "📬 If you don't see the email, it may have landed in your spam folder.",
-        errTitle: "Payment received",
-        errText: "Your event has been created. Check your email for the links.",
-        errContact: "If you don't receive an email within a few minutes, contact",
+        checkingText: "Confirming your payment…",
+        notFoundTitle: "We couldn't find a paid event for this link",
+        notFoundText: "If you just paid, the links were sent to your email. Didn't get them? Message us on WhatsApp and we'll check.",
+        verifyErrTitle: "We couldn't confirm the payment right now",
+        verifyErrText: "This is probably a temporary network problem. Try again in a moment, and please don't pay again.",
+        retryBtn: "Try again",
+        helpWa: "💬 WhatsApp help: 054-6787932",
         credit: "Created by Kupernet Systems",
         tosLink: "Terms & Privacy",
       },
@@ -45,12 +53,16 @@
   <script src="/theme.js" defer></script>
   <style>
     .spam-note {
-      margin-top: 10px; color: var(--text-muted); font-size: .8rem;
+      margin-top: 10px; color: #4b5563; font-size: .8rem;
       background: #fdf5e0; border: 1px solid #e8d9a0; border-radius: 8px; padding: 10px 14px;
     }
     .err-title { color: var(--navy); margin-bottom: 8px; }
-    html.dark .spam-note { background: #3a3320; border-color: #5c512e; }
+    .event-name-line { font-weight: 700; font-size: 1.15rem; color: var(--navy); margin: -4px 0 12px; word-break: break-word; }
+    html.dark .spam-note { background: #3a3320; border-color: #5c512e; color: #cbd5e1; }
+    .help-mail a { color: var(--navy); text-decoration: underline; }
+    html.dark .help-mail a { color: #f0d080; }
     html.dark .err-title { color: #f0d080; }
+    html.dark .event-name-line { color: #f0d080; }
   </style>
   <!-- Google tag (gtag.js) -->
   <script async src="https://www.googletagmanager.com/gtag/js?id=AW-18293655759"></script>
@@ -69,10 +81,17 @@
 
   <div class="success-page">
 
+    <!-- Checking state (default): the server confirms the event is paid before anything else shows -->
+    <div id="checkingState" style="text-align:center">
+      <span class="spinner"></span>
+      <p data-i18n="checkingText">מאמתים את התשלום…</p>
+    </div>
+
     <!-- Success state -->
     <div id="successState" style="display:none;width:100%;max-width:480px">
-      <div class="big-check">🎉</div>
-      <h1 data-i18n="readyTitle">האירוע מוכן!</h1>
+      <div class="big-check">✅</div>
+      <h1 data-i18n="readyTitle">תודה! האירוע שלך מוכן 🎉</h1>
+      <p id="eventNameLine" class="event-name-line"></p>
       <p class="sub" data-i18n="readySub">
         שלחנו אימייל עם כל הפרטים — קישור האורחים, קישור ממשק ניהול הזמנה וסיסמת הניהול.
         בדוק את תיבת הדואר (ואולי תיקיית ספאם).
@@ -96,44 +115,91 @@
       <p class="spam-note" data-i18n="spamNote">
         📬 אם אינך רואה את המייל, יתכן והוא הגיע לתיבת דואר הזבל שלך.
       </p>
+      <a class="wa-inline" href="https://wa.me/972546787932?text=%D7%94%D7%99%D7%99%2C%20%D7%99%D7%A9%20%D7%9C%D7%99%20%D7%A9%D7%90%D7%9C%D7%94%20%D7%A2%D7%9C%20%D7%90%D7%99%D7%A9%D7%95%D7%A8%D7%99%20%D7%94%D7%94%D7%92%D7%A2%D7%94%20%D7%91%D7%90%D7%AA%D7%A8%20rsvp.kupernet.com" target="_blank" rel="noopener" data-i18n="helpWa">💬 עזרה בוואטסאפ: 054-6787932</a>
     </div>
 
-    <!-- Error state -->
-    <div id="errorState" style="display:none;text-align:center">
+    <!-- Not found: missing/malformed slug, or no paid event under it -->
+    <div id="notFoundState" style="display:none;text-align:center;max-width:480px">
       <div style="font-size:3rem;margin-bottom:12px">⚠️</div>
-      <h2 class="err-title" data-i18n="errTitle">התשלום התקבל</h2>
-      <p style="color:var(--text-muted)">
-        <span data-i18n="errText">האירוע שלך נוצר. בדוק את האימייל לקישורים.</span><br/>
-        <span data-i18n="errContact">אם לא קיבלת אימייל תוך כמה דקות, צור קשר עם</span> <a href="mailto:kupernetservice@gmail.com">kupernetservice@gmail.com</a>
-      </p>
+      <h2 class="err-title" data-i18n="notFoundTitle">לא מצאנו אירוע ששולם בקישור הזה</h2>
+      <p style="color:var(--text-muted)" data-i18n="notFoundText">אם שילמת עכשיו, הקישורים נשלחו אליך באימייל. לא קיבלת? כתבו לנו בוואטסאפ ונבדוק.</p>
+      <a class="wa-inline" href="https://wa.me/972546787932?text=%D7%94%D7%99%D7%99%2C%20%D7%99%D7%A9%20%D7%9C%D7%99%20%D7%A9%D7%90%D7%9C%D7%94%20%D7%A2%D7%9C%20%D7%90%D7%99%D7%A9%D7%95%D7%A8%D7%99%20%D7%94%D7%94%D7%92%D7%A2%D7%94%20%D7%91%D7%90%D7%AA%D7%A8%20rsvp.kupernet.com" target="_blank" rel="noopener" data-i18n="helpWa">💬 עזרה בוואטסאפ: 054-6787932</a>
+      <p class="help-mail" style="margin-top:10px"><a href="mailto:kupernetservice@gmail.com">kupernetservice@gmail.com</a></p>
+    </div>
+
+    <!-- Could not verify (network / server error): never counted as a sale -->
+    <div id="verifyErrorState" style="display:none;text-align:center;max-width:480px">
+      <div style="font-size:3rem;margin-bottom:12px">⚠️</div>
+      <h2 class="err-title" data-i18n="verifyErrTitle">לא הצלחנו לאמת את התשלום כרגע</h2>
+      <p style="color:var(--text-muted)" data-i18n="verifyErrText">זו כנראה תקלת רשת זמנית. נסו שוב בעוד רגע, ואל תשלמו שוב.</p>
+      <button id="retryBtn" class="submit-btn" data-i18n="retryBtn">נסו שוב</button>
+      <a class="wa-inline" href="https://wa.me/972546787932?text=%D7%94%D7%99%D7%99%2C%20%D7%99%D7%A9%20%D7%9C%D7%99%20%D7%A9%D7%90%D7%9C%D7%94%20%D7%A2%D7%9C%20%D7%90%D7%99%D7%A9%D7%95%D7%A8%D7%99%20%D7%94%D7%94%D7%92%D7%A2%D7%94%20%D7%91%D7%90%D7%AA%D7%A8%20rsvp.kupernet.com" target="_blank" rel="noopener" data-i18n="helpWa">💬 עזרה בוואטסאפ: 054-6787932</a>
+      <p class="help-mail" style="margin-top:10px"><a href="mailto:kupernetservice@gmail.com">kupernetservice@gmail.com</a></p>
     </div>
   </div>
 
-  <script>
+  <script id="success-logic">
+    // No t()/getLang() here: theme.js is deferred and fills the texts from data-i18n later.
     const BASE   = window.location.origin;
     const params = new URLSearchParams(window.location.search);
-    const slug   = params.get("slug");
+    const slug   = params.get("slug") || "";
+    const STATES = ["checkingState", "successState", "notFoundState", "verifyErrorState"];
 
-    if (!slug) {
-      document.getElementById("errorState").style.display = "block";
-    } else {
+    function show(id) {
+      STATES.forEach(s => { document.getElementById(s).style.display = s === id ? "block" : "none"; });
+    }
+
+    // Tab gate: this browser tab must have just paid (marker written by register/dashboard onApprove).
+    function paidInThisTab() {
+      try {
+        const m = JSON.parse(sessionStorage.getItem("rsvp_paid"));
+        const age = Date.now() - m.t;
+        return m.slug === slug && age > -60000 && age < 30 * 60 * 1000;
+      } catch (e) { return false; }
+    }
+
+    async function verify() {
+      // Created slugs are always [a-z0-9-]; anything else never reaches the server.
+      if (!/^[a-z0-9-]{1,100}$/.test(slug)) { show("notFoundState"); return; }
+      show("checkingState");
+
+      // Server gate: only an event that is really paid counts. GET with no body, so aborting is harmless.
+      const ctrl  = new AbortController();
+      const timer = setTimeout(() => ctrl.abort(), 8000);
+      let res, ev;
+      try {
+        res = await fetch("/api/event/" + encodeURIComponent(slug), { signal: ctrl.signal, cache: "no-store" });
+        if (res.status === 200) ev = await res.json();
+      } catch (e) { // network error, abort, or a 200 whose body is not JSON
+        show("verifyErrorState"); return;
+      } finally { clearTimeout(timer); }
+      if (res.status === 404) { show("notFoundState"); return; }
+      if (res.status !== 200) { show("verifyErrorState"); return; }
+
       const rsvpUrl = `${BASE}/rsvp/${slug}`;
       const dashUrl = `${BASE}/dashboard/${slug}`;
       const waText  = encodeURIComponent(`אתם מוזמנים!\nלאישור הגעה: ${rsvpUrl}`);
 
-      document.getElementById("rsvpLinkBtn").href     = rsvpUrl;
+      document.getElementById("rsvpLinkBtn").href      = rsvpUrl;
       document.getElementById("dashboardLinkBtn").href = dashUrl;
       document.getElementById("waBtn").href            = `https://wa.me/?text=${waText}`;
-      document.getElementById("successState").style.display = "block";
+      document.getElementById("eventNameLine").textContent = (ev && ev.event_name) || "";
+      show("successState");
 
-      // Google Ads purchase conversion (slug as transaction_id dedupes refreshes)
-      gtag('event', 'conversion', {
-        'send_to': 'AW-18293655759/t6piCIOmuMkcEM-RjJNE',
-        'value': 99.0,
-        'currency': 'ILS',
-        'transaction_id': slug,
-      });
+      if (paidInThisTab()) {
+        // Google Ads purchase conversion (slug as transaction_id dedupes refreshes)
+        gtag('event', 'conversion', {
+          'send_to': 'AW-18293655759/t6piCIOmuMkcEM-RjJNE',
+          'value': 99.0,
+          'currency': 'ILS',
+          'transaction_id': slug,
+        });
+        try { sessionStorage.removeItem("rsvp_paid"); } catch (e) { /* ignore */ }
+      }
     }
+
+    document.getElementById("retryBtn").onclick = () => { window.successReady = verify(); };
+    window.successReady = verify();
   </script>
 
   <footer style="text-align:center;padding:24px;color:#9ca3af;font-size:.8rem;margin-top:32px">

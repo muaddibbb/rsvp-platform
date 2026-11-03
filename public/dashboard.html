@@ -16,6 +16,9 @@
         passwordPh: "הזן סיסמה",
         loginBtn: "כניסה",
         loginErr: "סיסמה שגויה",
+        loginHint: "הסיסמה נשלחה אליך באימייל \"הטיוטה שלך נשמרה\" או באימייל אישור התשלום.",
+        loginHelpWa: "לא מוצאים? כתבו לנו בוואטסאפ",
+        notFound: "האירוע לא נמצא",
         dashSub: "רשימת אישורי הגעה",
         refreshBtn: "🔄 רענן",
         exportBtn: "📥 ייצא CSV",
@@ -52,7 +55,18 @@
         serverErr: "שגיאת שרת",
         errPrefix: "שגיאה: ",
         loadError: "שגיאה בטעינת הנתונים",
+        trustSecure: "🔒 תשלום מאובטח דרך PayPal",
+        trustRefund: "↩️ החזר כספי מלא תוך 14 יום מהרכישה, כל עוד לא התקבל אף אישור הגעה והאירוע טרם התקיים.",
+        trustSupport: "💬 תמיכה בוואטסאפ: 054-6787932",
         payBlocked: "לא ניתן לטעון את כפתור התשלום. ייתכן שהחיבור שלך (רשת / VPN / חוסם פרסומות) חוסם את paypal.com. נסה רשת אחרת.",
+        payConfirming: "מאשרים את התשלום מול PayPal… זה לוקח כמה שניות. נא לא לסגור את הדף ולא ללחוץ שוב על תשלום.",
+        paySlow: "עדיין מאשרים — לפעמים זה לוקח עד דקה. נא להישאר בדף ולא לשלם שוב.",
+        payConfirmed: "✅ התשלום אושר! מעבירים אותך לדף האירוע…",
+        payNotCompleted: "התשלום לא הושלם. אפשר לנסות שוב. אם נראה לך שבוצע חיוב, כתבו לנו בוואטסאפ.",
+        payUnknown: "לא קיבלנו אישור סופי מהשרת, וייתכן שהתשלום כן עבר. נא לא לשלם שוב. בדקו את האימייל בעוד כמה דקות, או שלחו לנו בוואטסאפ את מספר ההזמנה:",
+        payInProgress: "התשלום הקודם עדיין בבדיקה",
+        waPaidNoConfirm: "היי, שילמתי באתר ולא קיבלתי אישור. מספר הזמנה:",
+        waSend: "💬 שליחה בוואטסאפ: 054-6787932",
         publishTitle: "האירוע שלך מוכן לפרסום",
         publishSub: "כדי לקבל קישור לשליחה לאורחים ולהתחיל לאסוף אישורי הגעה, יש להשלים תשלום חד-פעמי של ₪99.",
         publishSubtitle: "האירוע עדיין לא פורסם",
@@ -78,6 +92,9 @@
         passwordPh: "Enter password",
         loginBtn: "Sign in",
         loginErr: "Incorrect password",
+        loginHint: "Your password is in the email titled \"הטיוטה שלך נשמרה\" (draft saved) or in your payment confirmation email.",
+        loginHelpWa: "Can't find it? Message us on WhatsApp",
+        notFound: "Event not found",
         dashSub: "RSVP list",
         refreshBtn: "🔄 Refresh",
         exportBtn: "📥 Export CSV",
@@ -114,7 +131,18 @@
         serverErr: "Server error",
         errPrefix: "Error: ",
         loadError: "Error loading data",
+        trustSecure: "🔒 Secure payment via PayPal",
+        trustRefund: "↩️ Full refund within 14 days of purchase, as long as no RSVP has been received and the event hasn't taken place yet.",
+        trustSupport: "💬 WhatsApp support: 054-6787932",
         payBlocked: "Couldn't load the payment button. Your connection (network / VPN / ad-blocker) may be blocking paypal.com. Try another network.",
+        payConfirming: "Confirming your payment with PayPal… This takes a few seconds. Please don't close this page or press pay again.",
+        paySlow: "Still confirming — sometimes this takes up to a minute. Please stay on this page and don't pay again.",
+        payConfirmed: "✅ Payment confirmed! Taking you to your event…",
+        payNotCompleted: "The payment was not completed. You can try again. If you think you were charged, message us on WhatsApp.",
+        payUnknown: "We didn't get a final confirmation from our server, and the payment may have gone through. Please don't pay again. Check your email in a few minutes, or send us your order number on WhatsApp:",
+        payInProgress: "Your previous payment is still being confirmed",
+        waPaidNoConfirm: "Hi, I paid on the site and didn't get a confirmation. Order number:",
+        waSend: "💬 Send on WhatsApp: 054-6787932",
         publishTitle: "Your event is ready to publish",
         publishSub: "To get a link to share with your guests and start collecting RSVPs, complete a one-time ₪99 payment.",
         publishSubtitle: "This event isn't published yet",
@@ -143,6 +171,8 @@
     .modal { background:#fff;border-radius:16px;padding:32px;max-width:480px;width:90%;max-height:90vh;overflow-y:auto;direction:rtl; }
     .modal h2 { margin:0 0 20px;color:#1a2744;font-size:1.2rem; }
     .modal .form-group { margin-bottom:14px; }
+    .login-hint { font-size: .82rem; color: var(--text-muted); margin: -4px 0 14px; line-height: 1.6; }
+    .login-hint a { color: var(--gold); }
     .modal label { display:block;font-size:.85rem;color:#6b7280;margin-bottom:4px; }
     .modal input, .modal textarea { width:100%;padding:8px 12px;border:1px solid #e5e7eb;border-radius:8px;font-size:.95rem;box-sizing:border-box;font-family:inherit; }
     .modal textarea { resize:vertical;min-height:72px; }
@@ -179,6 +209,7 @@
         <input type="password" id="password" placeholder="הזן סיסמה" data-i18n-ph="passwordPh"
                onkeydown="if(event.key==='Enter') login()" />
       </div>
+      <p class="login-hint"><span data-i18n="loginHint">הסיסמה נשלחה אליך באימייל "הטיוטה שלך נשמרה" או באימייל אישור התשלום.</span> <a href="https://wa.me/972546787932?text=%D7%94%D7%99%D7%99%2C%20%D7%99%D7%A9%20%D7%9C%D7%99%20%D7%A9%D7%90%D7%9C%D7%94%20%D7%A2%D7%9C%20%D7%90%D7%99%D7%A9%D7%95%D7%A8%D7%99%20%D7%94%D7%94%D7%92%D7%A2%D7%94%20%D7%91%D7%90%D7%AA%D7%A8%20rsvp.kupernet.com" target="_blank" rel="noopener" data-i18n="loginHelpWa">לא מוצאים? כתבו לנו בוואטסאפ</a></p>
       <button class="submit-btn" onclick="login()" data-i18n="loginBtn">כניסה</button>
       <div class="error-banner" id="loginError"
            style="display:none;position:static;margin-top:12px;border-radius:8px;transform:none;left:auto;bottom:auto"
@@ -209,12 +240,13 @@
         <div style="font-size:2.6rem">🚀</div>
         <h2 data-i18n="publishTitle" style="color:var(--navy);margin:10px 0 6px">האירוע שלך מוכן לפרסום</h2>
         <p data-i18n="publishSub" style="color:var(--text-muted);line-height:1.7;margin-bottom:8px">כדי לקבל קישור לשליחה לאורחים ולהתחיל לאסוף אישורי הגעה, יש להשלים תשלום חד-פעמי של ₪99.</p>
+        <div id="dashPayStatus" class="pay-status" role="status" aria-live="polite"></div>
         <div id="dash-paypal" style="margin-top:16px"></div>
         <div id="dashPayError" style="display:none;color:var(--red);margin-top:10px;font-size:.9rem"></div>
         <div class="trust-row">
           <span data-i18n="trustSecure">🔒 תשלום מאובטח דרך PayPal</span>
-          <span data-i18n="trustRefund">↩️ החזר כספי מלא תוך 14 יום</span>
-          <span data-i18n="trustSupport">✉️ תמיכה: kupernetservice@gmail.com</span>
+          <a href="/refund.html" target="_blank" rel="noopener" data-i18n="trustRefund">↩️ החזר כספי מלא תוך 14 יום מהרכישה, כל עוד לא התקבל אף אישור הגעה והאירוע טרם התקיים.</a>
+          <a href="https://wa.me/972546787932?text=%D7%94%D7%99%D7%99%2C%20%D7%99%D7%A9%20%D7%9C%D7%99%20%D7%A9%D7%90%D7%9C%D7%94%20%D7%A2%D7%9C%20%D7%90%D7%99%D7%A9%D7%95%D7%A8%D7%99%20%D7%94%D7%94%D7%92%D7%A2%D7%94%20%D7%91%D7%90%D7%AA%D7%A8%20rsvp.kupernet.com" target="_blank" rel="noopener" data-i18n="trustSupport">💬 תמיכה בוואטסאפ: 054-6787932</a>
         </div>
       </div>
     </div>
@@ -344,6 +376,12 @@
           btn.textContent = t("loginBtn");
           return;
         }
+        if (res.status === 404) {
+          alert(t("errPrefix") + t("notFound"));
+          btn.disabled = false;
+          btn.textContent = t("loginBtn");
+          return;
+        }
         if (!res.ok) throw new Error(t("serverErr"));
 
         storedPassword = pw;
@@ -384,8 +422,62 @@
       processData(data);
     }
 
+    // Status box under the PayPal button after approval. Never throws: a UI error must not stop the capture.
+    let lastPay = null; // last state shown, re-rendered on a language switch (J2-07)
+    function setPayState(kind, orderID, detail) {
+      try {
+        lastPay = { kind, orderID, detail };
+        const el = document.getElementById("dashPayStatus");
+        const box = document.getElementById("dash-paypal");
+        const wasShown = el.className.indexOf("show") !== -1;
+        el.textContent = "";
+        if (kind === "confirming" || kind === "slow") {
+          el.textContent = t(kind === "slow" ? "paySlow" : "payConfirming");
+          const sp = document.createElement("span");
+          sp.className = "spinner";
+          el.appendChild(sp);
+          el.className = kind === "slow" ? "pay-status show warn" : "pay-status show";
+          box.classList.add("pay-busy");
+        } else if (kind === "confirmed") {
+          el.textContent = t("payConfirmed");
+          el.className = "pay-status show ok";
+          box.classList.add("pay-busy");
+        } else if (kind === "notCompleted") {
+          el.textContent = t("payNotCompleted");
+          // J2-06: show the server's specific reason (e.g. "לא ניתן לבחור תאריך שעבר"), as text only.
+          // The generic "התשלום לא הושלם" (paypal-capture.js:134) repeats payNotCompleted and is not shown.
+          const why = typeof detail === "string" ? detail.trim().slice(0, 200) : "";
+          if (why && why !== "התשלום לא הושלם") {
+            el.appendChild(document.createElement("br"));
+            const r = document.createElement("span");
+            r.className = "pay-reason";
+            r.textContent = why;
+            el.appendChild(r);
+          }
+          el.className = "pay-status show warn";
+          box.classList.remove("pay-busy");
+        } else if (kind === "unknown") {
+          const id = orderID || "";
+          el.textContent = t("payUnknown") + " " + id;
+          el.appendChild(document.createElement("br"));
+          const a = document.createElement("a");
+          a.href = "https://wa.me/972546787932?text=" + encodeURIComponent(t("waPaidNoConfirm") + " " + id);
+          a.target = "_blank";
+          a.rel = "noopener";
+          a.textContent = t("waSend");
+          el.appendChild(a);
+          el.className = "pay-status show warn";
+          box.classList.add("pay-busy");
+        }
+        if (!wasShown && el.scrollIntoView) el.scrollIntoView({ block: "center" });
+      } catch (e) { console.error("setPayState:", e); }
+    }
+    // J2-07: the status box follows a language switch (same state, new language; no side effect on the payment).
+    window.addEventListener("langchange", () => { if (lastPay) setPayState(lastPay.kind, lastPay.orderID, lastPay.detail); });
+
     // PayPal "publish" button on the dashboard — lets owners return via their emailed link and pay.
     let dashPaypalInit = false;
+    let captureInFlight = false;
     async function initDashPayPal() {
       if (dashPaypalInit) return;
       const errEl = document.getElementById("dashPayError");
@@ -406,28 +498,49 @@
         paypal.Buttons({
           style: { layout: "vertical", color: "gold", shape: "rect", label: "pay" },
           createOrder: async () => {
+            if (captureInFlight) throw new Error(t("payInProgress"));
             const res = await fetch("/api/paypal-create-order", { method: "POST" });
             const d = await res.json();
             if (!d.id) throw new Error(d.error || "order failed");
             return d.id;
           },
           onApprove: async (data) => {
-            errEl.style.display = "none";
+            captureInFlight = true;
+            let slowTimer = null;
+            const warnLeave = (e) => { e.preventDefault(); e.returnValue = ""; };
             try {
-              const res = await fetch("/api/paypal-capture", {
+              errEl.style.display = "none";
+              setPayState("confirming");
+              slowTimer = setTimeout(() => setPayState("slow"), 10000);
+              window.addEventListener("beforeunload", warnLeave);
+            } catch (e) { /* UI only: never block the capture */ }
+            // HTTP contract for the security cycle: 400 means nothing was captured (before the capture,
+            // or the capture itself failed). If J-02/J-03 add checks after the capture they must NOT answer 400.
+            let res, json;
+            try {
+              res = await fetch("/api/paypal-capture", {
                 method: "POST",
                 headers: { "Content-Type": "application/json" },
                 body: JSON.stringify({ orderID: data.orderID, slug }),
               });
-              const json = await res.json();
-              if (!res.ok || !json.slug) throw new Error(json.error || t("serverErr"));
-              window.location.href = `/success?slug=${json.slug}`;
-            } catch (e) {
-              errEl.textContent = t("errPrefix") + e.message;
-              errEl.style.display = "block";
+              json = await res.json();
+            } catch (e) { // network error, platform 504, non-JSON body
+              clearTimeout(slowTimer); window.removeEventListener("beforeunload", warnLeave);
+              setPayState("unknown", data.orderID); return; // money may have been taken: buttons stay disabled
+            }
+            clearTimeout(slowTimer); window.removeEventListener("beforeunload", warnLeave);
+            if (res.status === 200 && json && json.slug) {
+              setPayState("confirmed");
+              try { sessionStorage.setItem("rsvp_paid", JSON.stringify({ slug: json.slug, t: Date.now() })); } catch (e) { /* storage blocked: success page shows links but counts nothing */ }
+              window.location.href = "/success?slug=" + encodeURIComponent(json.slug);
+            } else if (res.status === 400) {
+              captureInFlight = false;
+              setPayState("notCompleted", null, json && json.error);
+            } else { // 404 after capture, 500, anything else, 200 without slug
+              setPayState("unknown", data.orderID);
             }
           },
-          onError: () => { errEl.textContent = t("payBlocked"); errEl.style.display = "block"; },
+          onError: () => { if (captureInFlight) return; errEl.textContent = t("payBlocked"); errEl.style.display = "block"; },
         }).render("#dash-paypal").catch(() => { errEl.textContent = t("payBlocked"); errEl.style.display = "block"; });
       } catch (e) {
         errEl.textContent = t("payBlocked");
