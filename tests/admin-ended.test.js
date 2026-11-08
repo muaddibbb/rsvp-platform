@@ -193,7 +193,7 @@ const stat = (h, id) => String(h.getEl(id).textContent);
     await load();
     const row = rowFor(h, "past-active");
     assert.ok(row.startsWith('"">'));
-    for (const fn of ["downloadReceipt", "toggleActive", "deleteEvent"]) assert.ok(row.includes(fn), fn);
+    for (const act of ["receipt", "refund", "toggle", "delete"]) assert.ok(row.includes(`data-act="${act}"`), act);
   });
 
   test("the count cell shows the live count, or the snapshot for a closed event", async () => {
@@ -310,7 +310,7 @@ test("admin e-mail cell wraps long text, and only the e-mail cell (B-7)", () => 
   const wrapRules = [...HTML.matchAll(/([^{}]+)\{[^}]*overflow-wrap: anywhere[^}]*\}/g)].map((m) => m[1].trim().split("\n").pop().trim());
   assert.deepEqual(wrapRules.filter((s) => /\btd\b/.test(s)), ["#eventsBody td.cell-email"]);
   assert.ok(!/(^|[\s,])(#eventsBody\s+)?td\s*\{[^}]*(overflow-wrap|word-break)/m.test(HTML), "no generic td wrap rule");
-  assert.match(HTML, /<td class="cell-email" style="[^"]*">\$\{e\.customer_email/);
+  assert.match(HTML, /<td class="cell-email" style="[^"]*">\$\{esc\(e\.customer_email/);
 });
 
 test("the process zone is the zone under test", () => {

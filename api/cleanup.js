@@ -76,6 +76,13 @@ module.exports = async (req, res) => {
     const abandoned = await sweepAbandonedCheckouts();
     const thanked   = await sendPostEventThankYous();
     const { deletedDrafts, closed } = await closeOrPurgeOldEvents();
+    // Rate-limit counters older than a day are useless (the longest window is one day): purge them.
+    // The table exists only after sql/release-two-migration.sql; before that this just logs.
+    try {
+      const { error: rlErr } = await supabase.from("rate_limits").delete()
+        .lt("window_start", new Date(Date.now() - 24 * 60 * 60 * 1000).toISOString());
+      if (rlErr) console.error("rate_limits purge skipped:", rlErr.code || "", rlErr.message || "");
+    } catch (e) { console.error("rate_limits purge error:", e && e.message); }
     console.log(`Cleanup: thanked ${thanked}, closed ${closed} past event(s), deleted ${deletedDrafts} stale draft(s), notified ${abandoned} abandoned checkout(s)`);
     return res.status(200).json({ thanked, closed, deletedDrafts, abandoned });
   } catch (err) {

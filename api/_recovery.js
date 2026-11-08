@@ -3,10 +3,7 @@
 // No Supabase import so tests can load it offline.
 // Underscore-prefixed so Vercel does not treat it as its own serverless function.
 
-function esc(s) {
-  return String(s == null ? "" : s).replace(/[&<>"']/g, c =>
-    ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c]));
-}
+const { esc } = require("./_mail");   // the one escaper (re-exported below)
 
 // True when the buyer already paid an event after (or just before) starting this checkout.
 // 60 minutes of slack: errs toward not emailing someone who just paid.

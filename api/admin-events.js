@@ -1,6 +1,7 @@
 const { createClient } = require("@supabase/supabase-js");
 const crypto = require("crypto");
 const generateReceiptPDF = require("./_receipt");
+const { buildReceipt } = generateReceiptPDF;
 const { sweepAbandonedCheckouts, sendPostEventThankYous } = require("./_sweep");
 
 const supabase = createClient(process.env.SUPABASE_URL, process.env.SUPABASE_SERVICE_ROLE_KEY);
@@ -27,24 +28,22 @@ module.exports = async (req, res) => {
     const { slug } = req.query;
     if (!slug) return res.status(400).json({ error: "Missing slug" });
 
-    const { data: event } = await supabase
+    // Stored receipt number and refund date need the release-two migration; before it, retry with the old columns.
+    let { data: event, error: evErr } = await supabase
       .from("events")
-      .select("customer_name, paid_at")
+      .select("slug, customer_name, paid_at, receipt_number, refunded_at")
       .eq("slug", slug)
       .maybeSingle();
+    if (evErr && evErr.code === "42703") {
+      ({ data: event, error: evErr } = await supabase
+        .from("events").select("slug, customer_name, paid_at").eq("slug", slug).maybeSingle());
+    }
+    if (evErr) { console.error("receipt lookup error:", evErr); return res.status(500).json({ error: "Database error" }); }
     if (!event) return res.status(404).json({ error: "Event not found" });
+    if (!event.paid_at) return res.status(400).json({ error: "Event is not paid" });
 
-    const { count } = await supabase
-      .from("events")
-      .select("*", { count: "exact", head: true })
-      .lte("paid_at", event.paid_at);
-
-    const pdfBuffer = await generateReceiptPDF({
-      receiptNumber: count || 1,
-      customerName:  event.customer_name,
-      paymentDate:   new Date().toLocaleDateString("he-IL"),
-      isRefund,
-    });
+    // The same helper builds the e-mailed receipt (paypal-capture.js): number stored once, date = the original payment.
+    const pdfBuffer = await generateReceiptPDF(await buildReceipt(supabase, event, { isRefund }));
 
     const filename = `${isRefund ? "זיכוי" : "קבלה"}-${slug}.pdf`;
     res.setHeader("Content-Type", "application/pdf");
@@ -66,10 +65,29 @@ module.exports = async (req, res) => {
   }
 
   // PATCH ?slug=xxx {active: true/false} — activate/deactivate event
+  // PATCH ?slug=xxx {refunded: true/false} — mark / unmark the event as refunded (marker only: the PayPal
+  //   refund itself stays manual, and the event stays active). Needs the release-two migration.
   if (req.method === "PATCH") {
     const { slug } = req.query;
     if (!slug) return res.status(400).json({ error: "Missing slug" });
-    const active = !!(req.body || {}).active;
+    const body = req.body || {};
+
+    if ("refunded" in body) {
+      if (typeof body.refunded !== "boolean") return res.status(400).json({ error: "refunded must be true or false" });
+      const refunded_at = body.refunded ? new Date().toISOString() : null;
+      const { data: rows, error } = await supabase
+        .from("events").update({ refunded_at }).eq("slug", slug).not("paid_at", "is", null).select("id");
+      if (error && (error.code === "42703" || error.code === "PGRST204")) {
+        return res.status(409).json({ error: "Migration needed: run sql/release-two-migration.sql first" });
+      }
+      if (error) return res.status(500).json({ error: error.message });
+      if (!rows || rows.length === 0) return res.status(404).json({ error: "Event not found" });
+      return res.status(200).json({ slug, refunded: body.refunded, refunded_at });
+    }
+
+    // Never read a missing `active` as false (that would silently deactivate the event).
+    if (!("active" in body)) return res.status(400).json({ error: "Missing active or refunded" });
+    const active = !!body.active;
 
     const { error } = await supabase.from("events").update({ active }).eq("slug", slug);
     if (error) return res.status(500).json({ error: error.message });
@@ -78,11 +96,16 @@ module.exports = async (req, res) => {
 
   // GET — list all events with RSVP counts
   if (req.method === "GET") {
-    const { data: events, error } = await supabase
+    // Paid events only (hide unpaid drafts). receipt_number / refunded_at exist after the release-two
+    // migration; before it Postgres answers 42703 and the old column list is used instead.
+    const LIST_COLS = "id, slug, event_name, event_type, gregorian_date, event_time, location, customer_name, customer_email, dashboard_password, paid_at, active, final_responses, final_guests";
+    const listEvents = (cols) => supabase
       .from("events")
-      .select("id, slug, event_name, event_type, gregorian_date, event_time, location, customer_name, customer_email, dashboard_password, paid_at, active, final_responses, final_guests, rsvps(count)")
-      .not("paid_at", "is", null)   // paid events only — hide unpaid drafts
+      .select(`${cols}, rsvps(count)`)
+      .not("paid_at", "is", null)
       .order("paid_at", { ascending: false });
+    let { data: events, error } = await listEvents(`${LIST_COLS}, receipt_number, refunded_at`);
+    if (error && error.code === "42703") ({ data: events, error } = await listEvents(LIST_COLS));
 
     if (error) return res.status(500).json({ error: error.message });
 

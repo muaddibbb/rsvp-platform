@@ -499,7 +499,11 @@
           style: { layout: "vertical", color: "gold", shape: "rect", label: "pay" },
           createOrder: async () => {
             if (captureInFlight) throw new Error(t("payInProgress"));
-            const res = await fetch("/api/paypal-create-order", { method: "POST" });
+            const res = await fetch("/api/paypal-create-order", {
+              method: "POST",
+              headers: { "Content-Type": "application/json" },
+              body: JSON.stringify({ slug, password: storedPassword }),
+            });
             const d = await res.json();
             if (!d.id) throw new Error(d.error || "order failed");
             return d.id;

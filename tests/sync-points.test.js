@@ -26,6 +26,16 @@ test("the only amount actually charged is 99.00 ILS (api/paypal-create-order.js)
   assert.match(src, /currency_code:\s*"ILS"\s*,\s*value:\s*"99\.00"/);
 });
 
+test("api/_pay.js PRICE_ILS / CURRENCY equal the create-order literal and the admin revenue constant", () => {
+  const pay = read("api/_pay.js");
+  const price = Number(/const PRICE_ILS = (\d+);/.exec(pay)[1]);
+  assert.equal(price, 99);
+  assert.match(pay, /const CURRENCY = "ILS";/);
+  assert.ok(read("api/paypal-create-order.js").includes(`value: "${price}.00"`));
+  assert.match(read("public/admin.html"), new RegExp(`const PRICE_PER_EVENT = ${price};`));
+  assert.ok(!/\*\s*99\b|\b99\s*\*/.test(read("public/admin.html")), "no second hard-coded 99 multiplier in admin.html");
+});
+
 test("the Google Ads conversion value on success.html is 99 ILS", () => {
   const src = read("public/success.html");
   assert.match(src, /value['"]?\s*:\s*99/);
