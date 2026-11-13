@@ -35,10 +35,12 @@ create table if not exists public.events (
   final_responses integer,          -- headcount snapshot, written once when a past event is closed (cleanup.js)
   final_guests integer,
   receipt_number integer,           -- release two: stored receipt number (gapless counter)
-  refunded_at timestamptz           -- release two: NULL = not refunded; set from /admin
+  refunded_at timestamptz,          -- release two: NULL = not refunded; set from /admin
+  picture_path text                 -- picture P1: optional JPEG, ok/<uuid>.jpg in bucket event-pictures
 );
 alter table public.events add column if not exists receipt_number integer;
 alter table public.events add column if not exists refunded_at timestamptz;
+alter table public.events add column if not exists picture_path text;
 create unique index if not exists events_receipt_number_key
   on public.events (receipt_number) where receipt_number is not null;
 alter table public.events enable row level security;

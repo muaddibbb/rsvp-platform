@@ -62,9 +62,9 @@ test("declared-but-unused dependencies stay unused (documents J-29: resend, stri
   assert.deepEqual(used.sort(), ["@supabase/supabase-js", "pdfkit"]);
 });
 
-test("the Vercel Hobby function budget: api/ has at most 12 non-underscore function files (9 today)", () => {
+test("the Vercel Hobby function budget: api/ has at most 12 non-underscore function files (10 today)", () => {
   const walk = (d) => fs.readdirSync(d, { withFileTypes: true }).flatMap((e) => (e.isDirectory() ? (e.name === "fonts" ? [] : walk(path.join(d, e.name))) : [path.join(d, e.name)]));
   const fns = walk(path.join(ROOT, "api")).filter((p) => p.endsWith(".js") && !path.basename(p).startsWith("_"));
   assert.ok(fns.length <= 12, `${fns.length} functions exceeds the Hobby cap of 12`);
-  assert.equal(fns.length, 9);
+  assert.equal(fns.length, 10);
 });
