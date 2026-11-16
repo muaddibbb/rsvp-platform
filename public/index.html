@@ -50,6 +50,17 @@
     html.dark .promo-old { color: #94a3b8; }
     .promo-old-big { font-size: 2rem; margin-inline-start: 10px; white-space: nowrap; }
     /* PROMO-CSS-END */
+    /* PROMO-HERO-CSS-START */
+    .promo-hero { margin: 0 auto 18px; max-width: 100%; text-align: center; overflow-wrap: anywhere; }
+    html .promo-hero .promo-badge { background: #f0d080; color: #1a2744; }
+    html.dark .promo-hero .promo-badge { background: #f0d080; color: #1a2744; }
+    html .promo-hero .promo-line { color: #ffffff; margin: 10px 0 2px; }
+    html.dark .promo-hero .promo-line { color: #ffffff; margin: 10px 0 2px; }
+    html .promo-hero .promo-urgency { color: #f0d080; }
+    html.dark .promo-hero .promo-urgency { color: #f0d080; }
+    html .promo-hero .promo-old { color: #cbd5e1; }
+    html.dark .promo-hero .promo-old { color: #cbd5e1; }
+    /* PROMO-HERO-CSS-END */
   </style>
 </head>
 <body>
@@ -78,6 +89,13 @@
       שלחו קישור לאורחים בוואטסאפ, עקבו אחר האישורים בזמן אמת,
       נהלו את הרשימה בקלות — הכל במקום אחד.
     </p>
+    <!-- PROMO-HERO-START -->
+    <div class="promo-hero">
+      <div class="promo-badge" data-i18n="promoBadge">🔥 מחיר מבצע לזמן מוגבל!</div>
+      <p class="promo-line"><span data-i18n="promoInstead">במקום</span> <s class="promo-old"><span class="promo-sr" data-i18n="promoPrev">המחיר הקודם</span> ₪159</s> <span data-i18n="promoOnly">— רק ₪99!!!</span></p>
+      <p class="promo-urgency" data-i18n="promoUrgency">מהרו להזמין!</p>
+    </div>
+    <!-- PROMO-HERO-END -->
     <a class="cta-btn" href="/register.html" data-i18n="heroCta">צור אירוע עכשיו — ₪99 בלבד 🎉</a>
     <div><a class="demo-link" href="/rsvp/demo" data-i18n="demoLink">👀 ראו איך זה נראה לאורחים</a></div>
     <p class="hero-trust"><span data-i18n="heroSecure">🔒 תשלום מאובטח</span> · <a href="/refund.html" data-i18n="refundLine">↩️ החזר כספי מלא תוך 14 יום מהרכישה, כל עוד לא התקבל אף אישור הגעה והאירוע טרם התקיים.</a> · <span data-i18n="heroBusiness">🧾 עוסק פטור 036409084</span></p>

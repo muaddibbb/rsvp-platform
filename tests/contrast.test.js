@@ -97,3 +97,38 @@ test("contrast: promo colours reach 4.5:1 on the white card, dark card and badge
     assert.ok(ratio(fg, bg) >= 4.5, `${sel} ${fg} on ${bg} is ${ratio(fg, bg).toFixed(2)}:1`);
   }
 });
+
+test("contrast: hero promo colours reach 4.5:1 on the lightest hero gradient stop and on the navy end (both themes)", () => {
+  const index = read("public/index.html");
+  // The hero gradient (style.css .landing-hero) is not changed by html.dark: check both its end stops.
+  assert.match(css, /\.landing-hero\s*\{[^}]*#2d4a8a/);
+  const stops = ["#1a2744", "#2d4a8a"];
+  for (const sel of ["html .promo-hero .promo-line", "html .promo-hero .promo-urgency", "html .promo-hero .promo-old"]) {
+    const fg = colourOf(index, sel);
+    for (const bg of stops) assert.ok(ratio(fg, bg) >= 4.5, `${sel} ${fg} on ${bg} is ${ratio(fg, bg).toFixed(2)}:1`);
+  }
+  const badgeFg = colourOf(index, "html .promo-hero .promo-badge");
+  const m = /html \.promo-hero \.promo-badge\s*\{[^}]*background:\s*(#[0-9a-f]{6})/i.exec(index);
+  assert.ok(m, "hero badge background");
+  assert.ok(ratio(badgeFg, m[1]) >= 4.5, `badge ${badgeFg} on ${m[1]} is ${ratio(badgeFg, m[1]).toFixed(2)}:1`);
+});
+
+test("contrast: in dark theme the winning hero promo colours (html.dark twins) equal the light ones and reach 4.5:1", () => {
+  const index = read("public/index.html");
+  const bgOf = (sel) => {
+    const m = new RegExp("(?:^|[\\s}])" + esc(sel) + "\\s*\\{[^}]*background:\\s*(#[0-9a-f]{6})", "m").exec(index);
+    assert.ok(m, `no background: ${sel}`);
+    return m[1].toLowerCase();
+  };
+  for (const el of ["promo-line", "promo-urgency", "promo-old", "promo-badge"]) {
+    const light = colourOf(index, `html .promo-hero .${el}`);
+    const dark = colourOf(index, `html.dark .promo-hero .${el}`);
+    assert.equal(dark, light, `${el}: dark twin equals light`);
+    if (el === "promo-badge") {
+      assert.equal(bgOf(`html.dark .promo-hero .${el}`), bgOf(`html .promo-hero .${el}`));
+      assert.ok(ratio(dark, bgOf(`html.dark .promo-hero .${el}`)) >= 4.5, "dark badge");
+    } else {
+      for (const bg of ["#1a2744", "#2d4a8a"]) assert.ok(ratio(dark, bg) >= 4.5, `dark ${el} ${dark} on ${bg} is ${ratio(dark, bg).toFixed(2)}:1`);
+    }
+  }
+});
