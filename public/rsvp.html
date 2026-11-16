@@ -297,6 +297,22 @@
       document.getElementById("eventTitle").textContent = ev.event_name;
       document.getElementById("eventEmoji").textContent = EVENT_EMOJI[ev.event_type] || "🎉";
 
+      // Picture (paid events only; the URL is built by the server). DOM only, a failing image removes itself.
+      const oldPic = document.getElementById("eventPicture");
+      if (oldPic && oldPic.parentNode) oldPic.remove();
+      if (typeof ev.picture_url === "string" && ev.picture_url.startsWith("https://")) {
+        const img = document.createElement("img");
+        img.id = "eventPicture";
+        img.alt = "";
+        img.style.maxWidth = "100%";
+        img.style.borderRadius = "12px";
+        img.style.display = "block";
+        img.style.margin = "12px auto 0";
+        img.onerror = () => img.remove();
+        img.src = ev.picture_url;
+        document.getElementById("eventEmoji").insertAdjacentElement("afterend", img);
+      }
+
       // Date
       document.getElementById("detailDate").textContent = formatEventDate(ev);
       document.getElementById("detailTime").textContent = ev.event_time;

@@ -4,6 +4,7 @@ const generateReceiptPDF = require("./_receipt");
 const { buildReceipt, receiptNumberFor } = generateReceiptPDF;
 const { esc, oneLine } = require("./_mail");
 const { clientIp, originVerdict, overLimit, HOUR, DAY } = require("./_ratelimit");
+const { isStagingPath, attachPicture, attachTimeoutMs, removePublic, publicUrl } = require("./_picture");
 const { PRICE_ILS, CURRENCY, parseCustomId, paypalBase } = require("./_pay");
 
 const supabase = createClient(process.env.SUPABASE_URL, process.env.SUPABASE_SERVICE_ROLE_KEY);
@@ -273,6 +274,7 @@ module.exports = async (req, res) => {
     // 4. Publish an existing draft (create-then-pay), or legacy create-on-capture.
     const EDITABLE = ["customer_name","customer_email","customer_phone","event_type","event_name","hebrew_date","gregorian_date","event_time","location","address","extra_note"];
     let slug, dashboard_password, paidAt;
+    let attachedPicturePath = null;
 
     if (draft) {
       // Publish: apply any last-minute edits, mark it paid (live). The `paid_at is null` guard makes a
@@ -287,11 +289,53 @@ module.exports = async (req, res) => {
           upd[f] = String(formData[f]).trim();
         }
       }
-      const { data: updated, error: uErr } = await supabase
+      // Picture: copy the staged object to the public bucket; any failure publishes without it.
+      let pic = null;
+      const candidate = isStagingPath(draft.picture_path) ? draft.picture_path
+        : (isStagingPath(formData.picture_path) ? formData.picture_path : null);
+      if (candidate) {
+        try {
+          let timedOut = false, timer;
+          const work = attachPicture(supabase, candidate);
+          const deadline = new Promise((resolve) => {
+            timer = setTimeout(() => { timedOut = true; resolve({ ok: false, reason: "timeout" }); }, attachTimeoutMs());
+          });
+          pic = await Promise.race([work, deadline]);
+          clearTimeout(timer);
+          if (timedOut) work.then((late) => { if (late && late.ok) removePublic(supabase, late.path); }).catch(() => {});
+        }
+        catch (e) { pic = { ok: false, reason: String((e && e.message) || e) }; }
+        if (pic.ok) upd.picture_path = pic.path;
+        else {
+          console.error("picture attach failed:", pic.reason);
+          await alertOwner(
+            "⚠️ תמונה לא צורפה לאירוע",
+            `<p>האירוע פורסם ללא התמונה.</p>
+             <p><strong>Slug:</strong> ${esc(signedSlug)}<br/><strong>מזהה הזמנה:</strong> ${esc(orderID)}<br/>
+             <strong>סיבה:</strong> ${esc(pic.reason)}</p>`
+          );
+          pic = null;
+        }
+      }
+      let { data: updated, error: uErr } = await supabase
         .from("events").update(upd).eq("id", draft.id).is("paid_at", null).select("id");
+      if (uErr && upd.picture_path && (uErr.code === "42703" || uErr.code === "PGRST204") && /picture_path/.test(String(uErr.message || ""))) {
+        console.error("publish: picture_path column missing, publishing without picture");
+        await removePublic(supabase, upd.picture_path);
+        delete upd.picture_path;
+        pic = null;
+        await alertOwner(
+          "⚠️ תמונה לא צורפה לאירוע",
+          `<p>האירוע פורסם ללא התמונה (עמודת picture_path חסרה).</p>
+           <p><strong>Slug:</strong> ${esc(signedSlug)}<br/><strong>מזהה הזמנה:</strong> ${esc(orderID)}</p>`
+        );
+        ({ data: updated, error: uErr } = await supabase
+          .from("events").update(upd).eq("id", draft.id).is("paid_at", null).select("id"));
+      }
+      if (pic && (uErr || !updated || updated.length === 0)) await removePublic(supabase, pic.path);
       if (uErr) {
         console.error("publish update error:", uErr);
-        await alertUnpublished(orderID, signedSlug, "publish update failed: " + (uErr.message || "error"));
+        await alertUnpublished(orderID, signedSlug, "publish update failed: " + (uErr.message || "error") + (pic ? " (the staged picture may be gone: the customer may need to re-upload it)" : ""));
         return res.status(502).json({ error: POST_CAPTURE_ERROR });
       }
       if (!updated || updated.length === 0) {
@@ -302,6 +346,8 @@ module.exports = async (req, res) => {
         );
         return res.status(409).json({ error: "האירוע כבר פורסם. התשלום יוחזר, אנא צרו קשר" });
       }
+
+      if (pic) attachedPicturePath = pic.path;
 
       // Backfill formData from the draft for the emails below (in case client omitted fields)
       for (const f of EDITABLE) if (formData[f] === undefined || formData[f] === null || formData[f] === "") formData[f] = draft[f];
@@ -414,7 +460,7 @@ module.exports = async (req, res) => {
           <strong>לקוח:</strong> ${esc(name)}<br/>
           <strong>אימייל:</strong> ${esc(email)}<br/>
           <strong>טלפון:</strong> ${esc(formData.customer_phone || "—")}<br/>
-          <strong>Slug:</strong> ${esc(slug)}</p>
+          <strong>Slug:</strong> ${esc(slug)}${attachedPicturePath ? `<br/><strong>תמונה:</strong> <a href="${esc(publicUrl(attachedPicturePath))}">${esc(publicUrl(attachedPicturePath))}</a>` : ""}</p>
           <p><a href="${esc(BASE_URL)}/admin">פתח את פאנל הניהול</a></p>
         </div>`
       );
