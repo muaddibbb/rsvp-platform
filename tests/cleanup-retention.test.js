@@ -59,7 +59,7 @@ before(async () => {
 
 test("cleanup returns closed 1 and deletedDrafts 1", () => {
   assert.equal(firstRun.statusCode, 200);
-  assert.deepEqual(firstRun.body, { thanked: 0, closed: 1, deletedDrafts: 1, abandoned: 0 });
+  assert.deepEqual(firstRun.body, { thanked: 0, closed: 1, deletedDrafts: 1, abandoned: 0, picturesRemoved: 0, stagingPurged: 0, publicOrphansPurged: 0 });
 });
 
 test("cleanup keeps every paid event row", () => {

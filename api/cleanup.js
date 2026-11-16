@@ -1,5 +1,6 @@
 const { createClient } = require("@supabase/supabase-js");
 const { sweepAbandonedCheckouts, sendPostEventThankYous } = require("./_sweep");
+const { STAGING_BUCKET, PUBLIC_BUCKET, isStagingPath } = require("./_picture");
 
 const supabase = createClient(
   process.env.SUPABASE_URL,
@@ -64,6 +65,119 @@ async function closeOrPurgeOldEvents() {
   return { deletedDrafts, closed };
 }
 
+// ---- Picture cleanup (P3). Every step is isolated: it never throws and never changes the steps above. ----
+// Only these shapes may ever reach remove(): pic/<uuid>.jpg (event-pictures), ok|raw/<name> (picture-staging).
+const PUBLIC_RE = /^pic\/[0-9a-f-]{36}\.jpg$/;
+const STAGING_ANY_RE = /^(raw|ok)\/[A-Za-z0-9._-]+$/;
+const DAY_MS = 24 * 60 * 60 * 1000;
+const isPublicPath = (p) => typeof p === "string" && PUBLIC_RE.test(p);
+const isStagingAny = (p) => typeof p === "string" && STAGING_ANY_RE.test(p) && !p.includes("..");
+const cutoffDate = () => new Date(Date.now() - 30 * DAY_MS).toISOString().slice(0, 10);
+// Age in ms from created_at (or updated_at); null when unknown (unknown age = keep).
+function ageMs(o) {
+  const t = Date.parse((o && (o.created_at || o.updated_at)) || "");
+  return Number.isFinite(t) ? Date.now() - t : null;
+}
+async function removeFrom(bucket, paths) {
+  if (!paths.length) return true;
+  const { error } = await supabase.storage.from(bucket).remove(paths);
+  if (error) { console.error(`picture cleanup: remove from ${bucket} failed:`, error.message || ""); return false; }
+  return true;
+}
+
+// B (part 1): staged picture paths of the unpaid past drafts, read BEFORE the drafts are deleted.
+async function collectDraftPictures() {
+  try {
+    const { data, error } = await supabase.from("events").select("picture_path")
+      .lt("gregorian_date", cutoffDate()).is("paid_at", null).not("picture_path", "is", null);
+    if (error) { console.error("picture cleanup: draft picture lookup skipped:", error.code || "", error.message || ""); return []; }
+    const out = [];
+    for (const r of data || []) {
+      if (!r.picture_path) continue;
+      if (isStagingPath(r.picture_path)) out.push(r.picture_path);
+      else console.error("picture cleanup: ignoring malformed draft picture_path");
+    }
+    return out;
+  } catch (e) { console.error("picture cleanup: draft picture lookup error:", e && e.message); return []; }
+}
+// B (part 2): best-effort removal once the drafts are gone.
+async function removeDraftPictures(paths) {
+  try { await removeFrom(STAGING_BUCKET, paths); } catch (e) { console.error("picture cleanup: draft picture remove error:", e && e.message); }
+}
+
+// A: past-cutoff events (any active state) with a pic/ path: remove the object, then null the path.
+async function purgeClosedEventPictures() {
+  let n = 0;
+  try {
+    const { data, error } = await supabase.from("events").select("id, picture_path")
+      .lt("gregorian_date", cutoffDate()).not("picture_path", "is", null)
+      .order("gregorian_date", { ascending: true }).limit(50); // at most 50 per night; the rest follow later
+    if (error) { console.error("picture cleanup: closed-event lookup skipped:", error.code || "", error.message || ""); return 0; }
+    for (const ev of data || []) {
+      try {
+        if (!ev.picture_path) continue;
+        // pic/ = attached picture; ok/ = stale staged path left by a failed attach at capture. Anything else is ignored.
+        const bucket = isPublicPath(ev.picture_path) ? PUBLIC_BUCKET : isStagingPath(ev.picture_path) ? STAGING_BUCKET : null;
+        if (!bucket) { console.error(`picture cleanup: ignoring malformed picture_path on event ${ev.id}`); continue; }
+        if (!(await removeFrom(bucket, [ev.picture_path]))) continue; // keep the path: retried next night
+        const { error: uErr } = await supabase.from("events").update({ picture_path: null }).eq("id", ev.id);
+        if (uErr) { console.error(`picture cleanup: could not clear picture_path on event ${ev.id}:`, uErr.message || ""); continue; }
+        n++;
+      } catch (e) { console.error(`picture cleanup: event ${ev && ev.id} error:`, e && e.message); }
+    }
+  } catch (e) { console.error("picture cleanup: closed-event step error:", e && e.message); }
+  return n;
+}
+
+// C: staging orphans: raw/ older than 1 day, ok/ older than 14 days.
+async function purgeStagingOrphans() {
+  let n = 0;
+  for (const [folder, maxAge] of [["raw", DAY_MS], ["ok", 14 * DAY_MS]]) {
+    try {
+      const { data, error } = await supabase.storage.from(STAGING_BUCKET)
+        .list(folder, { limit: 1000, offset: 0, sortBy: { column: "created_at", order: "asc" } });
+      if (error) { console.error(`picture cleanup: list ${folder}/ failed:`, error.message || ""); continue; }
+      const old = [];
+      for (const o of data || []) {
+        const p = `${folder}/${o && o.name}`;
+        const age = ageMs(o);
+        if (age === null || age <= maxAge) continue;
+        if (!isStagingAny(p)) { console.error(`picture cleanup: ignoring odd staging name in ${folder}/`); continue; }
+        old.push(p);
+      }
+      if (old.length && (await removeFrom(STAGING_BUCKET, old))) n += old.length;
+    } catch (e) { console.error(`picture cleanup: staging ${folder}/ error:`, e && e.message); }
+  }
+  return n;
+}
+
+// D: UTC Sundays only: pic/ objects older than 1 day that no event references (checked right before deleting).
+async function purgePublicOrphans() {
+  if (new Date().getUTCDay() !== 0) return 0;
+  let n = 0;
+  try {
+    const { data, error } = await supabase.storage.from(PUBLIC_BUCKET)
+      .list("pic", { limit: 1000, offset: 0, sortBy: { column: "created_at", order: "asc" } });
+    if (error) { console.error("picture cleanup: list pic/ failed:", error.message || ""); return 0; }
+    const cands = [];
+    for (const o of data || []) {
+      const p = `pic/${o && o.name}`;
+      const age = ageMs(o);
+      if (age === null || age <= DAY_MS) continue;
+      if (isPublicPath(p)) cands.push(p);
+    }
+    for (let i = 0; i < cands.length; i += 100) {
+      const chunk = cands.slice(i, i + 100);
+      const { data: refs, error: rErr } = await supabase.from("events").select("picture_path").in("picture_path", chunk);
+      if (rErr || !refs) { console.error("picture cleanup: reference check failed, nothing deleted:", (rErr && rErr.message) || ""); return n; }
+      const used = new Set(refs.map(r => r.picture_path));
+      const orphans = chunk.filter(p => !used.has(p));
+      if (orphans.length && (await removeFrom(PUBLIC_BUCKET, orphans))) n += orphans.length;
+    }
+  } catch (e) { console.error("picture cleanup: public orphan step error:", e && e.message); }
+  return n;
+}
+
 module.exports = async (req, res) => {
   // Vercel cron jobs send Authorization: Bearer <CRON_SECRET>
   const auth = req.headers.authorization || "";
@@ -75,7 +189,12 @@ module.exports = async (req, res) => {
   try {
     const abandoned = await sweepAbandonedCheckouts();
     const thanked   = await sendPostEventThankYous();
+    const draftPictures = await collectDraftPictures();
     const { deletedDrafts, closed } = await closeOrPurgeOldEvents();
+    if (deletedDrafts) await removeDraftPictures(draftPictures);
+    const picturesRemoved = await purgeClosedEventPictures();
+    const stagingPurged = await purgeStagingOrphans();
+    const publicOrphansPurged = await purgePublicOrphans();
     // Rate-limit counters older than a day are useless (the longest window is one day): purge them.
     // The table exists only after sql/release-two-migration.sql; before that this just logs.
     try {
@@ -83,8 +202,8 @@ module.exports = async (req, res) => {
         .lt("window_start", new Date(Date.now() - 24 * 60 * 60 * 1000).toISOString());
       if (rlErr) console.error("rate_limits purge skipped:", rlErr.code || "", rlErr.message || "");
     } catch (e) { console.error("rate_limits purge error:", e && e.message); }
-    console.log(`Cleanup: thanked ${thanked}, closed ${closed} past event(s), deleted ${deletedDrafts} stale draft(s), notified ${abandoned} abandoned checkout(s)`);
-    return res.status(200).json({ thanked, closed, deletedDrafts, abandoned });
+    console.log(`Cleanup: thanked ${thanked}, closed ${closed} past event(s), deleted ${deletedDrafts} stale draft(s), notified ${abandoned} abandoned checkout(s), removed ${picturesRemoved} picture(s), purged ${stagingPurged} staging + ${publicOrphansPurged} orphan picture(s)`);
+    return res.status(200).json({ thanked, closed, deletedDrafts, abandoned, picturesRemoved, stagingPurged, publicOrphansPurged });
   } catch (err) {
     console.error("cleanup error:", err);
     return res.status(500).json({ error: "Server error" });

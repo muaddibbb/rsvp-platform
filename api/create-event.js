@@ -5,6 +5,7 @@
 const { createClient } = require("@supabase/supabase-js");
 const crypto = require("crypto");
 const { esc, oneLine } = require("./_mail");
+const { isStagingPath, stagingExists } = require("./_picture");
 const { clientIp, originVerdict, overLimit, HOUR } = require("./_ratelimit");
 
 const supabase = createClient(process.env.SUPABASE_URL, process.env.SUPABASE_SERVICE_ROLE_KEY);
@@ -55,12 +56,23 @@ module.exports = async (req, res) => {
   const err = validate(b);
   if (err) return res.status(400).json({ error: err });
 
+  // Optional picture reference from picture-upload "finish": shape first, then the object must exist.
+  let picturePath = null;
+  if (b.picture_path !== undefined && b.picture_path !== null && b.picture_path !== "") {
+    if (!isStagingPath(b.picture_path)) return res.status(400).json({ error: "נתיב תמונה לא תקין" });
+    picturePath = b.picture_path;
+  }
+
   if (await overLimit(supabase, req, [
     ["ce-ip", clientIp(req), HOUR, 20],
     ["ce-mail", String(b.customer_email).trim().toLowerCase(), HOUR, 3],
   ])) {
     res.setHeader("Retry-After", String(HOUR));
     return res.status(429).json({ error: "יותר מדי בקשות, נסו שוב מאוחר יותר" });
+  }
+
+  if (picturePath && !(await stagingExists(supabase, picturePath))) {
+    return res.status(400).json({ error: "התמונה לא נמצאה, יש להעלות אותה מחדש" });
   }
 
   try {
@@ -73,7 +85,7 @@ module.exports = async (req, res) => {
     const slug = existing ? `${base}-${crypto.randomBytes(2).toString("hex")}` : base;
     const dashboard_password = crypto.randomBytes(6).toString("base64url");
 
-    const { error: dbErr } = await supabase.from("events").insert({
+    const row = {
       slug,
       customer_name:  b.customer_name?.trim(),
       customer_email: b.customer_email?.trim(),
@@ -89,7 +101,12 @@ module.exports = async (req, res) => {
       dashboard_password,
       paid_at:        null,   // draft — not published until paid
       active:         true,
-    });
+    };
+    let { error: dbErr } = await supabase.from("events").insert({ ...row, ...(picturePath ? { picture_path: picturePath } : {}) });
+    if (dbErr && picturePath && (dbErr.code === "42703" || dbErr.code === "PGRST204")) {
+      console.error("create-event: picture_path column missing, saving without picture");
+      ({ error: dbErr } = await supabase.from("events").insert(row));
+    }
     if (dbErr) { console.error("create-event DB error:", dbErr); return res.status(500).json({ error: "שגיאת מסד נתונים" }); }
 
     // Email the organizer their dashboard link + password so they can return and publish anytime

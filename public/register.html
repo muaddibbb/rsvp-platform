@@ -95,6 +95,28 @@
         previewRsvpQ: "האם תגיעו?",
         previewYes: "✓ מגיעים",
         previewNo: "✕ לא מגיעים",
+        picLabel: "תמונה לאירוע (אופציונלי)",
+        picHint: "JPG, PNG או WebP, עד 5MB. התמונה תוצג בראש דף ההזמנה.",
+        picRemove: "הסרת התמונה",
+        picRetry: "נסו שוב",
+        picProcessing: "מעבד את התמונה…",
+        picUploading: "מעלה את התמונה…",
+        picReady: "התמונה הועלתה ✓",
+        picWait: "התמונה עדיין בטעינה, אפשר להמשיך בעוד רגע.",
+        picContinue: "אפשר להמשיך גם בלי תמונה",
+        picErrType: "סוג הקובץ לא נתמך. יש לבחור תמונת JPG, PNG או WebP.",
+        picErrEmpty: "הקובץ ריק.",
+        picErrSize: "הקובץ גדול מדי (עד 5MB).",
+        picErrTooLarge: "לא הצלחנו להקטין את התמונה מספיק. נסו תמונה אחרת.",
+        picErrDecode: "לא הצלחנו לקרוא את התמונה. נסו תמונה אחרת.",
+        picErrNetwork: "אין חיבור לשרת. בדקו את החיבור ונסו שוב.",
+        picErrRate: "יותר מדי ניסיונות. נסו שוב מאוחר יותר.",
+        picErrUnavailable: "העלאת תמונות אינה זמינה כרגע.",
+        picErrNotJpeg: "הקובץ שהועלה אינו תמונה תקינה.",
+        picErrServer: "העלאת התמונה נכשלה.",
+        picErrBadPath: "נתיב תמונה לא תקין",
+        picErrNotFound: "התמונה לא נמצאה, יש להעלות אותה מחדש",
+        picErrDimensions: "התמונה גדולה מדי בפיקסלים או שאי אפשר לקרוא אותה. נסו תמונה אחרת.",
       },
       en: {
         pageTitle: "Create Event | RSVP",
@@ -183,6 +205,28 @@
         previewRsvpQ: "Will you attend?",
         previewYes: "✓ Attending",
         previewNo: "✕ Can't make it",
+        picLabel: "Event picture (optional)",
+        picHint: "JPG, PNG or WebP, up to 5 MB. It appears at the top of the invitation page.",
+        picRemove: "Remove picture",
+        picRetry: "Try again",
+        picProcessing: "Processing the picture...",
+        picUploading: "Uploading the picture...",
+        picReady: "Picture uploaded ✓",
+        picWait: "The picture is still uploading, please continue in a moment.",
+        picContinue: "You can also continue without a picture.",
+        picErrType: "Unsupported file type. Please choose a JPG, PNG or WebP image.",
+        picErrEmpty: "The file is empty.",
+        picErrSize: "The file is too large (up to 5 MB).",
+        picErrTooLarge: "We could not shrink the picture enough. Please try another one.",
+        picErrDecode: "We could not read the picture. Please try another one.",
+        picErrNetwork: "No connection to the server. Check your connection and try again.",
+        picErrRate: "Too many attempts. Please try again later.",
+        picErrUnavailable: "Picture upload is not available right now.",
+        picErrNotJpeg: "The uploaded file is not a valid picture.",
+        picErrServer: "The picture upload failed.",
+        picErrBadPath: "The picture reference is invalid. Please upload it again.",
+        picErrNotFound: "The picture was not found, please upload it again.",
+        picErrDimensions: "The picture has too many pixels or cannot be read. Please try another one.",
       },
     };
   </script>
@@ -223,6 +267,11 @@
     .gp-btn.no  { background:#fee2e2; color:#991b1b; }
     html.dark .gp-btn.yes { background:#14331f; color:#86efac; }
     html.dark .gp-btn.no  { background:#3a1c1c; color:#fca5a5; }
+    .pic-hint { font-size:.85rem; color:var(--text-muted); margin-top:6px; }
+    .pic-thumb { display:block; max-width:120px; max-height:120px; object-fit:cover; border-radius:10px; margin-top:10px; }
+    #picStatus { margin-top:8px; font-size:.9rem; }
+    #picRemoveBtn, #picRetryBtn { margin-top:8px; margin-inline-end:8px; padding:6px 14px; border-radius:8px; border:1px solid #d1d5db; background:transparent; color:inherit; font:inherit; cursor:pointer; }
+    .gp-picture { display:block; max-width:100%; height:auto; border-radius:12px; margin:10px auto; }
   </style>
   <!-- Google tag (gtag.js) -->
   <script async src="https://www.googletagmanager.com/gtag/js?id=AW-18293655759"></script>
@@ -314,6 +363,16 @@
         </div>
 
         <div class="form-group">
+          <label for="pictureInput" data-i18n="picLabel">תמונה לאירוע (אופציונלי)</label>
+          <input type="file" id="pictureInput" accept="image/jpeg,image/png,image/webp" />
+          <div class="pic-hint" data-i18n="picHint">JPG, PNG או WebP, עד 5MB. התמונה תוצג בראש דף ההזמנה.</div>
+          <img id="picThumb" class="pic-thumb" alt="" style="display:none" />
+          <div id="picStatus" role="status" aria-live="polite"></div>
+          <button type="button" id="picRemoveBtn" data-i18n="picRemove" style="display:none">הסרת התמונה</button>
+          <button type="button" id="picRetryBtn" data-i18n="picRetry" style="display:none">נסו שוב</button>
+        </div>
+
+        <div class="form-group">
           <label for="eventName" data-i18n="eventNameLabel">שם האירוע *</label>
           <input type="text" id="eventName" placeholder='למשל: בר המצווה של יונתן' data-i18n-ph="eventNamePh" />
         </div>
@@ -349,7 +408,7 @@
           <textarea id="extraNote" rows="2" placeholder='למשל: טקס הנחת תפילין בשעה 16:00 ב...' data-i18n-ph="extraNotePh"></textarea>
         </div>
 
-        <button class="submit-btn" onclick="goToStep2()" data-i18n="toStep2Btn">המשך לפרטי המארגן ←</button>
+        <button class="submit-btn" id="toStep2Btn" onclick="goToStep2()" data-i18n="toStep2Btn">המשך לפרטי המארגן ←</button>
       </div>
     </div>
 
@@ -431,6 +490,295 @@
   </div>
 
   <script>
+    // PICTURE-LOGIC-START
+    // Optional event picture: pure logic with injected dependencies (tested in node:vm, no DOM at top level).
+    const PICTURE_LIMITS = {
+      maxSourceBytes: 5242880, maxSide: 1600, targetBytes: 1048576, hardBytes: 1468006,
+      qualities: [0.85, 0.75, 0.65, 0.55, 0.45, 0.35],
+      types: ["image/jpeg", "image/png", "image/webp"],
+    };
+
+    const PICTURE_MAX_PIXELS = 40000000;
+    const PICTURE_DEADLINE_MS = 30000;
+
+    // Reads width/height from the file header (PNG IHDR, JPEG SOF, WebP VP8/VP8L/VP8X). Pure; null when unparseable.
+    function readImageDimensions(bytes) {
+      if (!bytes || typeof bytes.length !== "number") return null;
+      const n = bytes.length;
+      const u16 = (i) => (bytes[i] << 8) | bytes[i + 1];
+      const u32 = (i) => ((bytes[i] * 16777216) + ((bytes[i + 1] << 16) | (bytes[i + 2] << 8) | bytes[i + 3]));
+      const l16 = (i) => bytes[i] | (bytes[i + 1] << 8);
+      const l24 = (i) => bytes[i] | (bytes[i + 1] << 8) | (bytes[i + 2] << 16);
+      const tag = (i, str) => { for (let k = 0; k < str.length; k++) if (bytes[i + k] !== str.charCodeAt(k)) return false; return true; };
+      const ok = (w, h) => (w > 0 && h > 0 ? { width: w, height: h } : null);
+      if (n >= 24 && bytes[0] === 0x89 && tag(1, "PNG") && tag(12, "IHDR")) return ok(u32(16), u32(20));
+      if (n >= 4 && bytes[0] === 0xFF && bytes[1] === 0xD8) {
+        let i = 2;
+        while (i + 3 < n) {
+          if (bytes[i] !== 0xFF) { i++; continue; }
+          let m = bytes[i + 1];
+          while (m === 0xFF && i + 2 < n) { i++; m = bytes[i + 1]; }
+          if (m === 0xD8 || m === 0x01 || m === 0x00 || (m >= 0xD0 && m <= 0xD7)) { i += 2; continue; }
+          if (m === 0xD9 || m === 0xDA) return null;
+          if (i + 3 >= n) return null;
+          const len = u16(i + 2);
+          if (m >= 0xC0 && m <= 0xCF && m !== 0xC4 && m !== 0xC8 && m !== 0xCC) {
+            if (i + 8 >= n) return null;
+            return ok(u16(i + 7), u16(i + 5));
+          }
+          if (len < 2) return null;
+          i += 2 + len;
+        }
+        return null;
+      }
+      if (n >= 30 && tag(0, "RIFF") && tag(8, "WEBP")) {
+        if (tag(12, "VP8 ")) return (bytes[23] === 0x9D && bytes[24] === 0x01 && bytes[25] === 0x2A) ? ok(l16(26) & 0x3FFF, l16(28) & 0x3FFF) : null;
+        if (tag(12, "VP8L")) {
+          if (bytes[20] !== 0x2F) return null;
+          const b = (bytes[21] | (bytes[22] << 8) | (bytes[23] << 16) | (bytes[24] * 16777216)) >>> 0;
+          return ok((b & 0x3FFF) + 1, ((b >>> 14) & 0x3FFF) + 1);
+        }
+        if (tag(12, "VP8X")) return ok(l24(24) + 1, l24(27) + 1);
+      }
+      return null;
+    }
+
+    function validatePictureFile(file) {
+      const f = file || {};
+      if (PICTURE_LIMITS.types.indexOf(f.type) === -1) return { ok: false, code: "type" };
+      if (typeof f.size !== "number" || !(f.size > 0)) return { ok: false, code: "empty" };
+      if (f.size > PICTURE_LIMITS.maxSourceBytes) return { ok: false, code: "size" };
+      return { ok: true };
+    }
+
+    function computeTargetSize(w, h) {
+      if (typeof w !== "number" || typeof h !== "number" || !isFinite(w) || !isFinite(h) || w <= 0 || h <= 0) return null;
+      const scale = Math.min(1, PICTURE_LIMITS.maxSide / Math.max(w, h));
+      return { width: Math.max(1, Math.round(w * scale)), height: Math.max(1, Math.round(h * scale)) };
+    }
+
+    async function shrinkToJpeg(file, codec) {
+      let decoded = null;
+      try {
+        decoded = await codec.decode(file);
+        const size = computeTargetSize(decoded && decoded.width, decoded && decoded.height);
+        if (!size) return { ok: false, code: "decode" };
+        let smallest = null;
+        for (const q of PICTURE_LIMITS.qualities) {
+          const blob = await codec.encode(decoded, size.width, size.height, q);
+          if (!blob) return { ok: false, code: "decode" };
+          if (blob.size <= PICTURE_LIMITS.targetBytes) return { ok: true, blob };
+          if (!smallest || blob.size < smallest.size) smallest = blob;
+        }
+        if (smallest && smallest.size <= PICTURE_LIMITS.hardBytes) return { ok: true, blob: smallest };
+        return { ok: false, code: "toolarge" };
+      } catch (e) {
+        return { ok: false, code: "decode" };
+      } finally {
+        try { if (decoded && typeof decoded.close === "function") decoded.close(); } catch (e) { /* ignore */ }
+      }
+    }
+
+    function createPictureUploader(deps) {
+      let state = "idle", path = null, error = null, previewUrl = null, lastFile = null, seq = 0;
+      const notify = () => { if (typeof deps.onChange === "function") deps.onChange(api); };
+      const dropUrl = () => { if (previewUrl) { const u = previewUrl; previewUrl = null; deps.revokeObjectURL(u); } };
+      const discard = () => { seq++; path = null; error = null; dropUrl(); };
+      const fail = (code) => { state = "error"; error = code; path = null; dropUrl(); notify(); };
+      const DEADLINE = { deadline: true };
+      // Runs fn(signal) with a 30 s deadline (injectable timers/AbortController; none available means no deadline).
+      function timed(fn) {
+        const st = deps.setTimeout || (typeof setTimeout === "function" ? setTimeout : null);
+        const ct = deps.clearTimeout || (typeof clearTimeout === "function" ? clearTimeout : null);
+        const AC = deps.AbortController || (typeof AbortController === "function" ? AbortController : null);
+        if (!st) return fn(undefined);
+        const ctl = AC ? new AC() : null;
+        let timer;
+        const dl = new Promise((_, rej) => { timer = st(() => { try { if (ctl) ctl.abort(); } catch (e) { /* ignore */ } rej(DEADLINE); }, PICTURE_DEADLINE_MS); });
+        return Promise.race([fn(ctl ? ctl.signal : undefined), dl]).finally(() => { if (ct) ct(timer); });
+      }
+      function goodUploadUrl(u) {
+        if (typeof u !== "string" || u.indexOf("https://") !== 0) return false;
+        const URLc = deps.URL || (typeof URL === "function" ? URL : null);
+        if (URLc) {
+          try { const p = new URLc(u); return p.protocol === "https:" && /\.supabase\.co$/.test(p.hostname); } catch (e) { return false; }
+        }
+        return /^https:\/\/[a-z0-9.-]+\.supabase\.co(?::\d+)?(?:[\/?#]|$)/i.test(u);
+      }
+      const statusCode = (status) => (status === 429 ? "rate" : status === 503 ? "unavailable" : status === 422 ? "notjpeg" : "server");
+
+      async function post(body) {
+        let res;
+        try {
+          res = await timed((signal) => {
+            const init = { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify(body) };
+            if (signal) init.signal = signal;
+            return deps.fetch("/api/picture-upload", init);
+          });
+        } catch (e) { return { code: "network" }; }
+        if (!res.ok) return { code: statusCode(res.status) };
+        try { return { data: await timed(() => res.json()) }; } catch (e) { return { code: e === DEADLINE ? "network" : "server" }; }
+      }
+
+      async function run(file, my) {
+        const v = validatePictureFile(file);
+        if (!v.ok) { fail(v.code); return; }
+        state = "processing"; notify();
+        let r;
+        try { r = await timed(() => deps.shrink(file)); } catch (e) { r = { ok: false, code: e === DEADLINE ? "network" : "decode" }; }
+        if (my !== seq) return;
+        if (!r || !r.ok) { fail((r && r.code) || "decode"); return; }
+        previewUrl = deps.createObjectURL(r.blob);
+        state = "uploading"; notify();
+
+        const s = await post({ action: "sign" });
+        if (my !== seq) return;
+        if (s.code) { fail(s.code); return; }
+        const sd = s.data;
+        if (!sd || typeof sd.path !== "string" || typeof sd.uploadUrl !== "string" || !goodUploadUrl(sd.uploadUrl)) { fail("server"); return; }
+
+        let put;
+        try {
+          const fd = new deps.FormData();
+          fd.append("cacheControl", "3600");
+          fd.append("", r.blob);
+          put = await timed((signal) => {
+            const init = { method: "PUT", body: fd };
+            if (signal) init.signal = signal;
+            return deps.fetch(sd.uploadUrl, init);
+          });
+        } catch (e) { if (my !== seq) return; fail("network"); return; }
+        if (my !== seq) return;
+        if (!put.ok) { fail("put"); return; }
+
+        const f = await post({ action: "finish", path: sd.path });
+        if (my !== seq) return;
+        if (f.code) { fail(f.code); return; }
+        if (!f.data || typeof f.data.path !== "string" || !/^ok\/[0-9a-f-]{36}\.jpg$/.test(f.data.path)) { fail("server"); return; }
+        path = f.data.path; error = null; state = "ready"; notify();
+      }
+
+      const api = {
+        async select(file) {
+          lastFile = file;
+          discard();
+          const my = seq;
+          try { await run(file, my); } catch (e) { if (my === seq) fail("server"); }
+        },
+        remove() { discard(); state = "idle"; notify(); },
+        retry() { return lastFile ? api.select(lastFile) : Promise.resolve(); },
+        markError(code) { seq++; fail(code); },
+        hasLastFile() { return !!lastFile; },
+        getState() { return state; },
+        getPath() { return state === "ready" ? path : null; },
+        getError() { return state === "error" ? error : null; },
+        getPreviewUrl() { return previewUrl; },
+        isBusy() { return state === "processing" || state === "uploading"; },
+      };
+      return api;
+    }
+
+    function pictureMessageKey(code) {
+      const map = {
+        type: "picErrType", empty: "picErrEmpty", size: "picErrSize", toolarge: "picErrTooLarge", decode: "picErrDecode",
+        network: "picErrNetwork", rate: "picErrRate", unavailable: "picErrUnavailable", notjpeg: "picErrNotJpeg",
+        put: "picErrServer", server: "picErrServer", badpath: "picErrBadPath", notfound: "picErrNotFound", dimensions: "picErrDimensions",
+      };
+      return Object.prototype.hasOwnProperty.call(map, code) ? map[code] : "picErrServer";
+    }
+
+    function syncPictureToForm(formData, uploader) {
+      if (uploader.getState() === "ready") formData.picture_path = uploader.getPath();
+      else delete formData.picture_path;
+      return formData;
+    }
+
+    function pictureErrorFromCreateEvent(status, data) {
+      if (status !== 400 || !data) return null;
+      if (data.error === "נתיב תמונה לא תקין") return "badpath";
+      if (data.error === "התמונה לא נמצאה, יש להעלות אותה מחדש") return "notfound";
+      return null;
+    }
+
+    function renderPicturePreview(card, url, doc) {
+      const old = card.querySelector(".gp-picture");
+      if (old) old.remove();
+      if (!url) return;
+      const img = doc.createElement("img");
+      img.className = "gp-picture";
+      img.alt = "";
+      img.src = url;
+      const emoji = card.querySelector(".gp-emoji");
+      if (!emoji) return;
+      if (typeof emoji.insertAdjacentElement === "function") emoji.insertAdjacentElement("afterend", img);
+      else if (typeof emoji.after === "function") emoji.after(img);
+      else emoji.parentNode.insertBefore(img, emoji.nextSibling);
+    }
+
+    function renderPictureField(uploader, doc, tr) {
+      const st = uploader.getState();
+      const el = (id) => doc.getElementById(id);
+      const status = el("picStatus"), thumb = el("picThumb"), rm = el("picRemoveBtn"), rt = el("picRetryBtn"), next = el("toStep2Btn");
+      let text = "";
+      if (st === "processing") text = tr("picProcessing");
+      else if (st === "uploading") text = tr("picUploading");
+      else if (st === "ready") text = tr("picReady");
+      else if (st === "error") text = tr(pictureMessageKey(uploader.getError())) + " " + tr("picContinue");
+      if (status) status.textContent = text;
+      const url = uploader.getPreviewUrl();
+      if (thumb) { thumb.src = url || ""; thumb.style.display = url ? "block" : "none"; }
+      if (rm) rm.style.display = st !== "idle" ? "inline-block" : "none";
+      const code = uploader.getError();
+      const noRetry = code === "type" || code === "size" || code === "empty" || code === "dimensions";
+      if (rt) rt.style.display = (st === "error" && uploader.hasLastFile() && !noRetry) ? "inline-block" : "none";
+      if (next) next.disabled = uploader.isBusy();
+    }
+
+    function browserPictureDeps() {
+      // Image element fallback (blob URL); EXIF orientation is applied only where the browser does it for <img>/createImageBitmap.
+      const loadImage = (file) => new Promise((resolve, reject) => {
+        const url = URL.createObjectURL(file);
+        const img = new Image();
+        img.onload = () => { img.close = () => URL.revokeObjectURL(url); resolve(img); };
+        img.onerror = () => { URL.revokeObjectURL(url); reject(new Error("image")); };
+        img.src = url;
+      });
+      const codec = {
+        decode: async (file) => {
+          if (typeof createImageBitmap === "function") {
+            try { return await createImageBitmap(file, { imageOrientation: "from-image" }); } catch (e) { /* retry without options */ }
+            try { return await createImageBitmap(file); } catch (e) { /* fall back to <img> */ }
+          }
+          return loadImage(file);
+        },
+        encode: (bmp, w, h, q) => new Promise((resolve) => {
+          const canvas = document.createElement("canvas");
+          canvas.width = w; canvas.height = h;
+          const ctx = canvas.getContext("2d");
+          ctx.fillStyle = "#fff";
+          ctx.fillRect(0, 0, w, h);
+          ctx.drawImage(bmp, 0, 0, w, h);
+          canvas.toBlob((blob) => resolve(blob), "image/jpeg", q);
+        }),
+      };
+      return {
+        fetch: (u, i) => fetch(u, i),
+        FormData: FormData,
+        shrink: async (file) => {
+          // Refuse huge or unreadable headers before any decoding (decoder memory bomb).
+          let dim = null;
+          try { dim = readImageDimensions(new Uint8Array(await file.arrayBuffer())); } catch (e) { dim = null; }
+          if (!dim || dim.width * dim.height > PICTURE_MAX_PIXELS) return { ok: false, code: "dimensions" };
+          return shrinkToJpeg(file, codec);
+        },
+        createObjectURL: (blob) => URL.createObjectURL(blob),
+        revokeObjectURL: (u) => URL.revokeObjectURL(u),
+      };
+    }
+    // PICTURE-LOGIC-END
+  </script>
+
+  <script>
     const EVENT_TYPE_LABELS = {
       bar_mitzvah:  "בר מצווה",
       bat_mitzvah:  "בת מצווה",
@@ -446,6 +794,22 @@
     };
 
     let formData = { event_type: "" };
+    // The picture logic comes from the script above; stays null when that script is absent (isolated test contexts).
+    let pictureUploader = null;
+    if (typeof createPictureUploader === "function") {
+      pictureUploader = createPictureUploader(Object.assign(browserPictureDeps(), {
+        onChange: (u) => { syncPictureToForm(formData, u); renderPictureField(u, document, t); },
+      }));
+      document.getElementById("pictureInput").addEventListener("change", (ev) => {
+        const input = ev.target;
+        const file = input.files && input.files[0];
+        if (file) { resetDraftForPictureChange(); pictureUploader.select(file); }
+        input.value = "";
+      });
+      document.getElementById("picRemoveBtn").addEventListener("click", () => { resetDraftForPictureChange(); pictureUploader.remove(); });
+      document.getElementById("picRetryBtn").addEventListener("click", () => pictureUploader.retry());
+      window.addEventListener("langchange", () => renderPictureField(pictureUploader, document, t));
+    }
     let currentStep = 1;
     const checkoutId = (crypto.randomUUID && crypto.randomUUID())
       || String(Date.now()) + Math.random().toString(16).slice(2);
@@ -472,6 +836,7 @@
     }
 
     function goToStep2() {
+      if (pictureUploader && pictureUploader.isBusy()) return showError(t("picWait"));
       if (!formData.event_type) return showError(t("errSelectType"));
       const name = document.getElementById("eventName").value.trim();
       const date = document.getElementById("gregorianDate").value;
@@ -525,6 +890,8 @@
     // publish later. Created once per session; final edits are applied at publish time.
     let draftSlug = null;
     let draftPassword = "";   // the draft's dashboard password, sent only to create-order as proof of ownership
+    // The staged picture belongs to the draft: after any picture change, the next step 3 must create a fresh draft.
+    function resetDraftForPictureChange() { draftSlug = null; draftPassword = ""; }
     async function saveDraft() {
       if (draftSlug) return;
       try {
@@ -535,6 +902,16 @@
         });
         const data = await res.json();
         if (res.ok && data.slug) { draftSlug = data.slug; draftPassword = data.dashboard_password || ""; }
+        else if (!res.ok) {
+          const picCode = pictureUploader ? pictureErrorFromCreateEvent(res.status, data) : null;
+          if (picCode) {
+            // Picture rejected: drop it (the body no longer carries picture_path), tell the user, retry once without it.
+            pictureUploader.markError(picCode);
+            showCheckoutError(t(pictureMessageKey(picCode)) + " " + t("picContinue"));
+            renderPreview();
+            await saveDraft();
+          }
+        }
       } catch (e) { /* non-blocking — payment can still create the event via legacy path */ }
     }
 
@@ -597,6 +974,7 @@
           </div>
         </div>
       `;
+      if (pictureUploader) renderPicturePreview(document.getElementById("previewCard"), pictureUploader.getState() === "ready" ? pictureUploader.getPreviewUrl() : null, document);
     }
 
     // Re-render the preview card in the new language if it's already populated
