@@ -85,3 +85,15 @@ test("contrast: help-mail paragraphs are tagged", () => {
   assert.equal(paras.length, 2, "the not-found and verify-error help paragraphs");
   for (const p of paras) assert.ok(p.includes('class="help-mail"'), p);
 });
+
+test("contrast: promo colours reach 4.5:1 on the white card, dark card and badge backgrounds (index)", () => {
+  const index = read("public/index.html");
+  const rows = [
+    [".promo-badge", "#fee2e2"], [".promo-line", "#ffffff"], [".promo-urgency", "#ffffff"], [".promo-old", "#ffffff"],
+    ["html.dark .promo-badge", "#450a0a"], ["html.dark .promo-urgency", "#1e293b"], ["html.dark .promo-old", "#1e293b"],
+  ];
+  for (const [sel, bg] of rows) {
+    const fg = colourOf(index, sel);
+    assert.ok(ratio(fg, bg) >= 4.5, `${sel} ${fg} on ${bg} is ${ratio(fg, bg).toFixed(2)}:1`);
+  }
+});

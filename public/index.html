@@ -38,6 +38,18 @@
     /* ── LTR (English) ── */
     html[dir="ltr"] body { direction: ltr; }
     html[dir="ltr"] .pricing-features { text-align: left; }
+    /* PROMO-CSS-START */
+    .promo-box { margin: 12px 0; text-align: center; }
+    .promo-badge { display: inline-block; max-width: 100%; background: #fee2e2; color: #991b1b; font-weight: 700; border-radius: 999px; padding: 4px 12px; overflow-wrap: anywhere; }
+    .promo-line { font-weight: 800; color: #b91c1c; font-size: 1.1rem; margin: 8px 0 4px; overflow-wrap: anywhere; }
+    .promo-urgency { font-weight: 700; margin: 0; color: #b91c1c; }
+    .promo-old { color: #6b7280; text-decoration: line-through; font-weight: 600; }
+    .promo-sr { position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap; }
+    html.dark .promo-badge { background: #450a0a; color: #fecaca; }
+    html.dark .promo-line, html.dark .promo-urgency { color: #fca5a5; }
+    html.dark .promo-old { color: #94a3b8; }
+    .promo-old-big { font-size: 2rem; margin-inline-start: 10px; white-space: nowrap; }
+    /* PROMO-CSS-END */
   </style>
 </head>
 <body>
@@ -149,6 +161,14 @@
     <div class="pricing-card">
       <div class="price-row">
         <span class="price-currency">₪</span><span class="price-amount">99</span>
+        <!-- PROMO-START -->
+        <s class="promo-old promo-old-big" aria-hidden="true"><span class="promo-sr" data-i18n="promoPrev">המחיר הקודם</span> ₪159</s>
+        <div class="promo-box">
+          <div class="promo-badge" data-i18n="promoBadge">🔥 מחיר מבצע לזמן מוגבל!</div>
+          <p class="promo-line"><span data-i18n="promoInstead">במקום</span> <s class="promo-old"><span class="promo-sr" data-i18n="promoPrev">המחיר הקודם</span> ₪159</s> <span data-i18n="promoOnly">— רק ₪99!!!</span></p>
+          <p class="promo-urgency" data-i18n="promoUrgency">מהרו להזמין!</p>
+        </div>
+        <!-- PROMO-END -->
         <div class="price-period" data-i18n="pricePeriod">תשלום חד-פעמי לאירוע</div>
       </div>
       <ul class="pricing-features">
@@ -203,6 +223,7 @@
         priceTitle: "מחיר פשוט וברור",
         priceSub: "תשלום חד-פעמי לכל האירוע — ללא הפתעות",
         pricePeriod: "תשלום חד-פעמי לאירוע",
+        promoBadge: "🔥 מחיר מבצע לזמן מוגבל!", promoInstead: "במקום", promoPrev: "המחיר הקודם", promoOnly: "— רק ₪99!!!", promoUrgency: "מהרו להזמין!", // PROMO
         feat1: "דף אישורי הגעה לאורחים", feat2: "קישור אישי לשיתוף בוואטסאפ",
         feat3: "ממשק ניהול הזמנה עם סטטיסטיקות", feat4: "עדכון בזמן אמת",
         feat5: "ניהול ומחיקת אורחים", feat6: "ייצוא לקובץ CSV",
@@ -243,6 +264,7 @@
         priceTitle: "Simple, Clear Pricing",
         priceSub: "One-time payment per event — no surprises",
         pricePeriod: "one-time payment per event",
+        promoBadge: "🔥 Special limited-time price!", promoInstead: "Instead of", promoPrev: "Previous price", promoOnly: "— only ₪99!!!", promoUrgency: "Hurry up and order!", // PROMO
         feat1: "RSVP page for your guests", feat2: "Personal link to share on WhatsApp",
         feat3: "Management dashboard with statistics", feat4: "Real-time updates",
         feat5: "Manage and remove guests", feat6: "Export to CSV",
