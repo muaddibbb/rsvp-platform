@@ -125,8 +125,58 @@ test("every dictionary line containing a promo key holds only promo keys and end
 
 test("promo- classes appear in each page only inside the PROMO markers (HTML and CSS)", () => {
   for (const p of ["index", "pricing", "register"]) {
-    const src = html[p].replace(/<!-- PROMO-START -->[\s\S]*?<!-- PROMO-END -->/g, "").replace(/\/\* PROMO-CSS-START \*\/[\s\S]*?\/\* PROMO-CSS-END \*\//g, "");
+    const src = html[p].replace(/<!-- PROMO-START -->[\s\S]*?<!-- PROMO-END -->/g, "").replace(/\/\* PROMO-CSS-START \*\/[\s\S]*?\/\* PROMO-CSS-END \*\//g, "").replace(/<!-- PROMO-HERO-START -->[\s\S]*?<!-- PROMO-HERO-END -->/g, "").replace(/\/\* PROMO-HERO-CSS-START \*\/[\s\S]*?\/\* PROMO-HERO-CSS-END \*\//g, "");
     const left = src.split("\n").filter((l) => /promo-(?!guarantee|banner)/.test(l) && !/\/\/ PROMO\s*$/.test(l));
     assert.deepEqual(left, [], p);
   }
+});
+
+// Hero promo group (run 20261116-1248-promo-hero): own markers, existing keys only, button unchanged.
+const heroBlock = () => {
+  const m = /<!-- PROMO-HERO-START -->([\s\S]*?)<!-- PROMO-HERO-END -->/.exec(html.index);
+  assert.ok(m, "hero block");
+  return m[1];
+};
+
+test("hero promo markers appear exactly once on index and not on other pages, in order, before the CTA", () => {
+  for (const marker of ["<!-- PROMO-HERO-START -->", "<!-- PROMO-HERO-END -->", "/* PROMO-HERO-CSS-START */", "/* PROMO-HERO-CSS-END */"]) {
+    assert.equal(count(html.index, marker), 1, marker);
+    for (const p of ["pricing", "register"]) assert.equal(count(html[p], marker), 0, `${p}: ${marker}`);
+  }
+  assert.ok(html.index.indexOf("<!-- PROMO-HERO-START -->") < html.index.indexOf("<!-- PROMO-HERO-END -->"));
+  assert.ok(html.index.indexOf("/* PROMO-HERO-CSS-START */") < html.index.indexOf("/* PROMO-HERO-CSS-END */"));
+  assert.ok(html.index.indexOf("<!-- PROMO-HERO-END -->") < html.index.indexOf('data-i18n="heroCta"'));
+  assert.ok(html.index.indexOf("<!-- PROMO-HERO-START -->") > html.index.indexOf('class="landing-hero"'));
+});
+
+test("hero promo block uses only the existing promo keys, a real <s> with hidden previous-price text, no innerHTML", () => {
+  const b = heroBlock();
+  const keys = [...b.matchAll(/data-i18n="([^"]+)"/g)].map((m) => m[1]).sort();
+  assert.deepEqual(keys, ["promoBadge", "promoInstead", "promoOnly", "promoPrev", "promoUrgency"]);
+  const d = dictOf("index");
+  for (const k of keys) assert.ok(k in d.he && k in d.en, k);
+  assert.match(b, /<s class="promo-old">\s*<span class="promo-sr" data-i18n="promoPrev">[^<]*<\/span> ₪159<\/s>/);
+  assert.ok(!/aria-hidden/.test(b), "single crossed price: not aria-hidden");
+  assert.ok(!/innerHTML/i.test(b));
+  for (const m of b.matchAll(/<(span|p|div)\b[^>]*data-i18n="[^"]+"[^>]*>([^]*?)<\/\1>/g)) assert.ok(!/</.test(m[2]), "text-only leaf");
+});
+
+test("the hero CTA button text and link are unchanged and the existing price-block promo stays", () => {
+  assert.ok(html.index.includes('<a class="cta-btn" href="/register.html" data-i18n="heroCta">צור אירוע עכשיו — ₪99 בלבד 🎉</a>'));
+  assert.equal(promoBlocks("index").length, 1);
+});
+
+test("every hero promo colour selector has a light and an html.dark twin that outrank the html.dark .promo-* rules", () => {
+  const m = /\/\* PROMO-HERO-CSS-START \*\/([\s\S]*?)\/\* PROMO-HERO-CSS-END \*\//.exec(html.index);
+  assert.ok(m, "hero css block");
+  const rules = [...m[1].matchAll(/([^{}]+)\{([^}]*)\}/g)].map((r) => ({ sel: r[1].split(",").map((x) => x.trim()), body: r[2] }));
+  for (const el of ["promo-badge", "promo-line", "promo-urgency", "promo-old"]) {
+    const rule = rules.find((r) => r.sel.includes(`html.dark .promo-hero .${el}`));
+    assert.ok(rule, `${el}: dark twin`);
+    assert.ok(rules.some((r) => r.sel.includes(`html .promo-hero .${el}`)), `${el}: light twin`);
+    assert.match(rule.body, /color:/, el);
+  }
+  assert.match(m[1], /\.promo-hero\s*\{[^}]*overflow-wrap:\s*anywhere/);
+  // no bare `.promo-hero .promo-x` colour rule that the html.dark rules (0,2,1) would beat
+  for (const r of rules) for (const s of r.sel) assert.ok(!/^\.promo-hero\s+\./.test(s), `outranked selector: ${s}`);
 });
