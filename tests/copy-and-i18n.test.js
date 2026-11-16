@@ -142,7 +142,15 @@ test("index.html and pricing.html no longer carry the guarantee pill or its keys
 
 // ── item 9 ──
 test("the customer-facing pages and the recovery email contain no !!!", () => {
-  for (const [file, src] of Object.entries(SCANNED)) assert.ok(!src.includes("!!!"), file);
+  // Allowance for the limited-time promo (run 20261116-1140-promo-price): the customer-approved
+  // text "Instead of ₪159 — only ₪99!!!" needs "!!!". Only the two exact strings are removed; any other
+  // "!!!" still fails. Remove this allowance when the promo is removed.
+  const PROMO_ALLOWED = ["— רק ₪99!!!", "— only ₪99!!!"];
+  for (const [file, src] of Object.entries(SCANNED)) {
+    let scan = src;
+    for (const a of PROMO_ALLOWED) scan = scan.split(a).join("");
+    assert.ok(!scan.includes("!!!"), file);
+  }
 });
 
 test("no public file contains planBadge or plan-badge, הכי פופולרי or Most Popular", () => {

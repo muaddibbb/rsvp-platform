@@ -9,6 +9,7 @@
   <script>
     window.PAGE_I18N = {
       he: {
+        promoBadge: "🔥 מחיר מבצע לזמן מוגבל!", promoInstead: "במקום", promoPrev: "המחיר הקודם", promoOnly: "— רק ₪99!!!", promoUrgency: "מהרו להזמין!", // PROMO
         pageTitle: "מחירים | אישורי הגעה",
         logo: "אישורי הגעה",
         navCta: "הקמת אירוע",
@@ -50,6 +51,7 @@
         footContact: "צור קשר: kupernetservice@gmail.com",
       },
       en: {
+        promoBadge: "🔥 Special limited-time price!", promoInstead: "Instead of", promoPrev: "Previous price", promoOnly: "— only ₪99!!!", promoUrgency: "Hurry up and order!", // PROMO
         pageTitle: "Pricing | RSVP",
         logo: "RSVP",
         navCta: "Create Your Event",
@@ -179,6 +181,19 @@
     html.dark .faq-item { border-bottom-color: #334155; }
     html.dark .faq-a { color: #94a3b8; }
     html.dark .faq-a a { color: #f0d080; }
+    /* PROMO-CSS-START */
+    .promo-box { margin: 12px 0; text-align: center; }
+    .promo-badge { display: inline-block; max-width: 100%; background: #fee2e2; color: #991b1b; font-weight: 700; border-radius: 999px; padding: 4px 12px; overflow-wrap: anywhere; }
+    .promo-line { font-weight: 800; color: #b91c1c; font-size: 1.1rem; margin: 8px 0 4px; overflow-wrap: anywhere; }
+    .promo-urgency { font-weight: 700; margin: 0; color: #b91c1c; }
+    .promo-old { color: #6b7280; text-decoration: line-through; font-weight: 600; }
+    .promo-sr { position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap; }
+    html.dark .promo-badge { background: #450a0a; color: #fecaca; }
+    html.dark .promo-line, html.dark .promo-urgency { color: #fca5a5; }
+    html.dark .promo-old { color: #94a3b8; }
+    .promo-old-big { font-size: 1.75rem; margin-inline-start: 10px; white-space: nowrap; }
+    .plan-price { display: inline-block; }
+    /* PROMO-CSS-END */
   </style>
 </head>
 <body>
@@ -202,6 +217,14 @@
       <div class="plan-card featured">
         <div class="plan-name" data-i18n="planName">אירוע מלא</div>
         <div class="plan-price"><span>₪</span>99</div>
+        <!-- PROMO-START -->
+        <s class="promo-old promo-old-big" aria-hidden="true"><span class="promo-sr" data-i18n="promoPrev">המחיר הקודם</span> ₪159</s>
+        <div class="promo-box">
+          <div class="promo-badge" data-i18n="promoBadge">🔥 מחיר מבצע לזמן מוגבל!</div>
+          <p class="promo-line"><span data-i18n="promoInstead">במקום</span> <s class="promo-old"><span class="promo-sr" data-i18n="promoPrev">המחיר הקודם</span> ₪159</s> <span data-i18n="promoOnly">— רק ₪99!!!</span></p>
+          <p class="promo-urgency" data-i18n="promoUrgency">מהרו להזמין!</p>
+        </div>
+        <!-- PROMO-END -->
         <div class="plan-period" data-i18n="planPeriod">תשלום חד-פעמי לאירוע</div>
         <div class="plan-highlight" data-i18n="unlimitedGuestsHighlight">🎈 ללא הגבלת כמות אורחים</div>
         <a class="plan-cta" href="/register.html" data-i18n="planCta">התחילו עכשיו</a>
