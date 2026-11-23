@@ -58,9 +58,9 @@ function mulberry32(a) {
 }
 
 // ── grid ─────────────────────────────────────────────────────────────────────
-const MTDS = [0, 1, 99.99, 100, 299.99, 300, 387, 399, 399.99, 400, 400.01, 800, undefined];
+const MTDS = [0, 99.99, 150, 199, 199.99, 200, 200.01, 400, undefined];
 const DAYS = [[1, 28], [1, 30], [1, 31], [15, 30], [20, 30], [27, 31], [28, 28], [30, 30], [31, 31], [undefined, undefined], [35, 30]];
-const BUDGETS = [undefined, 0, 1, 5, 9, 12, 12.4, 12.5, 13, 13.4, 13.5, 14, 20, 1000];
+const BUDGETS = [undefined, 0, 1, 5, 6, 6.4, 6.5, 6.6, 7, 9, 12.5, 13, 20, 1000];
 const STATUSES = ["ENABLED", "PAUSED", "REMOVED", undefined];
 const PAUSED_BY = [true, false, undefined];
 
@@ -127,7 +127,7 @@ function randomInput(rnd) {
   const nt = Math.floor(rnd() * 14);
   const texts = Array.from({ length: 8 }, (_, i) => "t" + i);
   return {
-    campaign: { name: "c", status: pick(["ENABLED", "PAUSED", "REMOVED"]), dailyBudgetILS: maybe(rnd() < 0.5 ? pick([1, 5, 9, 12, 13, 14, 20]) : num(0, 30)), costILS: maybe(num(0, 600)), conversions: maybe(pick([0, 0, 1, 3, 7])) },
+    campaign: { name: "c", status: pick(["ENABLED", "PAUSED", "REMOVED"]), dailyBudgetILS: maybe(rnd() < 0.5 ? pick([1, 4, 5, 6, 6.4, 6.5, 6.6, 7, 13, 20]) : num(0, 30)), costILS: maybe(num(0, 600)), conversions: maybe(pick([0, 0, 1, 3, 7])) },
     keywords: Array.from({ length: nk }, (_, i) => ({
       criterionId: "id" + i, text: pick(texts), matchType: pick(["PHRASE", "EXACT", "BROAD"]), status: pick(["ENABLED", "ENABLED", "PAUSED"]),
       costILS: maybe(rnd() < 0.3 ? pick([59.99, 60, 60.01]) : num(0, 200)), conversions: maybe(pick([0, 0, 0, 1, 2])), clicks: maybe(Math.floor(rnd() * 30)), conversionsAllTime: maybe(pick([0, 0, 0, 1, 4])),
@@ -136,7 +136,7 @@ function randomInput(rnd) {
       term: pick(texts.concat(["x", "y", "z"])), clicks: maybe(rnd() < 0.3 ? pick([3, 4, 5]) : Math.floor(rnd() * 20)), costILS: maybe(rnd() < 0.3 ? pick([14.99, 15, 15.01]) : num(0, 80)),
       conversions: maybe(pick([0, 0, 0, 1])), alreadyNegative: rnd() < 0.2,
     })),
-    monthToDateSpendILS: maybe(rnd() < 0.2 ? pick([0, 399.99, 400, 400.01]) : num(0, 520)),
+    monthToDateSpendILS: maybe(rnd() < 0.2 ? pick([0, 199.99, 200, 200.01]) : num(0, 320)),
     dayOfMonth: maybe(1 + Math.floor(rnd() * dim)),
     daysInMonth: maybe(dim),
     pausedByAgent: pick([true, false, undefined, "true", 1]),
@@ -163,13 +163,16 @@ for (const seed of [0x5eed1234, 0xc0ffee, 20261101]) {
 }
 
 test("both copies carry the same CONFIG values", () => {
-  const input = { campaign: { status: "ENABLED", dailyBudgetILS: 13 } };
+  const input = { campaign: { status: "ENABLED", dailyBudgetILS: 6.5 } };
   assert.deepStrictEqual(runEmbedded(structuredClone(input)).config, runFile(structuredClone(input)).config);
 });
 
 // ── sensitivity control: the comparison must notice a real behavioural change ─
 const MUTATIONS = [
-  ["cap constant 400 -> 401", (s) => s.replace("MONTHLY_BUDGET_CAP_ILS: 400", "MONTHLY_BUDGET_CAP_ILS: 401")],
+  ["cap constant 200 -> 201", (s) => s.replace("MONTHLY_BUDGET_CAP_ILS: 200", "MONTHLY_BUDGET_CAP_ILS: 201")],
+  ["r2 dropped in enforce comparison", (s) => s.replace("r2(campaign.dailyBudgetILS) > CONFIG.DAILY_BUDGET_ILS", "Math.round(campaign.dailyBudgetILS) > CONFIG.DAILY_BUDGET_ILS")],
+  ["r2 dropped in throttle comparison", (s) => s.replace("r2(campaign.dailyBudgetILS) !== safeDaily", "Math.round(campaign.dailyBudgetILS) !== safeDaily")],
+  ["r2 dropped in projectedMonthILS", (s) => s.replace("projectedMonthILS: r2(projectedMonth)", "projectedMonthILS: Math.round(projectedMonth)")],
   ["keyword spend threshold >= -> >", (s) => s.replace("(k.costILS || 0) >= CONFIG.KEYWORD_PAUSE_MIN_SPEND_ILS", "(k.costILS || 0) > CONFIG.KEYWORD_PAUSE_MIN_SPEND_ILS")],
   ["resume on PAUSED -> on REMOVED", (s) => s.replace("campaign.status === 'PAUSED'", "campaign.status === 'REMOVED'")],
   ["action cap 8 -> 7", (s) => s.replace("MAX_ACTIONS_PER_RUN: 8", "MAX_ACTIONS_PER_RUN: 7")],

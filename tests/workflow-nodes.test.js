@@ -32,8 +32,8 @@ const pauseCamp = { type: "pause_campaign", reason: "cap" };
 const pauseKw = { type: "pause_keyword", criterionId: "customers/1/adGroupCriteria/2~3", keyword: "kw", matchType: "PHRASE", reason: "r" };
 const neg = { type: "add_negative", text: "bad term", matchType: "PHRASE", reason: "r" };
 const baseEngine = (over = {}) => ({
-  budgetStatus: "throttling", monthToDateSpendILS: 300, projectedMonthILS: 443, cpaILS: null, profitable: false, winners: [],
-  candidateActions: [budgetAct, pauseKw, neg], droppedActions: 0, config: { DAILY_BUDGET_ILS: 13 }, notes: [], ...over,
+  budgetStatus: "throttling", monthToDateSpendILS: 150, projectedMonthILS: 221.5, cpaILS: null, profitable: false, winners: [],
+  candidateActions: [budgetAct, pauseKw, neg], droppedActions: 0, config: { DAILY_BUDGET_ILS: 6.5 }, notes: [], ...over,
 });
 const norm = { campaign: { resourceName: "customers/1/campaigns/7", budgetResourceName: "customers/1/campaignBudgets/8" } };
 const llm = (obj) => ({ message: { content: typeof obj === "string" ? obj : JSON.stringify(obj) } });
@@ -73,9 +73,17 @@ test("Validate: a budget RAISE above the daily cap is dropped unless throttling"
   const raise = { type: "set_daily_budget", valueILS: 20 };
   const notThrottling = await validate(baseEngine({ budgetStatus: "ok", candidateActions: [raise] }), llm({ approvedActions: [raise] }));
   assert.equal(notThrottling.approvedCount, 0);
-  const lowering = { type: "set_daily_budget", valueILS: 13 };
+  const lowering = { type: "set_daily_budget", valueILS: 6.5 };
   const ok = await validate(baseEngine({ budgetStatus: "ok", candidateActions: [lowering] }), llm({ approvedActions: [lowering] }));
   assert.equal(ok.approvedCount, 1);
+});
+
+test("Validate: set_daily_budget 6.5 -> amountMicros \"6500000\" and label \"budget: ₪6.5/day\"", async () => {
+  const a = { type: "set_daily_budget", valueILS: 6.5 };
+  const out = await validate(baseEngine({ budgetStatus: "ok", candidateActions: [a] }), llm({ approvedActions: [a] }));
+  assert.equal(out.approvedCount, 1);
+  assert.equal(out.mutations[0].label, "budget: ₪6.5/day");
+  assert.match(JSON.stringify(out.mutations[0]), /"amountMicros":"6500000"/);
 });
 
 test("Validate: UNPARSEABLE LLM output falls back to the engine plan verbatim", async () => {
@@ -146,7 +154,7 @@ function normalize(over = {}) {
   return run("Normalize", {
     upstream: {
       "Read: Campaign+MTD": rows([{ metrics: { costMicros: "123450000", conversions: 2.5, clicks: 40 } }]),
-      "Read: Campaign Status": rows([{ campaign: { name: "RSVP Search Campaign", status: "PAUSED", resourceName: "customers/1/campaigns/7" }, campaignBudget: { resourceName: "customers/1/campaignBudgets/8", amountMicros: "13000000" } }]),
+      "Read: Campaign Status": rows([{ campaign: { name: "RSVP Search Campaign", status: "PAUSED", resourceName: "customers/1/campaigns/7" }, campaignBudget: { resourceName: "customers/1/campaignBudgets/8", amountMicros: "6500000" } }]),
       "Read: Keywords 30d": rows([{ adGroupCriterion: { resourceName: "c/1", status: "ENABLED", keyword: { text: "kw1", matchType: "PHRASE" } }, metrics: { costMicros: "70000000", conversions: 0, clicks: 12 } }]),
       "Read: Keywords 90d": rows([{ adGroupCriterion: { resourceName: "c/1" }, metrics: { conversions: 3 } }]),
       "Read: Search terms": rows([{ searchTermView: { searchTerm: "t1" }, metrics: { clicks: 5, costMicros: "20000000", conversions: 0 } }]),
@@ -155,9 +163,16 @@ function normalize(over = {}) {
   }).then((o) => o[0].json);
 }
 
+test("Normalize: amountMicros \"6500000\" -> dailyBudgetILS 6.5", async () => {
+  const j = await normalize({
+    "Read: Campaign Status": rows([{ campaign: { name: "RSVP Search Campaign", status: "ENABLED", resourceName: "customers/1/campaigns/7" }, campaignBudget: { resourceName: "customers/1/campaignBudgets/8", amountMicros: "6500000" } }]),
+  });
+  assert.equal(j.campaign.dailyBudgetILS, 6.5);
+});
+
 test("Normalize: converts micros to ILS, maps status/budget, joins lifetime conversions, sets alreadyNegative=false", async () => {
   const j = await normalize();
-  assert.deepEqual(j.campaign, { name: "RSVP Search Campaign", status: "PAUSED", resourceName: "customers/1/campaigns/7", budgetResourceName: "customers/1/campaignBudgets/8", dailyBudgetILS: 13, costILS: 123.45, conversions: 2.5 });
+  assert.deepEqual(j.campaign, { name: "RSVP Search Campaign", status: "PAUSED", resourceName: "customers/1/campaigns/7", budgetResourceName: "customers/1/campaignBudgets/8", dailyBudgetILS: 6.5, costILS: 123.45, conversions: 2.5 });
   assert.equal(j.monthToDateSpendILS, 123.45);
   assert.deepEqual(j.keywords[0], { criterionId: "c/1", text: "kw1", matchType: "PHRASE", status: "ENABLED", costILS: 70, conversions: 0, clicks: 12, conversionsAllTime: 3 });
   assert.deepEqual(j.searchTerms[0], { term: "t1", clicks: 5, costILS: 20, conversions: 0, alreadyNegative: false });

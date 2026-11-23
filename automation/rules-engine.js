@@ -7,14 +7,16 @@
  * Validate node re-checks the final plan against these same limits before anything is applied.
  *
  * Money limits live here and nowhere else:
- *   - Google Ads spend is capped at ₪400/month (daily budget pinned + month-to-date throttle).
+ *   - Google Ads spend is capped at ₪200/month (daily budget pinned + month-to-date throttle).
  *   - The agent never spends on the site itself (it only ever emits ad mutations + GitHub PRs).
  */
 
+const r2 = (n) => Math.round(n * 100) / 100; // agora precision, so 6.5 equals 6.5
+
 const CONFIG = {
   CAMPAIGN_NAME: "RSVP Search Campaign",
-  MONTHLY_BUDGET_CAP_ILS: 400,
-  DAILY_BUDGET_ILS: 13, // 13 × 30.4 ≈ 395 ≤ 400
+  MONTHLY_BUDGET_CAP_ILS: 200,
+  DAILY_BUDGET_ILS: 6.5, // 6.5 × 30.4 = 197.6 ≤ 200
   PRICE_ILS: 99, // product price → target-CPA anchor; CPA < price = profitable
   LOOKBACK_DAYS: 30,
 
@@ -52,7 +54,7 @@ function decide(input) {
   const actions = [];
   const notes = [];
 
-  // ── 1. Budget guardrails (the ₪400/month cap) ─────────────────────────────
+  // ── 1. Budget guardrails (the ₪200/month cap) ─────────────────────────────
   const remainingDays = Math.max(1, daysInMonth - dayOfMonth + 1);
   const projectedMonth = monthToDateSpendILS + CONFIG.DAILY_BUDGET_ILS * remainingDays;
   let budgetStatus = "ok";
@@ -68,20 +70,21 @@ function decide(input) {
     }
     budgetStatus = "cap_reached";
   } else if (projectedMonth > CONFIG.MONTHLY_BUDGET_CAP_ILS) {
+    // safeDaily is floored to a whole shekel, minimum 1, so spend only ever goes lower.
     const safeDaily = Math.max(1, Math.floor((CONFIG.MONTHLY_BUDGET_CAP_ILS - monthToDateSpendILS) / remainingDays));
-    if (Math.round(campaign.dailyBudgetILS) !== safeDaily) {
+    if (r2(campaign.dailyBudgetILS) !== safeDaily) {
       actions.push({
         type: "set_daily_budget",
         valueILS: safeDaily,
-        reason: `Throttle to keep month ≤ ₪${CONFIG.MONTHLY_BUDGET_CAP_ILS} (projected ₪${Math.round(projectedMonth)})`,
+        reason: `Throttle to keep month ≤ ₪${CONFIG.MONTHLY_BUDGET_CAP_ILS} (projected ₪${r2(projectedMonth)})`,
       });
     }
     budgetStatus = "throttling";
-  } else if (Math.round(campaign.dailyBudgetILS) > CONFIG.DAILY_BUDGET_ILS) {
+  } else if (r2(campaign.dailyBudgetILS) > CONFIG.DAILY_BUDGET_ILS) {
     actions.push({
       type: "set_daily_budget",
       valueILS: CONFIG.DAILY_BUDGET_ILS,
-      reason: `Enforce the ≤ ₪${CONFIG.DAILY_BUDGET_ILS}/day cap (was ₪${Math.round(campaign.dailyBudgetILS)})`,
+      reason: `Enforce the ≤ ₪${CONFIG.DAILY_BUDGET_ILS}/day cap (was ₪${r2(campaign.dailyBudgetILS)})`,
     });
   }
 
@@ -169,7 +172,7 @@ function decide(input) {
   return {
     budgetStatus,
     monthToDateSpendILS,
-    projectedMonthILS: Math.round(projectedMonth),
+    projectedMonthILS: r2(projectedMonth),
     cpaILS,
     profitable: cpaILS != null && cpaILS < CONFIG.PRICE_ILS,
     winners,

@@ -103,10 +103,10 @@ in Google Ads Editor are not visible; a change can take up to 3 minutes to appea
 ```json
 { "operations": [ {
   "updateMask": "amount_micros",
-  "update": { "resourceName": "customers/{CID}/campaignBudgets/{BUDGET_ID}", "amountMicros": "13000000" }
+  "update": { "resourceName": "customers/{CID}/campaignBudgets/{BUDGET_ID}", "amountMicros": "6500000" }
 } ] }
 ```
-(₪13 → `13000000` micros. Never exceed `13000000` except a *lower* throttle value.)
+(₪6.5 → `6500000` micros. Never exceed `6500000` except a *lower* throttle value.)
 
 ### Pause the campaign (cap reached) — POST `.../campaigns:mutate`
 ```json
@@ -126,7 +126,7 @@ in Google Ads Editor are not visible; a change can take up to 3 minutes to appea
 
 ## Validate node (final gate, before any write)
 - Drop any ad action not present in `candidateActions`.
-- Reject any `set_daily_budget` with `amountMicros > 13000000` unless `budgetStatus === "throttling"`.
+- Reject any `set_daily_budget` with `amountMicros > 6500000` unless `budgetStatus === "throttling"`.
 - Reject any `pause_keyword` whose keyword is in `winners`.
 - Resume only when the engine emitted `resume_campaign` (which requires `pausedByAgent`).
 - Honor `DRY_RUN`: when true, log the plan + skip all mutate calls.
