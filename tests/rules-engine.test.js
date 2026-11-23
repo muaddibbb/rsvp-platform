@@ -15,7 +15,7 @@ const { decide, CONFIG } = require(ENGINE_PATH);
 
 function input(over = {}) {
   return {
-    campaign: { name: "RSVP Search Campaign", status: "ENABLED", dailyBudgetILS: 13, costILS: 0, conversions: 0, ...(over.campaign || {}) },
+    campaign: { name: "RSVP Search Campaign", status: "ENABLED", dailyBudgetILS: 6.5, costILS: 0, conversions: 0, ...(over.campaign || {}) },
     keywords: over.keywords || [],
     searchTerms: over.searchTerms || [],
     monthToDateSpendILS: over.monthToDateSpendILS ?? 0,
@@ -37,8 +37,8 @@ function withKeywordActions(value, fn) {
 // ── entry paths ──────────────────────────────────────────────────────────────
 test("entry path 1: module.exports exposes decide and CONFIG; requiring the file in Node does not execute the n8n branch", () => {
   assert.equal(typeof decide, "function");
-  assert.equal(CONFIG.MONTHLY_BUDGET_CAP_ILS, 400);
-  assert.equal(CONFIG.DAILY_BUDGET_ILS, 13);
+  assert.equal(CONFIG.MONTHLY_BUDGET_CAP_ILS, 200);
+  assert.equal(CONFIG.DAILY_BUDGET_ILS, 6.5);
   assert.equal(CONFIG.MAX_ACTIONS_PER_RUN, 8);
   assert.equal(typeof globalThis.$input, "undefined");
 });
@@ -46,7 +46,7 @@ test("entry path 1: module.exports exposes decide and CONFIG; requiring the file
 test("entry path 2: with an n8n-style $input the file returns [{json: decide(...)}] (top-level return)", () => {
   const src = fs.readFileSync(ENGINE_PATH, "utf8");
   const run = new Function("$input", "module", src); // n8n wraps Code-node bodies in a function the same way
-  const data = input({ monthToDateSpendILS: 300, dayOfMonth: 20 });
+  const data = input({ monthToDateSpendILS: 150, dayOfMonth: 20 });
   const out = run({ first: () => ({ json: data }) }, { exports: {} });
   assert.ok(Array.isArray(out) && out.length === 1 && out[0].json, "expected [{json}]");
   assert.deepEqual(out[0].json.candidateActions, decide(data).candidateActions);
@@ -62,49 +62,81 @@ test("entry path 2b: without $input the same source falls through to module.expo
 });
 
 // ── budget guardrails ────────────────────────────────────────────────────────
-test("below budget: day 1, MTD 0, budget 13 -> ok, projected 390, no actions", () => {
+test("below budget: day 1, MTD 0, budget 6.5 -> ok, projected 195, no actions", () => {
   const r = decide(input());
   assert.equal(r.budgetStatus, "ok");
-  assert.equal(r.projectedMonthILS, 390);
+  assert.equal(r.projectedMonthILS, 195);
   assert.deepEqual(r.candidateActions, []);
   assert.equal(r.droppedActions, 0);
 });
 
-test("throttling: MTD 300 on day 20 of 30 -> set_daily_budget floor(100/11)=9", () => {
-  const r = decide(input({ monthToDateSpendILS: 300, dayOfMonth: 20 }));
+test("throttling: MTD 150 on day 20 of 30 -> set_daily_budget floor(50/11)=4", () => {
+  const r = decide(input({ monthToDateSpendILS: 150, dayOfMonth: 20 }));
   assert.equal(r.budgetStatus, "throttling");
-  assert.equal(r.projectedMonthILS, 443);
-  assert.deepEqual(r.candidateActions.map((a) => [a.type, a.valueILS]), [["set_daily_budget", 9]]);
+  assert.equal(r.projectedMonthILS, 221.5);
+  assert.deepEqual(r.candidateActions.map((a) => [a.type, a.valueILS]), [["set_daily_budget", 4]]);
 });
 
 test("throttling: no action is emitted when the budget already equals the safe value", () => {
-  const r = decide(input({ monthToDateSpendILS: 300, dayOfMonth: 20, campaign: { dailyBudgetILS: 9 } }));
+  const r = decide(input({ monthToDateSpendILS: 150, dayOfMonth: 20, campaign: { dailyBudgetILS: 4 } }));
   assert.equal(r.budgetStatus, "throttling");
   assert.deepEqual(r.candidateActions, []);
 });
 
 test("throttling: the throttled value never drops below 1", () => {
-  const r = decide(input({ monthToDateSpendILS: 399, dayOfMonth: 29, daysInMonth: 30 }));
+  const r = decide(input({ monthToDateSpendILS: 199, dayOfMonth: 29, daysInMonth: 30 }));
   assert.equal(r.budgetStatus, "throttling");
   assert.equal(r.candidateActions[0].valueILS, 1);
 });
 
-test("cap reached: MTD exactly 400 -> pause_campaign, status cap_reached, note present", () => {
-  const r = decide(input({ monthToDateSpendILS: 400 }));
+test("cap reached: MTD exactly 200 -> pause_campaign, status cap_reached, note present", () => {
+  const r = decide(input({ monthToDateSpendILS: 200 }));
   assert.equal(r.budgetStatus, "cap_reached");
   assert.deepEqual(types(r), ["pause_campaign"]);
   assert.ok(r.notes.some((n) => /cap reached/i.test(n)));
 });
 
-test("cap boundary: MTD 399.99 is not the cap (throttle instead), 400.01 is", () => {
-  assert.equal(decide(input({ monthToDateSpendILS: 399.99, dayOfMonth: 15 })).budgetStatus, "throttling");
-  assert.equal(decide(input({ monthToDateSpendILS: 400.01 })).budgetStatus, "cap_reached");
+test("cap boundary: MTD 199.99 is not the cap (throttle instead), 200.01 is", () => {
+  assert.equal(decide(input({ monthToDateSpendILS: 199.99, dayOfMonth: 15 })).budgetStatus, "throttling");
+  assert.equal(decide(input({ monthToDateSpendILS: 200.01 })).budgetStatus, "cap_reached");
 });
 
-test("budget above 13 with no throttle -> set_daily_budget 13; budget exactly 13 -> nothing", () => {
+test("budget above 6.5 with no throttle -> set_daily_budget 6.5; budget exactly 6.5 -> nothing", () => {
   const r = decide(input({ campaign: { dailyBudgetILS: 20 } }));
-  assert.deepEqual(r.candidateActions.map((a) => [a.type, a.valueILS]), [["set_daily_budget", 13]]);
-  assert.deepEqual(decide(input({ campaign: { dailyBudgetILS: 13 } })).candidateActions, []);
+  assert.deepEqual(r.candidateActions.map((a) => [a.type, a.valueILS]), [["set_daily_budget", 6.5]]);
+  assert.deepEqual(decide(input({ campaign: { dailyBudgetILS: 6.5 } })).candidateActions, []);
+});
+
+test("budget 6.5, MTD 0 -> no action, status ok", () => {
+  const r = decide(input({ campaign: { dailyBudgetILS: 6.5 }, monthToDateSpendILS: 0 }));
+  assert.equal(r.budgetStatus, "ok");
+  assert.ok(!types(r).includes("set_daily_budget"));
+  assert.deepEqual(r.candidateActions, []);
+});
+
+test("budget 13 -> exactly one set_daily_budget with 6.5", () => {
+  const r = decide(input({ campaign: { dailyBudgetILS: 13 } }));
+  assert.deepEqual(r.candidateActions.map((a) => [a.type, a.valueILS]), [["set_daily_budget", 6.5]]);
+});
+
+test("budget 6.5 with throttling -> status throttling; the proposed value is a whole shekel, >= 1 and < 6.5", () => {
+  const r = decide(input({ campaign: { dailyBudgetILS: 6.5 }, monthToDateSpendILS: 150, dayOfMonth: 20 }));
+  assert.equal(r.budgetStatus, "throttling");
+  assert.equal(r.candidateActions.length, 1);
+  const v = r.candidateActions[0].valueILS;
+  assert.equal(v, 4);
+  assert.ok(Number.isInteger(v) && v >= 1 && v < 6.5);
+});
+
+test("budget 6.5 equals the cap even as 6.499999 or 6.5000001 (agora precision)", () => {
+  for (const b of [6.499999, 6.5000001, 6.5]) {
+    assert.deepEqual(decide(input({ campaign: { dailyBudgetILS: b } })).candidateActions, [], String(b));
+  }
+});
+
+test("projectedMonthILS keeps decimals (6.5 x 30 -> 195; 6.5 x 31 -> 201.5, not rounded)", () => {
+  assert.equal(decide(input()).projectedMonthILS, 195);
+  assert.equal(decide(input({ daysInMonth: 31 })).projectedMonthILS, 201.5);
 });
 
 // ── pause / resume ───────────────────────────────────────────────────────────
@@ -129,7 +161,7 @@ test("an ENABLED campaign at the cap is still paused", () => {
 });
 
 test("paused + throttling -> throttle then resume (budget actions come first)", () => {
-  const r = decide(input({ campaign: { status: "PAUSED" }, monthToDateSpendILS: 300, dayOfMonth: 20, pausedByAgent: true }));
+  const r = decide(input({ campaign: { status: "PAUSED" }, monthToDateSpendILS: 150, dayOfMonth: 20, pausedByAgent: true }));
   assert.deepEqual(types(r), ["set_daily_budget", "resume_campaign"]);
 });
 
@@ -158,19 +190,19 @@ test("PAUSED is the only status that resumes (ENABLED / REMOVED / undefined do n
   for (const status of ["ENABLED", "REMOVED", undefined]) assert.ok(!types(decide(input({ campaign: { status }, pausedByAgent: true }))).includes("resume_campaign"), String(status));
 });
 
-test("CONFIG.DAILY_BUDGET_ILS is 13 in the engine and in the inline copy", () => {
-  assert.equal(CONFIG.DAILY_BUDGET_ILS, 13);
+test("CONFIG.DAILY_BUDGET_ILS is 6.5 in the engine and in the inline copy", () => {
+  assert.equal(CONFIG.DAILY_BUDGET_ILS, 6.5);
   const wf = JSON.parse(fs.readFileSync(path.resolve(__dirname, "..", "automation", "campaign-manager.workflow.json"), "utf8"));
   const inline = wf.nodes.find((n) => n.name === "Rules Engine").parameters.jsCode;
-  assert.match(inline, /DAILY_BUDGET_ILS:\s*13\b/);
+  assert.match(inline, /DAILY_BUDGET_ILS:\s*6\.5\b/);
 });
 
 // ── month length (J-15) ──────────────────────────────────────────────────────
-test("KNOWN WEAKNESS (J-15): a 31-day month throttles to 12 on day 1 (13 x 31 = 403 > 400)", () => {
+test("KNOWN WEAKNESS (J-15): a 31-day month throttles to 6 on day 1 (6.5 x 31 = 201.5 > 200)", () => {
   const r = decide(input({ daysInMonth: 31 }));
   assert.equal(r.budgetStatus, "throttling");
-  assert.equal(r.projectedMonthILS, 403);
-  assert.deepEqual(r.candidateActions.map((a) => [a.type, a.valueILS]), [["set_daily_budget", 12]]);
+  assert.equal(r.projectedMonthILS, 201.5);
+  assert.deepEqual(r.candidateActions.map((a) => [a.type, a.valueILS]), [["set_daily_budget", 6]]);
 });
 
 test("KNOWN WEAKNESS (J-15): nothing raises the budget back up after a throttle (budget 5, MTD 0, 30-day month -> ok, no action)", () => {
@@ -282,11 +314,11 @@ test("a pause_campaign is first in the list even when many keyword actions exist
 
 // ── bad / missing input (NaN path, J-17) ─────────────────────────────────────
 test("KNOWN WEAKNESS (J-17): missing dailyBudgetILS + throttling -> still emits a set_daily_budget (NaN !== safeDaily)", () => {
-  const r = decide(input({ campaign: { dailyBudgetILS: undefined }, monthToDateSpendILS: 300, dayOfMonth: 20 }));
-  assert.deepEqual(r.candidateActions.map((a) => [a.type, a.valueILS]), [["set_daily_budget", 9]]);
+  const r = decide(input({ campaign: { dailyBudgetILS: undefined }, monthToDateSpendILS: 150, dayOfMonth: 20 }));
+  assert.deepEqual(r.candidateActions.map((a) => [a.type, a.valueILS]), [["set_daily_budget", 4]]);
 });
 
-test("missing dailyBudgetILS with no throttle -> no budget action (NaN > 13 is false)", () => {
+test("missing dailyBudgetILS with no throttle -> no budget action (NaN > 6.5 is false)", () => {
   assert.deepEqual(decide(input({ campaign: { dailyBudgetILS: undefined } })).candidateActions, []);
 });
 
@@ -295,9 +327,9 @@ test("a missing campaign object throws (the engine does not guard against it)", 
 });
 
 test("omitted optional inputs default sensibly (no keywords, no search terms, day 1, 30 days, MTD 0)", () => {
-  const r = decide({ campaign: { dailyBudgetILS: 13, status: "ENABLED" } });
+  const r = decide({ campaign: { dailyBudgetILS: 6.5, status: "ENABLED" } });
   assert.equal(r.budgetStatus, "ok");
-  assert.equal(r.projectedMonthILS, 390);
+  assert.equal(r.projectedMonthILS, 195);
 });
 
 test("CPA and profitability: 300 cost / 4 conversions = 75 < 99 -> profitable with a note; 400/2 = 200 -> not", () => {

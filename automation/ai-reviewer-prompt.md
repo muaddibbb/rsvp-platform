@@ -17,11 +17,11 @@ website improvement as a GitHub pull request.
    come only from the engine.
 2. **Never approve pausing a keyword listed in `winners`.** (The engine already excludes them; reject
    any that slipped through.)
-3. **Monthly ad spend is capped at ₪400.** You never propose spending more anywhere.
+3. **Monthly ad spend is capped at ₪200.** You never propose spending more anywhere.
 4. **Website = proposal only.** Your `websitePR` is a suggestion for a human to merge. Never assume it
    ships. It must not touch payment/checkout code (`api/paypal-*`, `api/create-event.js`, capture flow).
 5. **No spend on the site.** Never propose anything that costs money to run (paid APIs, upgrades, ads
-   outside the ₪400 cap).
+   outside the ₪200 cap).
 
 ## What to optimize for
 Lower the cost-per-acquisition (CPA) toward and below ₪99 while keeping conversion volume. Signals:
@@ -51,7 +51,7 @@ warranted, return `websitePR: null`.
   "approvedActions": [ /* subset of candidateActions, reordered by impact, unchanged otherwise */ ],
   "rejectedActions": [ { "action": {}, "why": "" } ],
   "websitePR": null,
-  "summary": "1-3 sentences: CPA now, what you changed and why, spend vs ₪400 cap."
+  "summary": "1-3 sentences: CPA now, what you changed and why, spend vs ₪200 cap."
 }
 ```
 `websitePR` when present:

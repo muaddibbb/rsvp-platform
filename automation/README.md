@@ -8,10 +8,10 @@ prioritizes; every ad change is applied automatically, every **website** change 
 ## Hard limits (enforced in code, not left to the AI)
 1. **No spend on the site** — the agent only touches the free-tier infra + the ad account. It never
    buys or upgrades anything. The AI runs on a **local** model (Ollama), so even the "brain" is free.
-2. **≤ ₪400/month on Google Ads** — enforced two ways:
-   - Daily budget is pinned to **₪13/day** (₪13 × 30.4 ≈ ₪395 ≤ ₪400 — Google caps monthly at daily×30.4).
+2. **≤ ₪200/month on Google Ads** — enforced two ways:
+   - Daily budget is pinned to **₪6.5/day** (₪6.5 × 30.4 = ₪197.6 ≤ ₪200 — Google caps monthly at daily×30.4). The live n8n copy must be updated by the owner following `automation/n8n-update-instructions.md`.
    - The workflow also reads **month-to-date spend** each run and throttles the daily budget down (or
-     pauses the campaign) if the projected month would exceed ₪400.
+     pauses the campaign) if the projected month would exceed ₪200.
 3. **Never pauses a keyword that has ever converted** (winners are protected).
 4. **Website = propose only** — the agent opens a PR against `muaddibbb/rsvp-platform`; your merge is the gate. It never deploys.
 5. **Max 8 changes per run** — no wild swings.
@@ -24,7 +24,7 @@ prioritizes; every ad change is applied automatically, every **website** change 
 ## Status: live and proven working (Sep 2026)
 Deployed to the real account (`RSVP Search Campaign`, customer 3674361839, manager 4057140705). Has
 correctly applied real mutations end-to-end: paused a keyword, added negatives, paused the campaign at
-the ₪400 cap, and — after the fixes below — **auto-resumed it for real** once the new month's budget
+the ₪200 cap, and — after the fixes below — **auto-resumed it for real** once the new month's budget
 became available. AI reviewer (Ollama, `qwen2.5:3b-instruct`) is live and reasoning correctly (e.g. it
 independently caught and rejected a proposed negative keyword that would have blocked one of the two
 converting/winning keywords — the review layer is adding real value, not just rubber-stamping). Daily
@@ -45,7 +45,7 @@ Daily schedule (n8n) →
   VALIDATE Code node re-checks the LLM output against the hard limits (final gate)
   ACT     Google Ads API mutate: add negatives, pause losers, set/throttle budget, pause if capped
   PROPOSE GitHub API: open a PR if a website change is warranted
-  REPORT  email summary: changes made, CPA, spend vs ₪400 cap, pending PRs
+  REPORT  email summary: changes made, CPA, spend vs ₪200 cap, pending PRs
 ```
 The LLM can only **approve/reject/reorder** actions the rules engine already sanctioned, and **draft**
 website PRs. It can never invent an ad change or raise the budget beyond the cap — the Validate node
